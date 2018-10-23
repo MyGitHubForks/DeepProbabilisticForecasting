@@ -1,3 +1,7 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
 class Attn(nn.Module):
     def __init__(self, method, hidden_size):
         super(Attn, self).__init__()

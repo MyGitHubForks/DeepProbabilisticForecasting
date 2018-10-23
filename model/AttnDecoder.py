@@ -1,3 +1,8 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import model.Attn as AF
+
 class AttnDecoderRNN(nn.Module):
     def __init__(self, hidden_size, output_size, n_layers=1, dropout=0.1, method=None):
         super(AttnDecoderRNN, self).__init__()
@@ -13,7 +18,7 @@ class AttnDecoderRNN(nn.Module):
         self.concat = nn.Linear(hidden_size * 2, hidden_size).cuda()
         self.out = nn.Linear(hidden_size, output_size).cuda()
         if method != None:
-            self.attn = Attn(method, hidden_size).cuda()
+            self.attn = AF.Attn(method, hidden_size).cuda()
 
     def forward(self, input_seq, last_hidden, encoder_outputs):
         # Note: we run this one step at a time S = 1
@@ -31,7 +36,7 @@ class AttnDecoderRNN(nn.Module):
         rnn_output = rnn_output.squeeze(0) # S=1 x B x NHidden -> B x NHidden
         context = context.squeeze(1) # B x S=1 x NHidden -> B x NHidden
         concat_input = torch.cat((rnn_output, context), 1)
-        concat_output = F.tanh(self.concat(concat_input))
+        concat_output = torch.tanh(self.concat(concat_input))
         
         output = self.out(concat_output)
         

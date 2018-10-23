@@ -1,3 +1,5 @@
+import torch
+import torch.nn as nn
 class EncoderRNN(nn.Module):
     def __init__(self, sequence_length, num_features, hidden_size, n_layers=1, dropout=0.1):
         super(EncoderRNN, self).__init__()

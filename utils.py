@@ -1,4 +1,6 @@
 import torch
+import torch.nn as nn
+from torch import optim
 import time
 import math
 import matplotlib.pyplot as plt
@@ -159,7 +161,7 @@ def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription
 
 def train(trainDataObj, validationDataObj, encoder, decoder, model_description, n_epochs=100, batch_size=64, initialLR = 1e-2,
           lrDecayRatio=0.10, lrDecayBegginingEpoch=20,
-          lrDecayEvery=10, print_every=1000, plot_every=100, batchesPerEpoch=None)
+          lrDecayEvery=10, print_every=1000, plot_every=100, batchesPerEpoch=None):
 
     if not batchesPerEpoch:
         batchesPerEpoch=int(np.ceil(trainDataObj.getNumSamples() / batch_size))
@@ -199,5 +201,5 @@ def train(trainDataObj, validationDataObj, encoder, decoder, model_description, 
                                          epoch, epoch + 1 / n_epochs * 100, epochTrainLoss / float(batchesPerEpoch), epochValidationLoss))
         valEpochLosses.append(epochValidationLoss)
         trainEpochLosses.append(epochTrainLoss / float(batchesPerEpoch))
-    plotTrainValCurve(trainEpochLosses, valEpochLosses, modelDescription, criterion[1])
+    plotTrainValCurve(trainEpochLosses, valEpochLosses, model_description, criterion[1])
     return trainEpochLosses, valEpochLosses

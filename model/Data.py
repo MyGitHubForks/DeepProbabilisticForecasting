@@ -1,3 +1,5 @@
+import torch
+import numpy as np
 class Data():
     def __init__(self, filepath):
         data = np.load(filepath)
