@@ -65,7 +65,8 @@ def trainOneBatch(input_batch, input_lengths, target_batch, target_lengths, enco
     encoder_optimizer.step()
     decoder_optimizer.step()
     
-    return loss.item() / float(max(target_lengths)) / float(batch_size)
+    # average loss per timestep
+    return loss.item() / float(batch_size)
 
 
 # In[227]:
@@ -127,7 +128,7 @@ def validate(validationDataObj, batch_size, encoder, decoder, criterion):
             valLoss += criterion[0](output.cuda(), targetTensor.cuda())
         else:
             valLoss += criterion[0](output, targetTensor)
-    return valLoss / num_batches / max(target_lengths).float() / float(batch_size)
+    return valLoss / num_batches / float(batch_size)
 
 def asMinutes(s):
     m = math.floor(s / 60)
@@ -171,7 +172,7 @@ def train(trainDataObj, validationDataObj, encoder, decoder, model_description, 
 
     # Define Criterion
     #criterion = (nn.MSELoss(),"MSE")
-    criterion = (nn.L1Loss(size_average=True), "Mean Absolute Error")
+    criterion = (nn.L1Loss(reduction="elementwise_mean"), "Mean Absolute Error")
     
     sequence_length = trainDataObj.getSequenceLength()
     num_features = trainDataObj.getNumFeatures()
