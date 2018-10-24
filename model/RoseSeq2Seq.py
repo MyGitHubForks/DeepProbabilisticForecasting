@@ -71,7 +71,7 @@ class AttnDecoderRNN(nn.Module):
         self.embedding = nn.Linear(output_size, hidden_size)
         self.gru = nn.GRU(hidden_size, hidden_size, n_layers)
 
-        self.attn = nn.Linear(self.hidden_size * 2, self.args.output_len)
+        self.attn = nn.Linear(self.hidden_size * 2, self.args.sequence_len)
         self.attn_combine = nn.Linear(self.hidden_size * 2, self.hidden_size)
 
         self.out = nn.Linear(self.hidden_size * 2, output_size)
@@ -114,7 +114,7 @@ class AttnDecoderRNN(nn.Module):
 
 
 class Seq2Seq(nn.Module):
-    def __init__(self, args, test=False):
+    def __init__(self, args):
         super(Seq2Seq, self).__init__()
         self.args = args
 
@@ -122,9 +122,7 @@ class Seq2Seq(nn.Module):
 
         self.enc = EncoderRNN(self.args.x_dim, self.args.h_dim, args=args)
 
-        self.use_attn = False
-
-        if self.use_attn:
+        if self.args.use_attn:
             self.dec = AttnDecoderRNN(self.args.h_dim, self.args.x_dim, args=args)
         else:
             self.dec = DecoderRNN(self.args.h_dim, self.args.x_dim, args=args)
@@ -136,7 +134,7 @@ class Seq2Seq(nn.Module):
         encoder_hidden = self.enc.initHidden()
 
         hs = []
-        for t in range(self.args.input_len):
+        for t in range(self.args.sequence_len):
             encoder_output, encoder_hidden = self.enc(x[t], encoder_hidden)
             hs += [encoder_output]
 
@@ -148,15 +146,15 @@ class Seq2Seq(nn.Module):
         if self.args.cuda: inp = inp.cuda()
         ys = []
 
-        if self.use_attn:
-            for t in range(self.args.output_len):
+        if self.args.use_attn:
+            for t in range(self.args.sequence_len):
                 decoder_output, decoder_hidden = self.dec(inp, decoder_hidden, hs)
                 inp = decoder_output
                 ys += [decoder_output]
         else:
-            for t in range(self.args.output_len):
+            for t in range(self.args.sequence_len):
                 decoder_output, decoder_hidden = self.dec(inp, decoder_hidden)
                 inp = decoder_output
                 ys += [decoder_output]
 
-        return torch.cat([torch.unsqueeze(y, dim=0) for y in ys])from __future__ import print_function
+        return torch.cat([torch.unsqueeze(y, dim=0) for y in ys])
