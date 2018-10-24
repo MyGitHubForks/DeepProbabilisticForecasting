@@ -12,7 +12,6 @@ def trainOneBatch(input_batch, input_lengths, target_batch, target_lengths, enco
     # Zero gradients of both optimizers
     encoder_optimizer.zero_grad()
     decoder_optimizer.zero_grad()
-    loss = 0 # Added onto for each word
     batch_size = input_batch.size(1)
     CUDA = torch.cuda.is_available()
     _device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -49,14 +48,14 @@ def trainOneBatch(input_batch, input_lengths, target_batch, target_lengths, enco
     #Calculate Loss
     if criterion[1] == "MSE":
         if CUDA:
-            loss += torch.sqrt(criterion[0])(all_decoder_outputs.cuda(), target_batch.cuda())
+            loss = torch.sqrt(criterion[0])(all_decoder_outputs.cuda(), target_batch.cuda())
         else:
-            loss += torch.sqrt(criterion[0])(all_decoder_outputs, target_batch)
+            loss = torch.sqrt(criterion[0])(all_decoder_outputs, target_batch)
     elif criterion[1] == "Mean Absolute Error":
         if CUDA:
-            loss += criterion[0](all_decoder_outputs.cuda(), target_batch.cuda())
+            loss = criterion[0](all_decoder_outputs.cuda(), target_batch.cuda())
         else:
-            loss += criterion[0](all_decoder_outputs, target_batch)
+            loss = criterion[0](all_decoder_outputs, target_batch)
     else:
         assert False, "Cannot match loss"
     
@@ -77,7 +76,6 @@ def evaluate(input_batch, input_lengths, target_batch, target_lengths, encoder, 
     _device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     with torch.no_grad():
-        loss = 0 # Added onto for each word
         batch_size = input_batch.size(1)
         num_features = input_batch.size(2)
 
