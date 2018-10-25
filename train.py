@@ -53,7 +53,7 @@ def main():
     assert x_dim == 207
     # Set additional arguments
     args.cuda = not args.no_cuda and torch.cuda.is_available()
-    args.use_attn = not no_attn
+    args.use_attn = not args.no_attn
     args.x_dim = x_dim
     args.sequence_length = sequence_length
     if args.batches_per_epoch == -1:
