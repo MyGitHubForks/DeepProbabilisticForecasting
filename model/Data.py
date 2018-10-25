@@ -14,4 +14,4 @@ class Dataset(data.Dataset):
     def __getitem__(self, index):
         x = self.data["x"][index, :, :, 0]
         y = self.data["y"][index, :, :, 0]
-        return X, Y
+        return x, y
