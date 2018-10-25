@@ -89,8 +89,6 @@ class AttnDecoderRNN(nn.Module):
 
         attn_weights = F.softmax(self.attn(torch.cat((embedded, hidden.squeeze(0)), 1))) # B x T
 
-        print(attn_weights.size(), "attn_weights", encoder_outputs.size(), "encoder_outputs")
-
         # B x 1 x T * B x T x H = B x 1 x H = B x H
         context = torch.bmm(attn_weights.unsqueeze(1),
                             encoder_outputs.transpose(0, 1)).squeeze(1)

@@ -21,9 +21,9 @@ def load_dataset(dataset_dir, batch_size, **kwargs):
     assert data['x_dim'] == 207
     # Data format
     for category in ['train', 'val', 'test']:
-    data['train_loader'] = DataLoader(data['x_train'], data['y_train'], batch_size, shuffle=True)
-    data['val_loader'] = DataLoader(data['x_val'], data['y_val'], batch_size, shuffle=False)
-    data['test_loader'] = DataLoader(data['x_test'], data['y_test'], batch_size, shuffle=False)
+        data['train_loader'] = DataLoader(data['x_train'], data['y_train'], batch_size, shuffle=True)
+        data['val_loader'] = DataLoader(data['x_val'], data['y_val'], batch_size, shuffle=False)
+        data['test_loader'] = DataLoader(data['x_test'], data['y_test'], batch_size, shuffle=False)
 
     return data
 
@@ -73,6 +73,7 @@ def train(train_loader, val_loader, model, lr, args):
 
     # Train
     for batch_idx, (data, target) in enumerate(train_loader):
+        print("batch: {}".format(batch_idx))
         data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1).requires_grad_()
         target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1).requires_grad_()
         optimizer.zero_grad()
@@ -86,13 +87,9 @@ def train(train_loader, val_loader, model, lr, args):
 
         #printing
         if batch_idx % args.print_every == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\t Loss: {:.6f}'.format(
-                epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader),
-                loss.data[0] / args.batch_size ))
-
+            print("batch index: {}, loss: {}".format(batch_idx, loss.data[0] / float(args.batch_size)))
         train_loss += loss.data[0]
-
+    nTrainBatches = batch_idx + 1
     # Validate
     with torch.no_grad():
         for batch_idx, (data, target) in enumerate(val_loader):
@@ -100,8 +97,8 @@ def train(train_loader, val_loader, model, lr, args):
             target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
             output = model(data)
             val_loss += criterion[0](output, target)
-
-    avgTrainLoss = train_loss / len(train_loader.dataset)
-    avgValLoss = val_loss / len(val_loader.dataset)
-    print('====> Epoch: {} Average Train Loss: {:.4f} Average Val Loss: {:.4f}'.format(epoch, avgTrainLoss, avgValLoss))
+    nValBatches = batch_idx + 1
+    avgTrainLoss = train_loss / nTrainBatches
+    avgValLoss = val_loss / nValBatches
+    print('====> Average Train Loss: {} Average Val Loss: {}'.format(avgTrainLoss, avgValLoss))
     return avgTrainLoss, avgValLoss

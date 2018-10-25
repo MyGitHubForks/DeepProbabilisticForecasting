@@ -7,7 +7,6 @@ import utils
 import pstats
 import torch
 from torch.utils import data
-from model.Data import Dataset
 from model.RoseSeq2Seq import Seq2Seq
 import os
 import argparse
@@ -37,27 +36,31 @@ def main():
     args = parser.parse_args()
 
     print("loading data")
-    data = utils.load_dataset()
-
+    data = utils.load_dataset("./data/", args.batch_size)
+    print("setting additional params")
     # Set additional arguments
     args.cuda = not args.no_cuda and torch.cuda.is_available()
     args._device = "cuda" if args.cuda else "cpu"
     args.use_attn = not args.no_attn
     args.x_dim = data['x_dim']
-    args.sequence_length = data['sequence_len']
+    args.sequence_len = data['sequence_len']
     # if args.batches_per_epoch == -1:
     #     args.batches_per_epoch = np.ceil(trainData.__len__() / args.batch_size)
-
-    model = Seq2Seq(args)
+    print("generating model")
+    if args.cuda:
+        model = Seq2Seq(args).cuda()
+    else:
+        model = Seq2Seq(args)
     modelDescription = "Sequence to Sequence RNN with Attn"
     trainLosses = []
     valLosses = []
     lr = args.initial_lr
+    print("beginning training")
     for epoch in range(1, args.n_epochs + 1):
         print("epoch {}".format(epoch))
         if epoch > args.lr_decay_beginning and epoch % args.lr_decay_every:
             lr = lr * (1 - args.lr_decay_ratio)
-        avgTrainLoss, avgValLoss = utils.train(data['train_loader'].get_iterator(), data['valLoader'].get_iterator(), model, lr, args)
+        avgTrainLoss, avgValLoss = utils.train(data['train_loader'].get_iterator(), data['val_loader'].get_iterator(), model, lr, args)
         trainLosses.append(avgTrainLoss)
         valLosses.append(avgValLoss)
         #saving model
