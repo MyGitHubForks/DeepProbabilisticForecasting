@@ -36,17 +36,21 @@ def main():
 
     args = parser.parse_args()
 
-    print("loading data")
+    print("loading train data")
     # Get data objects
     trainData = Dataset("./data/train.npz")
+    print("loading val data")
     valData = Dataset("./data/val.npz")
+    print("setting up data loaders")
     trainLoader = data.DataLoader(trainData,
         batch_size=args.batch_size, shuffle=True)
     valLoader = data.DataLoader(valData,
         batch_size=args.batch_size, shuffle=True)
 
     # Get data constants
+    print("get example")
     xExample, yExample = trainData.__getitem__(0)
+    print(xExample.size())
     sequence_length = xExample.size(0)
     assert sequence_length == 12
     x_dim = xExample.size(1)
@@ -63,8 +67,12 @@ def main():
     modelDescription = "Sequence to Sequence RNN with Attn"
     trainLosses = []
     valLosses = []
+    lr = args.initial_lr
     for epoch in range(1, args.n_epochs + 1):
-        avgTrainLoss, avgValLoss = train(train_loader, epoch, model, args)
+        print("epoch {}".format(epoch))
+        if epoch > args.lr_decay_beginning and epoch % args.lr_decay_every:
+            lr = lr * (1 - args.lr_decay_ratio)
+        avgTrainLoss, avgValLoss = utils.train(trainLoader, valLoader, model, lr, args)
         trainLosses.append(avgTrainLoss)
         valLosses.append(avgValLoss)
         #saving model
@@ -72,7 +80,7 @@ def main():
         torch.save(model.state_dict(), fn)
         print('Saved model to '+fn)
 
-    plotTrainValCurve(trainLosses, valLosses, modelDescription, args.criterion)
+    utils.plotTrainValCurve(trainLosses, valLosses, modelDescription, args.criterion)
 
 if __name__ == '__main__':
         cProfile.run("main()", "restats")
