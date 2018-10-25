@@ -41,7 +41,6 @@ class DecoderRNN(nn.Module):
         self.embedding = nn.Linear(output_size, hidden_size)
         self.gru = nn.GRU(hidden_size, hidden_size, n_layers)
         self.out = nn.Linear(hidden_size, output_size)
-        # self.softmax = nn.LogSoftmax()
 
     def forward(self, input, hidden):
         embedded = self.embedding(input)
@@ -79,6 +78,7 @@ class AttnDecoderRNN(nn.Module):
         self.softmax = nn.LogSoftmax()
 
     def forward(self, input, hidden, encoder_outputs):
+        assert False, "Do not use AttnDecoder at the moment"
         # input  B x H
         # hidden 1 x B x H
         # output B x H

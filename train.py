@@ -15,7 +15,7 @@ parser = argparse.ArgumentParser(description='Batched Sequence to Sequence')
 parser.add_argument('--h_dim', type=int, default=64)
 parser.add_argument('--no_cuda', action='store_true', default=False,
                                         help='disables CUDA training')
-parser.add_argument("--no_attn", action="store_true", default=False, help="Do not use AttnDecoder")
+parser.add_argument("--no_attn", action="store_true", default=True, help="Do not use AttnDecoder")
 parser.add_argument("--n_epochs", type=int, default=50)
 parser.add_argument("--batches_per_epoch", type=int, default= -1)
 parser.add_argument("--batch_size", type=int, default= 40)
@@ -26,7 +26,7 @@ parser.add_argument("--lr_decay_beginning", type=int, default=20)
 parser.add_argument("--lr_decay_every", type=int, default=10)
 parser.add_argument("--print_every", type=int, default = 100)
 parser.add_argument("--plot_every", type=int, default = 100)
-parser.add_argument("--criterion", type=str, default="L1 Loss")
+parser.add_argument("--criterion", type=str, default="MSE")
 parser.add_argument("--save_freq", type=int, default=1)
 def main():
     saveDir = './save/'

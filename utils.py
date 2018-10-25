@@ -64,31 +64,32 @@ def train(train_loader, val_loader, model, lr, args):
     start = time.time()
 
     # Define Criterion
-    if args.criterion == "L1 Loss":
-        criterion = (nn.L1Loss(reduction="elementwise_mean"), "Mean Absolute Error")
-    elif args.criterion == "MSE":
-        criterion = (nn.MSELoss(),"MSE")
-    
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
     # Train
     for batch_idx, (data, target) in enumerate(train_loader):
-        print("batch: {}".format(batch_idx))
         data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1).requires_grad_()
         target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1).requires_grad_()
         optimizer.zero_grad()
         output = model(data)
+        #print("output", output[0,0,:5])
+        #print("target", target[0,0,:5])
+        if args.criterion == "MSE":
+            loss = torch.sqrt(torch.mean((output - target)**2))
 
-        loss = criterion[0](output, target)
+        elif args.criterion == "L1 Loss":
+            loss = torch.mean(torch.abs(output - target))
+        else:
+            assert False, "bad loss function"
         loss.backward()
         optimizer.step()
         #grad norm clipping, only in pytorch version >= 1.10
-        nn.utils.clip_grad_norm(model.parameters(), clip)
+        nn.utils.clip_grad_norm_(model.parameters(), clip)
 
         #printing
         if batch_idx % args.print_every == 0:
-            print("batch index: {}, loss: {}".format(batch_idx, loss.data[0] / float(args.batch_size)))
-        train_loss += loss.data[0]
+             print("batch index: {}, loss: {}".format(batch_idx, loss.data.item()))
+        train_loss += loss.item()
     nTrainBatches = batch_idx + 1
     # Validate
     with torch.no_grad():
@@ -96,7 +97,14 @@ def train(train_loader, val_loader, model, lr, args):
             data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
             target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
             output = model(data)
-            val_loss += criterion[0](output, target)
+            if args.criterion == "MSE":
+                loss = torch.sqrt(torch.mean((output - target)**2))
+
+            elif args.criterion == "L1 Loss":
+                loss = torch.mean(torch.abs(output - target))
+            else:
+                assert False, "bad loss function"
+            val_loss += loss.item()
     nValBatches = batch_idx + 1
     avgTrainLoss = train_loss / nTrainBatches
     avgValLoss = val_loss / nValBatches
