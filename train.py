@@ -55,7 +55,7 @@ def main():
     args.cuda = not args.no_cuda and torch.cuda.is_available()
     args.use_attn = not args.no_attn
     args.x_dim = x_dim
-    args.sequence_length = sequence_length
+    args.sequence_len = sequence_length
     if args.batches_per_epoch == -1:
         args.batches_per_epoch = np.ceil(trainData.__len__() / args.batch_size)
 
