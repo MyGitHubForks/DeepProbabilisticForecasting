@@ -12,6 +12,6 @@ class Dataset(data.Dataset):
         return self.data["x"].shape[0]
 
     def __getitem__(self, index):
-        x = self.data["x"][index, :, :, 0]
-        y = self.data["y"][index, :, :, 0]
+        x = torch.FloatTensor(self.data["x"][index, :, :, 0], device=self._device)
+        y = torch.FloatTensor(self.data["y"][index, :, :, 0], device=self._device)
         return x, y
