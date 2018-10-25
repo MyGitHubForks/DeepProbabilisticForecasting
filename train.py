@@ -10,6 +10,7 @@ from torch.utils import data
 from model.Data import Dataset
 from model.RoseSeq2Seq import Seq2Seq
 import os
+import argparse
 
 parser = argparse.ArgumentParser(description='Batched Sequence to Sequence')
 parser.add_argument('--h_dim', type=int, default=64)
@@ -21,13 +22,13 @@ parser.add_argument("--batches_per_epoch", type=int, default= -1)
 parser.add_argument("--batch_size", type=int, default= 40)
 parser.add_argument("--n_layers", type=int, default=2)
 parser.add_argument("--initial_lr", type=float, default=1e-2)
-parer.add_argument("--lr_decay_ratio", type=float, default=0.10)
+parser.add_argument("--lr_decay_ratio", type=float, default=0.10)
 parser.add_argument("--lr_decay_beginning", type=int, default=20)
 parser.add_argument("--lr_decay_every", type=int, default=10)
 parser.add_argument("--print_every", type=int, default = 1000)
 parser.add_argument("--plot_every", type=int, default = 100)
-parser.add_argument("--criterion", type=string, default="L1 Loss")
-parser.add_argument("--save_freq", type=int, default=)
+parser.add_argument("--criterion", type=str, default="L1 Loss")
+parser.add_argument("--save_freq", type=int, default=1)
 def main():
     saveDir = './save/'
     if not os.path.isdir(saveDir):
@@ -40,7 +41,7 @@ def main():
     trainData = Dataset("./data/train.npz")
     valData = Dataset("./data/val.npz")
     trainLoader = data.DataLoader(trainData,
-        batch_size=args["batch_size"], shuffle=True)
+        batch_size=args.batch_size, shuffle=True)
     valLoader = data.DataLoader(valData,
         batch_size=args["batch_size"], shuffle=True)
 
