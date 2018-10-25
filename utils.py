@@ -7,126 +7,25 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
 import os
+from model.Data import DataLoader
 
-# def trainOneBatch(input_batch, input_lengths, target_batch, target_lengths, encoder, decoder, encoder_optimizer, decoder_optimizer, criterion):
-#     # Zero gradients of both optimizers
-#     encoder_optimizer.zero_grad()
-#     decoder_optimizer.zero_grad()
-#     batch_size = input_batch.size(1)
-#     CUDA = torch.cuda.is_available()
-#     _device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-#     # Run words through encoder
-#     encoder_outputs, encoder_hidden = encoder(input_batch, input_lengths, None)
-    
-#     # Prepare decoder input and output variables
-#     if CUDA:
-#         decoder_input = torch.autograd.Variable(torch.FloatTensor(np.zeros((batch_size, target_batch.size(2))), device=_device)).cuda()
-#     else:
-#         decoder_input = torch.autograd.Variable(torch.FloatTensor(np.zeros((batch_size, target_batch.size(2))), device=_device))
-    
-#     # use last encoder hidden as initial decoder hidden
-#     if CUDA:
-#         decoder_hidden = encoder_hidden.cuda()
-#         all_decoder_outputs = torch.autograd.Variable(torch.zeros(max(target_lengths), batch_size, target_batch.size(2), device=_device)).cuda()
-#     else:
-#         decoder_hidden = encoder_hidden
-#         all_decoder_outputs = torch.autograd.Variable(torch.zeros(max(target_lengths), batch_size, target_batch.size(2), device=_device))
+def load_dataset(dataset_dir, batch_size, **kwargs):
+    data = {}
+    for category in ['train', 'val', 'test']:
+        cat_data = np.load(os.path.join(dataset_dir, category + '.npz'))
+        data['x_' + category] = cat_data['x'][:,:,:,0]
+        data['y_' + category] = cat_data['y'][:,:,:,0]
+    data['sequence_len'] = cat_data['x'].shape[1]
+    data['x_dim'] = cat_data['x'].shape[2]
+    assert data['sequence_len'] == 12
+    assert data['x_dim'] == 207
+    # Data format
+    for category in ['train', 'val', 'test']:
+    data['train_loader'] = DataLoader(data['x_train'], data['y_train'], batch_size, shuffle=True)
+    data['val_loader'] = DataLoader(data['x_val'], data['y_val'], batch_size, shuffle=False)
+    data['test_loader'] = DataLoader(data['x_test'], data['y_test'], batch_size, shuffle=False)
 
-#     # Decode
-#     for t in range(max(target_lengths
-#                       )):
-#         decoder_output, decoder_hidden, decoder_attn = decoder(
-#             decoder_input, decoder_hidden, encoder_outputs
-#         )
-#         if CUDA:
-#             all_decoder_outputs[t] = decoder_output.cuda()
-#             decoder_input = target_batch[t].detach().cuda() # Next input is current target
-#         else:
-#             all_decoder_outputs[t] = decoder_output
-#             decoder_input = target_batch[t].detach() # Next input is current target
-    
-#     #Calculate Loss
-#     if criterion[1] == "MSE":
-#         if CUDA:
-#             loss = torch.sqrt(criterion[0])(all_decoder_outputs.cuda(), target_batch.cuda())
-#         else:
-#             loss = torch.sqrt(criterion[0])(all_decoder_outputs, target_batch)
-#     elif criterion[1] == "Mean Absolute Error":
-#         if CUDA:
-#             loss = criterion[0](all_decoder_outputs.cuda(), target_batch.cuda())
-#         else:
-#             loss = criterion[0](all_decoder_outputs, target_batch)
-#     else:
-#         assert False, "Cannot match loss"
-    
-#     loss.backward()
-    
-#     encoder_optimizer.step()
-#     decoder_optimizer.step()
-    
-#     # average loss per timestep
-#     return loss.item() / float(batch_size)
-
-
-# # In[227]:
-
-
-# def evaluate(input_batch, input_lengths, target_batch, target_lengths, encoder, decoder):
-#     CUDA = torch.cuda.is_available()
-#     _device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-#     with torch.no_grad():
-#         batch_size = input_batch.size(1)
-#         num_features = input_batch.size(2)
-
-#         # Run batch through encoder
-#         encoder_outputs, encoder_hidden = encoder(input_batch, input_lengths, None)
-
-#         # Prepare decoder input and output variables
-#         if CUDA:
-#             decoder_input = torch.autograd.Variable(torch.FloatTensor(np.zeros((batch_size, num_features)), device=_device)).cuda()
-#         else:
-#             decoder_input = torch.autograd.Variable(torch.FloatTensor(np.zeros((batch_size, num_features)), device=_device))
-
-#         # use last encoder hidden as initial decoder hidden
-#         if CUDA:
-#             decoder_hidden = encoder_hidden.cuda()
-#             all_decoder_outputs = torch.autograd.Variable(torch.zeros(max(target_lengths), batch_size, num_features, device="cuda")).cuda()
-#         else:
-#             decoder_hidden = encoder_hidden
-#             all_decoder_outputs = torch.autograd.Variable(torch.zeros(max(target_lengths), batch_size, num_features, device=_device))
-
-#         # Decode One sequence at a time
-#         for t in range(max(target_lengths)):
-#             decoder_output, decoder_hidden, decoder_attn = decoder(
-#                 decoder_input, decoder_hidden, encoder_outputs
-#             )
-#             if CUDA:
-#                 all_decoder_outputs[t] = decoder_output.cuda()
-#                 decoder_input = target_batch[t].cuda() # Next input is current target
-#             else:
-#                 all_decoder_outputs[t] = decoder_output
-#                 decoder_input = target_batch[t] # Next input is current target
-#         return all_decoder_outputs
-
-
-# # In[233]:
-
-
-# def validate(validationDataObj, batch_size, encoder, decoder, criterion):
-#     CUDA = torch.cuda.is_available()
-#     _device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-#     valLoss = 0.0
-#     num_batches = int(np.ceil(validationDataObj.getNumSamples() / batch_size))
-#     for iteration in range(num_batches):
-#         inputTensor, input_lengths, targetTensor, target_lengths = validationDataObj.random_batch(batch_size)
-#         output = evaluate(inputTensor, input_lengths, targetTensor, target_lengths, encoder, decoder)
-#         if CUDA:
-#             valLoss += criterion[0](output.cuda(), targetTensor.cuda())
-#         else:
-#             valLoss += criterion[0](output, targetTensor)
-#     return valLoss / num_batches / float(batch_size)
+    return data
 
 def asMinutes(s):
     m = math.floor(s / 60)
