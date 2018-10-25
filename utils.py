@@ -73,9 +73,8 @@ def train(train_loader, val_loader, model, lr, args):
 
     # Train
     for batch_idx, (data, target) in enumerate(train_loader):
-        data, target = Variable(data), Variable(target)
-        data = torch.transpose(data, 0, 1)
-        target = torch.transpose(target, 0, 1)
+        data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1).requires_grad_()
+        target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1).requires_grad_()
         optimizer.zero_grad()
         output = model(data)
 
@@ -97,9 +96,8 @@ def train(train_loader, val_loader, model, lr, args):
     # Validate
     with torch.no_grad():
         for batch_idx, (data, target) in enumerate(val_loader):
-            data, target = Variable(data), Variable(target)
-            data = torch.transpose(data, 0, 1)
-            target = torch.transpose(target, 0, 1)
+            data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
+            target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
             output = model(data)
             val_loss += criterion[0](output, target)
 

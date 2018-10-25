@@ -36,32 +36,17 @@ def main():
 
     args = parser.parse_args()
 
-    print("loading train data")
-    # Get data objects
-    trainData = Dataset("./data/train.npz")
-    print("loading val data")
-    valData = Dataset("./data/val.npz")
-    print("setting up data loaders")
-    trainLoader = data.DataLoader(trainData,
-        batch_size=args.batch_size, shuffle=True)
-    valLoader = data.DataLoader(valData,
-        batch_size=args.batch_size, shuffle=True)
+    print("loading data")
+    data = utils.load_dataset()
 
-    # Get data constants
-    print("get example")
-    xExample, yExample = trainData.__getitem__(0)
-    print(xExample.size())
-    sequence_length = xExample.size(0)
-    assert sequence_length == 12
-    x_dim = xExample.size(1)
-    assert x_dim == 207
     # Set additional arguments
     args.cuda = not args.no_cuda and torch.cuda.is_available()
+    args._device = "cuda" if args.cuda else "cpu"
     args.use_attn = not args.no_attn
-    args.x_dim = x_dim
-    args.sequence_len = sequence_length
-    if args.batches_per_epoch == -1:
-        args.batches_per_epoch = np.ceil(trainData.__len__() / args.batch_size)
+    args.x_dim = data['x_dim']
+    args.sequence_length = data['sequence_len']
+    # if args.batches_per_epoch == -1:
+    #     args.batches_per_epoch = np.ceil(trainData.__len__() / args.batch_size)
 
     model = Seq2Seq(args)
     modelDescription = "Sequence to Sequence RNN with Attn"
@@ -72,7 +57,7 @@ def main():
         print("epoch {}".format(epoch))
         if epoch > args.lr_decay_beginning and epoch % args.lr_decay_every:
             lr = lr * (1 - args.lr_decay_ratio)
-        avgTrainLoss, avgValLoss = utils.train(trainLoader, valLoader, model, lr, args)
+        avgTrainLoss, avgValLoss = utils.train(data['train_loader'].get_iterator(), data['valLoader'].get_iterator(), model, lr, args)
         trainLosses.append(avgTrainLoss)
         valLosses.append(avgValLoss)
         #saving model
