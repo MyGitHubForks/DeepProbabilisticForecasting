@@ -43,7 +43,7 @@ def main():
     trainLoader = data.DataLoader(trainData,
         batch_size=args.batch_size, shuffle=True)
     valLoader = data.DataLoader(valData,
-        batch_size=args["batch_size"], shuffle=True)
+        batch_size=args.batch_size, shuffle=True)
 
     # Get data constants
     xExample, yExample = trainData.__getitem__(0)
@@ -52,12 +52,12 @@ def main():
     x_dim = xExample.size(2)
 
     # Set additional arguments
-    args["cuda"] = not args.no_cuda and torch.cuda.is_available()
-    args["use_attn"] = not no_attn
-    args["x_dim"] = x_dim
-    args["sequence_length"] = sequence_length
-    if args["batches_per_epoch"] == -1:
-        args["batches_per_epoch"] = np.ceil(trainData.__len__() / args["batch_size"])
+    args.cuda = not args.no_cuda and torch.cuda.is_available()
+    args.use_attn = not no_attn
+    args.x_dim = x_dim
+    args.sequence_length = sequence_length
+    if args.batches_per_epoch == -1:
+        args.batches_per_epoch = np.ceil(trainData.__len__() / args.batch_size)
 
     model = Seq2Seq(args)
     modelDescription = "Sequence to Sequence RNN with Attn"
@@ -72,7 +72,7 @@ def main():
         torch.save(model.state_dict(), fn)
         print('Saved model to '+fn)
 
-    plotTrainValCurve(trainLosses, valLosses, modelDescription, args["criterion"])
+    plotTrainValCurve(trainLosses, valLosses, modelDescription, args.criterion)
 
 if __name__ == '__main__':
         cProfile.run("main()", "restats")

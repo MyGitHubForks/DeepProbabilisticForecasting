@@ -165,7 +165,7 @@ def train(train_loader, val_loader, model, lr, args):
     start = time.time()
 
     # Define Criterion
-    if args["criterion"] == "L1 Loss":
+    if args.criterion == "L1 Loss":
         criterion = (nn.L1Loss(reduction="elementwise_mean"), "Mean Absolute Error")
     elif args.criterion == "MSE":
         criterion = (nn.MSELoss(),"MSE")
@@ -187,7 +187,7 @@ def train(train_loader, val_loader, model, lr, args):
         nn.utils.clip_grad_norm(model.parameters(), clip)
 
         #printing
-        if batch_idx % args["print_every"] == 0:
+        if batch_idx % args.print_every == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\t Loss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader),
