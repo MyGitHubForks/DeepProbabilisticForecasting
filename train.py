@@ -47,10 +47,10 @@ def main():
 
     # Get data constants
     xExample, yExample = trainData.__getitem__(0)
-    sequence_length = xExample.size(1)
+    sequence_length = xExample.size(0)
     assert sequence_length == 12
-    x_dim = xExample.size(2)
-
+    x_dim = xExample.size(1)
+    assert x_dim == 207
     # Set additional arguments
     args.cuda = not args.no_cuda and torch.cuda.is_available()
     args.use_attn = not no_attn
