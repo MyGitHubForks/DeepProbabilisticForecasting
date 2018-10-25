@@ -37,8 +37,8 @@ def main():
 
     print("loading data")
     # Get data objects
-    trainData = Dataset("./data/individualizedData/train/")
-    valData = Dataset("./data/individualizedData/val/")
+    trainData = Dataset("./data/train.npz")
+    valData = Dataset("./data/val.npz")
     trainLoader = data.DataLoader(trainData,
         batch_size=args["batch_size"], shuffle=True)
     valLoader = data.DataLoader(valData,
