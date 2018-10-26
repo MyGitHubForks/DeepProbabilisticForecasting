@@ -28,6 +28,7 @@ parser.add_argument("--print_every", type=int, default = 100)
 parser.add_argument("--plot_every", type=int, default = 100)
 parser.add_argument("--criterion", type=str, default="MSE")
 parser.add_argument("--save_freq", type=int, default=1)
+parser.add_argument("--down_sample", type=int, default=0)
 def main():
     saveDir = './save/'
     if not os.path.isdir(saveDir):
@@ -36,7 +37,7 @@ def main():
     args = parser.parse_args()
 
     print("loading data")
-    data = utils.load_dataset("./data/", args.batch_size)
+    data = utils.load_dataset("./data/", args.batch_size, down_sample=args.down_sample)
     print("setting additional params")
     # Set additional arguments
     args.cuda = not args.no_cuda and torch.cuda.is_available()

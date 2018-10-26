@@ -9,12 +9,18 @@ import numpy as np
 import os
 from model.Data import DataLoader
 
-def load_dataset(dataset_dir, batch_size, **kwargs):
+def load_dataset(dataset_dir, batch_size, down_sample=None, **kwargs):
     data = {}
     for category in ['train', 'val', 'test']:
         cat_data = np.load(os.path.join(dataset_dir, category + '.npz'))
-        data['x_' + category] = cat_data['x'][:,:,:,0]
-        data['y_' + category] = cat_data['y'][:,:,:,0]
+        if down_sample:
+            nRows = cat_data['x'].shape[0]
+            down_sampled_rows = np.random.choice(range(nRows), size=nRows * down_sample, replace=False)
+            data['x_' + category] = cat_data['x'][down_sampled_rows,:,:,0]
+            data['y_' + category] = cat_data['y'][down_sampled_rows,:,:,0]
+        else:
+            data['x_' + category] = cat_data['x'][:,:,:,0]
+            data['y_' + category] = cat_data['y'][:,:,:,0]
     data['sequence_len'] = cat_data['x'].shape[1]
     data['x_dim'] = cat_data['x'].shape[2]
     assert data['sequence_len'] == 12
