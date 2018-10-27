@@ -14,7 +14,7 @@ def load_dataset(dataset_dir, batch_size, down_sample=None, **kwargs):
     for category in ['train', 'val', 'test']:
         print(category)
         cat_data = np.load(os.path.join(dataset_dir, category + '.npz'))
-        if down_sample:
+        if down_sample and category=="train":
             nRows = cat_data['x'].shape[0]
             down_sampled_rows = np.random.choice(range(nRows), size=np.ceil(nRows * down_sample).astype(int), replace=False)
             data['x_' + category] = cat_data['x'][down_sampled_rows,:,:,0]
@@ -47,14 +47,14 @@ def timeSince(since, percent):
     rs = es - s
     return '%s (- %s)' % (asMinutes(s), asMinutes(rs))
 
-def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription):
+def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription, args):
     plt.rcParams.update({'font.size': 8})
     plt.figure()
     fig, ax = plt.subplots()
     plt.xlabel("Epoch")
     plt.ylabel(lossDescription)
-    plt.plot(np.arange(len(trainLosses)), trainLosses, color="red", label="train loss")
-    plt.plot(np.arange(len(valLosses)), valLosses, color="blue", label="validation loss")
+    plt.plot(np.arange(1, len(trainLosses)+1)*args.plot_every, trainLosses, color="red", label="train loss")
+    plt.plot(np.arange(1, len(valLosses)+1)*args.plot_every, valLosses, color="blue", label="validation loss")
     plt.grid()
     plt.legend()
     plt.title("Losses for {}".format(model_description))
@@ -84,7 +84,7 @@ def train(train_loader, val_loader, model, lr, args):
         if args.criterion == "RMSE":
             loss = torch.sqrt(torch.mean((output - target)**2))
 
-        elif args.criterion == "L1 Loss":
+        elif args.criterion == "L1Loss":
             loss = torch.mean(torch.abs(output - target))
         else:
             assert False, "bad loss function"
@@ -107,7 +107,7 @@ def train(train_loader, val_loader, model, lr, args):
             if args.criterion == "RMSE":
                 loss = torch.sqrt(torch.mean((output - target)**2))
 
-            elif args.criterion == "L1 Loss":
+            elif args.criterion == "L1Loss":
                 loss = torch.mean(torch.abs(output - target))
             else:
                 assert False, "bad loss function"

@@ -26,8 +26,8 @@ parser.add_argument("--no_lr_decay", action="store_true", default=False)
 parser.add_argument("--lr_decay_ratio", type=float, default=0.10)
 parser.add_argument("--lr_decay_beginning", type=int, default=50)
 parser.add_argument("--lr_decay_every", type=int, default=10)
-parser.add_argument("--print_every", type=int, default = 5)
-parser.add_argument("--plot_every", type=int, default = 1)
+parser.add_argument("--print_every", type=int, default = 100)
+parser.add_argument("--plot_every", type=int, default = 5)
 parser.add_argument("--criterion", type=str, default="RMSE")
 parser.add_argument("--save_freq", type=int, default=1)
 parser.add_argument("--down_sample", type=float, default=0.0)
@@ -70,14 +70,15 @@ def main():
         if not args.no_lr_decay and epoch > args.lr_decay_beginning and epoch % args.lr_decay_every:
             lr = lr * (1 - args.lr_decay_ratio)
         avgTrainLoss, avgValLoss = utils.train(data['train_loader'].get_iterator(), data['val_loader'].get_iterator(), model, lr, args)
-        trainLosses.append(avgTrainLoss)
-        valLosses.append(avgValLoss)
+        if (epoch % args.plot_every) == 0:
+            trainLosses.append(avgTrainLoss)
+            valLosses.append(avgValLoss)
         #saving model
         fn = saveDir+'vrnn_state_dict_'+str(epoch)+'.pth'
         torch.save(model.state_dict(), fn)
         print('Saved model to '+fn)
 
-    utils.plotTrainValCurve(trainLosses, valLosses, modelDescription, args.criterion)
+    utils.plotTrainValCurve(trainLosses, valLosses, modelDescription, args.criterion, args)
 
 if __name__ == '__main__':
         cProfile.run("main()", "restats")
