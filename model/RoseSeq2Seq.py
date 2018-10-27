@@ -24,8 +24,7 @@ class EncoderRNN(nn.Module):
         return output, hidden
 
     def initHidden(self):
-        #result = Variable(torch.zeros(self.n_layers, self.args.batch_size, self.hidden_size))
-        result = torch.zeros(self.n_layers, self.args.batch_size, self.hidden_size)
+        result = Variable(torch.zeros(self.n_layers, self.args.batch_size, self.hidden_size))
         if self.args.cuda:
             return result.cuda()
         else:
@@ -52,8 +51,7 @@ class DecoderRNN(nn.Module):
         return output, hidden
 
     def initHidden(self):
-        #result = Variable(torch.zeros(self.n_layers, self.args.batch_size, self.hidden_size))
-        result = torch.zeros(self.n_layers, self.args.batch_size, self.hidden_size)
+        result = Variable(torch.zeros(self.n_layers, self.args.batch_size, self.hidden_size))
         if self.args.cuda:
             return result.cuda()
         else:
@@ -106,8 +104,7 @@ class AttnDecoderRNN(nn.Module):
         return output, hidden
 
     def initHidden(self):
-        #result = Variable(torch.zeros(self.n_layers, self.args.batch_size, self.hidden_size))
-        result = torch.zeros(self.n_layers, self.args.batch_size, self.hidden_size)
+        result = Variable(torch.zeros(self.n_layers, self.args.batch_size, self.hidden_size))
         if self.args.cuda:
             return result.cuda()
         else:
@@ -143,8 +140,7 @@ class Seq2Seq(nn.Module):
 
         hs = torch.cat(hs, 0)
 
-        #inp = Variable(torch.zeros(self.args.batch_size, self.args.x_dim))
-        inp = torch.zeros(self.args.batch_size, self.args.x_dim)
+        inp = Variable(torch.zeros(self.args.batch_size, self.args.x_dim))
         if self.args.cuda: inp = inp.cuda()
         ys = []
 
