@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 def main():
     data = {}
-    tensorShape = (100, 12, 207, 1)
+    tensorShape = (100, 12, 207, 2)
     # tensorShape = (5, 2, 2, 1)
     data["x"] = np.zeros(tensorShape)
     data["y"] = np.zeros(tensorShape)
@@ -22,8 +22,8 @@ def main():
     #     plt.scatter(range(tensorShape[1] * tensorShape[2]), data["x"][i].flatten(), color="red")
     #     plt.scatter(np.array(range(tensorShape[1] * tensorShape[2])) + tensorShape[1] * tensorShape[2], data["y"][i].flatten(), color="blue")
     #     plt.show()
-    np.savez("./data/trainSine.npz", x = data["x"][:70], y=data["y"][:70])
-    np.savez("./data/valSine.npz", x = data["x"][70:90], y=data["y"][70:90])
-    np.savez("./data/testSine.npz", x = data["x"][90:], y=data["y"][90])
+    np.savez("./data/sin/train.npz", x = data["x"][:70], y=data["y"][:70])
+    np.savez("./data/sin/val.npz", x = data["x"][70:90], y=data["y"][70:90])
+    np.savez("./data/sin/test.npz", x = data["x"][90:], y=data["y"][90:])
 if __name__ == '__main__':
     main()

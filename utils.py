@@ -12,10 +12,11 @@ from model.Data import DataLoader
 def load_dataset(dataset_dir, batch_size, down_sample=None, **kwargs):
     data = {}
     for category in ['train', 'val', 'test']:
+        print(category)
         cat_data = np.load(os.path.join(dataset_dir, category + '.npz'))
         if down_sample:
             nRows = cat_data['x'].shape[0]
-            down_sampled_rows = np.random.choice(range(nRows), size=nRows * down_sample, replace=False)
+            down_sampled_rows = np.random.choice(range(nRows), size=np.ceil(nRows * down_sample).astype(int), replace=False)
             data['x_' + category] = cat_data['x'][down_sampled_rows,:,:,0]
             data['y_' + category] = cat_data['y'][down_sampled_rows,:,:,0]
         else:
@@ -80,7 +81,7 @@ def train(train_loader, val_loader, model, lr, args):
         output = model(data)
         #print("output", output[0,0,:5])
         #print("target", target[0,0,:5])
-        if args.criterion == "MSE":
+        if args.criterion == "RMSE":
             loss = torch.sqrt(torch.mean((output - target)**2))
 
         elif args.criterion == "L1 Loss":
@@ -103,7 +104,7 @@ def train(train_loader, val_loader, model, lr, args):
             data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
             target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
             output = model(data)
-            if args.criterion == "MSE":
+            if args.criterion == "RMSE":
                 loss = torch.sqrt(torch.mean((output - target)**2))
 
             elif args.criterion == "L1 Loss":
