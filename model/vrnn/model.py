@@ -15,13 +15,14 @@ inference, prior, and generating models."""
 
 
 class VRNN(nn.Module):
-	def __init__(self, x_dim, h_dim, z_dim, n_layers, bias=False):
+	def __init__(self, args, bias=False):
 		super(VRNN, self).__init__()
 
-		self.x_dim = x_dim
-		self.h_dim = h_dim
-		self.z_dim = z_dim
-		self.n_layers = n_layers
+		self.x_dim = args.x_dim
+		self.h_dim = args.h_dim
+		self.z_dim = args.z_dim
+		self.n_layers = args.n_layers
+		self.cuda = self.args.cuda
 
 		#feature-extracting transformations
 		self.phi_x = nn.Sequential(
@@ -62,23 +63,23 @@ class VRNN(nn.Module):
 		self.dec_std = nn.Sequential(
 			nn.Linear(h_dim, x_dim),
 			nn.Softplus())
-		#self.dec_mean = nn.Linear(h_dim, x_dim)
-		self.dec_mean = nn.Sequential(
-			nn.Linear(h_dim, x_dim),
-			nn.Sigmoid())
+
+		self.dec_mean = nn.Linear(h_dim, x_dim)
+		# self.dec_mean = nn.Sequential(
+		# 	nn.Linear(h_dim, x_dim),
+		# 	nn.Sigmoid())
 
 		#recurrence
 		self.rnn = nn.GRU(h_dim + h_dim, h_dim, n_layers, bias)
 
 
 	def forward(self, x):
-
+		x = torch.transpose(x, 0, 1) # switch to sequence length x batch size x x_dim
 		all_enc_mean, all_enc_std = [], []
 		all_dec_mean, all_dec_std = [], []
-		kld_loss = 0
-		nll_loss = 0
+		all_prior_mean, all_prior_std = [],[]
 
-		h = Variable(torch.zeros(self.n_layers, x.size(1), self.h_dim))
+		h = self.init_hidden()
 		for t in range(x.size(0)):
 			
 			phi_x_t = self.phi_x(x[t])
@@ -106,18 +107,18 @@ class VRNN(nn.Module):
 			_, h = self.rnn(torch.cat([phi_x_t, phi_z_t], 1).unsqueeze(0), h)
 
 			#computing losses
-			kld_loss += self._kld_gauss(enc_mean_t, enc_std_t, prior_mean_t, prior_std_t)
+			#kld_loss += self._kld_gauss(enc_mean_t, enc_std_t, prior_mean_t, prior_std_t)
 			#nll_loss += self._nll_gauss(dec_mean_t, dec_std_t, x[t])
-			nll_loss += self._nll_bernoulli(dec_mean_t, x[t])
+			# nll_loss += self._nll_bernoulli(dec_mean_t, x[t])
 
 			all_enc_std.append(enc_std_t)
 			all_enc_mean.append(enc_mean_t)
+			all_prior_mean.append(prior_mean_t)
+			all_prior_std.append(prior_std_t)
 			all_dec_mean.append(dec_mean_t)
 			all_dec_std.append(dec_std_t)
 
-		return kld_loss, nll_loss, \
-			(all_enc_mean, all_enc_std), \
-			(all_dec_mean, all_dec_std)
+			return (all_enc_mean, all_enc_std, all_dec_mean, all_dec_std, all_prior_mean, all_prior_std)
 
 
 	def sample(self, seq_len):
@@ -125,6 +126,9 @@ class VRNN(nn.Module):
 		sample = torch.zeros(seq_len, self.x_dim)
 
 		h = Variable(torch.zeros(self.n_layers, 1, self.h_dim))
+		if self.cuda:
+			h = h.cuda()
+
 		for t in range(seq_len):
 
 			#prior
@@ -150,6 +154,12 @@ class VRNN(nn.Module):
 	
 		return sample
 
+	def init_hidden(self):
+		result = Variable(torch.zeros(self.n_layers, self.args.batch_size, self.h_dim))
+		if self.cuda:
+			return result.cuda()
+		else:
+			return result
 
 	def reset_parameters(self, stdv=1e-1):
 		for weight in self.parameters():

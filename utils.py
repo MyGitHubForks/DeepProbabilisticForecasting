@@ -64,6 +64,21 @@ def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription
         filestring = filestring[:-5] + str(int(filestring[-5]) + 1) + ".png"
     plt.savefig(filestring)
 
+#Loss functions for VRNN
+
+#computing losses
+#kld_loss += self._kld_gauss(enc_mean_t, enc_std_t, prior_mean_t, prior_std_t)
+#nll_loss += self._nll_gauss(dec_mean_t, dec_std_t, x[t])
+# nll_loss += self._nll_bernoulli(dec_mean_t, x[t])
+
+def _kld_gauss(mean_1, std_1, mean_2, std_2):
+        """Using std to compute KLD"""
+
+        kld_element =  (2 * torch.log(std_2) - 2 * torch.log(std_1) + 
+            (std_1.pow(2) + (mean_1 - mean_2).pow(2)) /
+            std_2.pow(2) - 1)
+        return  0.5 * torch.sum(kld_element)
+
 def train(train_loader, val_loader, model, lr, args):
     clip = 10
     train_loss = 0.0
@@ -86,6 +101,25 @@ def train(train_loader, val_loader, model, lr, args):
 
         elif args.criterion == "L1Loss":
             loss = torch.mean(torch.abs(output - target))
+
+        elif args.model == "VRNNLoss":
+            encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds = output
+            # Calculate KLDivergence part
+            loss = 0.0
+            for enc_mean_t, enc_std_t, decoder_mean_t, decoder_std_t, prior_mean_t, prior_std_t in zip(encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds):
+                kldLoss = kld_gauss(enc_mean_t, enc_std_t, prior_mean_t, prior_std_t)
+                loss += kldLoss
+
+            #Calculate Prediction Loss
+            pred = torch.cat([torch.unsqueeze(y, dim=0) for y in decoder_means])
+            if args.criterion == "RMSE":
+                predLoss = torch.sqrt(torch.mean((pred - target)**2))
+                loss += predLoss
+
+            elif args.criterion == "L1Loss":
+                predLoss = torch.mean(torch.abs(pred - target))
+                loss += predLoss
+
         else:
             assert False, "bad loss function"
         loss.backward()
@@ -94,9 +128,14 @@ def train(train_loader, val_loader, model, lr, args):
         nn.utils.clip_grad_norm_(model.parameters(), clip)
 
         #printing
+        if args.model == "vrnn":
+            bLoss = predLoss
+        else:
+            bLoss = loss.data.item()
+
         if batch_idx % args.print_every == 0:
-             print("batch index: {}, loss: {}".format(batch_idx, loss.data.item()))
-        train_loss += loss.item()
+             print("batch index: {}, loss: {}".format(batch_idx, bLoss))
+        train_loss += bLoss
     nTrainBatches = batch_idx + 1
     # Validate
     with torch.no_grad():
@@ -104,6 +143,10 @@ def train(train_loader, val_loader, model, lr, args):
             data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
             target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
             output = model(data)
+            if args.model == "vrnn":
+                encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds = output
+                output = torch.cat([torch.unsqueeze(y, dim=0) for y in decoder_means])
+
             if args.criterion == "RMSE":
                 loss = torch.sqrt(torch.mean((output - target)**2))
 

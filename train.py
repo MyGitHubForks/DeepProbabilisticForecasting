@@ -32,6 +32,7 @@ parser.add_argument("--criterion", type=str, default="RMSE")
 parser.add_argument("--save_freq", type=int, default=1)
 parser.add_argument("--down_sample", type=float, default=0.0)
 parser.add_argument("--data_dir", type=str, default="./data")
+parser.add_argument("--model", type=str, default="rnn")
 def main():
     saveDir = './save/models/model0/'
     while os.path.isdir(saveDir):
