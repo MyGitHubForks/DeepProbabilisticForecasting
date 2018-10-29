@@ -71,7 +71,7 @@ def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription
 #nll_loss += self._nll_gauss(dec_mean_t, dec_std_t, x[t])
 # nll_loss += self._nll_bernoulli(dec_mean_t, x[t])
 
-def _kld_gauss(mean_1, std_1, mean_2, std_2):
+def kld_gauss(mean_1, std_1, mean_2, std_2):
         """Using std to compute KLD"""
 
         kld_element =  (2 * torch.log(std_2) - 2 * torch.log(std_1) + 
@@ -96,13 +96,7 @@ def train(train_loader, val_loader, model, lr, args):
         output = model(data)
         #print("output", output[0,0,:5])
         #print("target", target[0,0,:5])
-        if args.criterion == "RMSE":
-            loss = torch.sqrt(torch.mean((output - target)**2))
-
-        elif args.criterion == "L1Loss":
-            loss = torch.mean(torch.abs(output - target))
-
-        elif args.model == "VRNNLoss":
+        if args.model == "vrnn":
             encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds = output
             # Calculate KLDivergence part
             loss = 0.0
@@ -120,6 +114,11 @@ def train(train_loader, val_loader, model, lr, args):
                 predLoss = torch.mean(torch.abs(pred - target))
                 loss += predLoss
 
+        elif args.criterion == "RMSE":
+            loss = torch.sqrt(torch.mean((output - target)**2))
+
+        elif args.criterion == "L1Loss":
+            loss = torch.mean(torch.abs(output - target))
         else:
             assert False, "bad loss function"
         loss.backward()

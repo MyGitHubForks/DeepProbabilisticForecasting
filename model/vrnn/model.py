@@ -15,66 +15,66 @@ inference, prior, and generating models."""
 
 
 class VRNN(nn.Module):
-	def __init__(self, args, bias=False):
+	def __init__(self, args):
 		super(VRNN, self).__init__()
 
 		self.x_dim = args.x_dim
 		self.h_dim = args.h_dim
 		self.z_dim = args.z_dim
 		self.n_layers = args.n_layers
-		self.cuda = self.args.cuda
+		self.cuda = args.cuda
+		self.args = args
 
 		#feature-extracting transformations
 		self.phi_x = nn.Sequential(
-			nn.Linear(x_dim, h_dim),
+			nn.Linear(self.x_dim, self.h_dim),
 			nn.ReLU(),
-			nn.Linear(h_dim, h_dim),
+			nn.Linear(self.h_dim, self.h_dim),
 			nn.ReLU())
 		self.phi_z = nn.Sequential(
-			nn.Linear(z_dim, h_dim),
+			nn.Linear(self.z_dim, self.h_dim),
 			nn.ReLU())
 
 		#encoder
 		self.enc = nn.Sequential(
-			nn.Linear(h_dim + h_dim, h_dim),
+			nn.Linear(self.h_dim + self.h_dim, self.h_dim),
 			nn.ReLU(),
-			nn.Linear(h_dim, h_dim),
+			nn.Linear(self.h_dim, self.h_dim),
 			nn.ReLU())
-		self.enc_mean = nn.Linear(h_dim, z_dim)
+		self.enc_mean = nn.Linear(self.h_dim, self.z_dim)
 		self.enc_std = nn.Sequential(
-			nn.Linear(h_dim, z_dim),
+			nn.Linear(self.h_dim, self.z_dim),
 			nn.Softplus())
 
 		#prior
 		self.prior = nn.Sequential(
-			nn.Linear(h_dim, h_dim),
+			nn.Linear(self.h_dim, self.h_dim),
 			nn.ReLU())
-		self.prior_mean = nn.Linear(h_dim, z_dim)
+		self.prior_mean = nn.Linear(self.h_dim, self.z_dim)
 		self.prior_std = nn.Sequential(
-			nn.Linear(h_dim, z_dim),
+			nn.Linear(self.h_dim, self.z_dim),
 			nn.Softplus())
 
 		#decoder
 		self.dec = nn.Sequential(
-			nn.Linear(h_dim + h_dim, h_dim),
+			nn.Linear(self.h_dim + self.h_dim, self.h_dim),
 			nn.ReLU(),
-			nn.Linear(h_dim, h_dim),
+			nn.Linear(self.h_dim, self.h_dim),
 			nn.ReLU())
 		self.dec_std = nn.Sequential(
-			nn.Linear(h_dim, x_dim),
+			nn.Linear(self.h_dim, self.x_dim),
 			nn.Softplus())
 
-		self.dec_mean = nn.Linear(h_dim, x_dim)
+		self.dec_mean = nn.Linear(self.h_dim, self.x_dim)
 		# self.dec_mean = nn.Sequential(
-		# 	nn.Linear(h_dim, x_dim),
+		# 	nn.Linear(self.h_dim, x_dim),
 		# 	nn.Sigmoid())
 
 		#recurrence
-		self.rnn = nn.GRU(h_dim + h_dim, h_dim, n_layers, bias)
+		self.rnn = nn.GRU(self.h_dim + self.h_dim, self.h_dim, self.n_layers)
 
 
 	def forward(self, x):
-		x = torch.transpose(x, 0, 1) # switch to sequence length x batch size x x_dim
 		all_enc_mean, all_enc_std = [], []
 		all_dec_mean, all_dec_std = [], []
 		all_prior_mean, all_prior_std = [],[]

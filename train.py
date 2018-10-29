@@ -8,38 +8,45 @@ import pstats
 import torch
 from torch.utils import data
 from model.RoseSeq2Seq import Seq2Seq
+from model.vrnn.model import VRNN
 import os
 import argparse
 import json
 
 parser = argparse.ArgumentParser(description='Batched Sequence to Sequence')
-parser.add_argument('--h_dim', type=int, default=64)
+parser.add_argument('--h_dim', type=int, default=256)
+parser.add_argument("--z_dim", type=int, default=256)
 parser.add_argument('--no_cuda', action='store_true', default=False,
                                         help='disables CUDA training')
 parser.add_argument("--no_attn", action="store_true", default=True, help="Do not use AttnDecoder")
-parser.add_argument("--n_epochs", type=int, default=50)
-parser.add_argument("--batches_per_epoch", type=int, default= -1)
-parser.add_argument("--batch_size", type=int, default= 5)
+parser.add_argument("--n_epochs", type=int, default=300)
+parser.add_argument("--batch_size", type=int, default= 64)
 parser.add_argument("--n_layers", type=int, default=2)
-parser.add_argument("--initial_lr", type=float, default=1e-2)
-parser.add_argument("--no_lr_decay", action="store_true", default=False)
+parser.add_argument("--initial_lr", type=float, default=.0001)
+parser.add_argument("--no_lr_decay", action="store_true", default=True)
 parser.add_argument("--lr_decay_ratio", type=float, default=0.10)
 parser.add_argument("--lr_decay_beginning", type=int, default=50)
 parser.add_argument("--lr_decay_every", type=int, default=10)
-parser.add_argument("--print_every", type=int, default = 100)
-parser.add_argument("--plot_every", type=int, default = 5)
-parser.add_argument("--criterion", type=str, default="RMSE")
+parser.add_argument("--print_every", type=int, default = 20)
+parser.add_argument("--plot_every", type=int, default = 1)
+parser.add_argument("--criterion", type=str, default="L1Loss")
 parser.add_argument("--save_freq", type=int, default=1)
-parser.add_argument("--down_sample", type=float, default=0.0)
+parser.add_argument("--down_sample", type=float, default=0.5)
 parser.add_argument("--data_dir", type=str, default="./data")
-parser.add_argument("--model", type=str, default="rnn")
-def main():
+parser.add_argument("--model", type=str, default="vrnn")
+
+def train(suggestions=None):
     saveDir = './save/models/model0/'
     while os.path.isdir(saveDir):
         saveDir = saveDir[:-2] + str(int(saveDir[-2])+1) + "/"
     os.mkdir(saveDir)
-
     args = parser.parse_args()
+    if suggestions:
+        args.h_dim = suggestions["h_dim"]
+        args.z_dim = suggestions["z_dim"]
+        args.batch_size = suggestions["batch_size"]
+        args.n_layers = suggestions["n_layers"]
+        args.initial_lr = suggestions["initial_lr"]
 
     print("loading data")
     data = utils.load_dataset(args.data_dir, args.batch_size, down_sample=args.down_sample)
@@ -50,14 +57,16 @@ def main():
     args.use_attn = not args.no_attn
     args.x_dim = data['x_dim']
     args.sequence_len = data['sequence_len']
-    # if args.batches_per_epoch == -1:
-    #     args.batches_per_epoch = np.ceil(trainData.__len__() / args.batch_size)
     print("generating model")
-    if args.cuda:
-        model = Seq2Seq(args).cuda()
+    if args.model == "vrnn":
+        print("using vrnn")
+        model = VRNN(args)
     else:
+        print("using Seq2Seq RNN")
         model = Seq2Seq(args)
-    modelDescription = "Sequence to Sequence RNN with Attn"
+    if args.cuda:
+        model = model.cuda()
+
     trainLosses = []
     valLosses = []
     lr = args.initial_lr
@@ -79,9 +88,10 @@ def main():
         torch.save(model.state_dict(), fn)
         print('Saved model to '+fn)
 
-    utils.plotTrainValCurve(trainLosses, valLosses, modelDescription, args.criterion, args)
+    utils.plotTrainValCurve(trainLosses, valLosses, args.model, args.criterion, args)
+    return valLosses[-1]
 
 if __name__ == '__main__':
-        cProfile.run("main()", "restats")
+        cProfile.run("train()", "restats")
         p = pstats.Stats('restats')
         p.sort_stats("tottime").print_stats(10)
