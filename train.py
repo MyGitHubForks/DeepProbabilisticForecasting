@@ -22,7 +22,7 @@ parser.add_argument("--no_attn", action="store_true", default=True, help="Do not
 parser.add_argument("--n_epochs", type=int, default=300)
 parser.add_argument("--batch_size", type=int, default= 64)
 parser.add_argument("--n_layers", type=int, default=2)
-parser.add_argument("--initial_lr", type=float, default=.0001)
+parser.add_argument("--initial_lr", type=float, default=.001)
 parser.add_argument("--no_lr_decay", action="store_true", default=True)
 parser.add_argument("--lr_decay_ratio", type=float, default=0.10)
 parser.add_argument("--lr_decay_beginning", type=int, default=50)
@@ -93,9 +93,9 @@ def train(suggestions=None):
     model_fn = saveDir + '{}_full_model'.format(args.model) +".pth"
     torch.save(model, model_fn)
     utils.plotTrainValCurve(trainLosses, valLosses, args.model, args.criterion, args)
-    preds, targets = utils.getPredictions(args, val_loader, model)
+    preds, targets = utils.getPredictions(args, data['val_loader'].get_iterator(), model)
     torch.save(preds, saveDir+"validation_preds")
-    torch.save(preds, saveDir+"validation_targets")
+    torch.save(targets, saveDir+"validation_targets")
     return valLosses[-1]
 
 if __name__ == '__main__':

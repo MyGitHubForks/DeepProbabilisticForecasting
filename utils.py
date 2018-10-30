@@ -74,7 +74,7 @@ def getPredictions(args, data_loader, model):
         target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
         output = model(data)
         targets.append(target)
-        preds.append(pred)
+        preds.append(output)
     return preds, targets
 
 def kld_gauss(mean_1, std_1, mean_2, std_2):
