@@ -117,8 +117,8 @@ class VRNN(nn.Module):
 			all_prior_std.append(prior_std_t)
 			all_dec_mean.append(dec_mean_t)
 			all_dec_std.append(dec_std_t)
-
-			return (all_enc_mean, all_enc_std, all_dec_mean, all_dec_std, all_prior_mean, all_prior_std)
+		del h
+		return (all_enc_mean, all_enc_std, all_dec_mean, all_dec_std, all_prior_mean, all_prior_std)
 
 
 	def sample(self, seq_len):

@@ -66,6 +66,16 @@ def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription
 #kld_loss += self._kld_gauss(enc_mean_t, enc_std_t, prior_mean_t, prior_std_t)
 #nll_loss += self._nll_gauss(dec_mean_t, dec_std_t, x[t])
 # nll_loss += self._nll_bernoulli(dec_mean_t, x[t])
+def getPredictions(args, data_loader, model):
+    targets = []
+    preds = []
+    for batch_idx, (data, target) in enumerate(data_loader):
+        data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
+        target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
+        output = model(data)
+        targets.append(target)
+        preds.append(pred)
+    return preds, targets
 
 def kld_gauss(mean_1, std_1, mean_2, std_2):
         """Using std to compute KLD"""

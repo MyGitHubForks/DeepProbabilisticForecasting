@@ -62,9 +62,11 @@ def train(suggestions=None):
     if args.model == "vrnn":
         print("using vrnn")
         model = VRNN(args)
-    else:
+    elif args.model == "rnn":
         print("using Seq2Seq RNN")
         model = Seq2Seq(args)
+    else:
+        assert False, "Model incorrectly specified"
     if args.cuda:
         model = model.cuda()
 
@@ -85,11 +87,15 @@ def train(suggestions=None):
             trainLosses.append(avgTrainLoss)
             valLosses.append(avgValLoss)
         #saving model
-        fn = saveDir+'vrnn_state_dict_'+str(epoch)+'.pth'
+        fn = saveDir+'{}_state_dict_'.format(args.model)+str(epoch)+'.pth'
         torch.save(model.state_dict(), fn)
         print('Saved model to '+fn)
-
+    model_fn = saveDir + '{}_full_model'.format(args.model) +".pth"
+    torch.save(model, model_fn)
     utils.plotTrainValCurve(trainLosses, valLosses, args.model, args.criterion, args)
+    preds, targets = utils.getPredictions(args, val_loader, model)
+    torch.save(preds, saveDir+"validation_preds")
+    torch.save(preds, saveDir+"validation_targets")
     return valLosses[-1]
 
 if __name__ == '__main__':
