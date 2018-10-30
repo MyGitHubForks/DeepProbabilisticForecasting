@@ -41,6 +41,7 @@ def train(suggestions=None):
         saveDir = saveDir[:-2] + str(int(saveDir[-2])+1) + "/"
     os.mkdir(saveDir)
     args = parser.parse_args()
+    args.save_dir = saveDir
     if suggestions:
         args.h_dim = suggestions["h_dim"]
         args.z_dim = suggestions["z_dim"]

@@ -58,11 +58,7 @@ def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription
     plt.grid()
     plt.legend()
     plt.title("Losses for {}".format(model_description))
-    
-    filestring = "./figs/train_val_loss_plot_0.png"
-    while(os.path.isfile(filestring)):
-        filestring = filestring[:-5] + str(int(filestring[-5]) + 1) + ".png"
-    plt.savefig(filestring)
+    plt.savefig(args.save_dir+"train_val_loss_plot.png")
 
 #Loss functions for VRNN
 
