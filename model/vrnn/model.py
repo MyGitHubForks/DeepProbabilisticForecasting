@@ -22,7 +22,7 @@ class VRNN(nn.Module):
 		self.h_dim = args.h_dim
 		self.z_dim = args.z_dim
 		self.n_layers = args.n_layers
-		self.cuda = args.cuda
+		self.useCuda = args.cuda
 		self.args = args
 
 		#feature-extracting transformations
@@ -156,7 +156,7 @@ class VRNN(nn.Module):
 
 	def init_hidden(self):
 		result = Variable(torch.zeros(self.n_layers, self.args.batch_size, self.h_dim))
-		if self.cuda:
+		if self.useCuda:
 			return result.cuda()
 		else:
 			return result
@@ -172,7 +172,9 @@ class VRNN(nn.Module):
 
 	def _reparameterized_sample(self, mean, std):
 		"""using std to sample"""
-		eps = torch.FloatTensor(std.size()).normal_()
+		eps = torch.FloatTensor(std.size(), device=self.args._device).normal_()
+		if self.useCuda:
+			eps = eps.cuda()
 		eps = Variable(eps)
 		return eps.mul(std).add_(mean)
 
