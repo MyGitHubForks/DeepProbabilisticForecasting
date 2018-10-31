@@ -14,26 +14,26 @@ import argparse
 import json
 
 parser = argparse.ArgumentParser(description='Batched Sequence to Sequence')
-parser.add_argument('--h_dim', type=int, default=256)
+parser.add_argument('--h_dim', type=int, default=512)
 parser.add_argument("--z_dim", type=int, default=256)
 parser.add_argument('--no_cuda', action='store_true', default=False,
                                         help='disables CUDA training')
 parser.add_argument("--no_attn", action="store_true", default=True, help="Do not use AttnDecoder")
-parser.add_argument("--n_epochs", type=int, default=300)
-parser.add_argument("--batch_size", type=int, default= 64)
-parser.add_argument("--n_layers", type=int, default=2)
+parser.add_argument("--n_epochs", type=int, default=150)
+parser.add_argument("--batch_size", type=int, default= 128)
+parser.add_argument("--n_layers", type=int, default=1)
 parser.add_argument("--initial_lr", type=float, default=.001)
-parser.add_argument("--no_lr_decay", action="store_true", default=True)
+parser.add_argument("--no_lr_decay", action="store_true", default=False)
 parser.add_argument("--lr_decay_ratio", type=float, default=0.10)
-parser.add_argument("--lr_decay_beginning", type=int, default=50)
+parser.add_argument("--lr_decay_beginning", type=int, default=20)
 parser.add_argument("--lr_decay_every", type=int, default=10)
 parser.add_argument("--print_every", type=int, default = 20)
 parser.add_argument("--plot_every", type=int, default = 1)
 parser.add_argument("--criterion", type=str, default="L1Loss")
-parser.add_argument("--save_freq", type=int, default=1)
+parser.add_argument("--save_freq", type=int, default=10)
 parser.add_argument("--down_sample", type=float, default=0.5)
 parser.add_argument("--data_dir", type=str, default="./data")
-parser.add_argument("--model", type=str, default="vrnn")
+parser.add_argument("--model", type=str, default="rnn")
 
 def train(suggestions=None):
     saveDir = './save/models/model0/'
@@ -82,20 +82,22 @@ def train(suggestions=None):
         print("epoch {}".format(epoch))
         if not args.no_lr_decay and epoch > args.lr_decay_beginning and epoch % args.lr_decay_every:
             lr = lr * (1 - args.lr_decay_ratio)
-        avgTrainLoss, avgValLoss = utils.train(data['train_loader'].get_iterator(), data['val_loader'].get_iterator(), model, lr, args)
+        avgTrainLoss, avgValLoss = utils.train(data['train_loader'].get_iterator(), data['val_loader'].get_iterator(), model, lr, args, data)
         if (epoch % args.plot_every) == 0:
             trainLosses.append(avgTrainLoss)
             valLosses.append(avgValLoss)
         #saving model
-        fn = saveDir+'{}_state_dict_'.format(args.model)+str(epoch)+'.pth'
-        torch.save(model.state_dict(), fn)
-        print('Saved model to '+fn)
+        if (epoch % args.save_freq) == 0:
+            fn = saveDir+'{}_state_dict_'.format(args.model)+str(epoch)+'.pth'
+            torch.save(model.state_dict(), fn)
+            print('Saved model to '+fn)
     model_fn = saveDir + '{}_full_model'.format(args.model) +".pth"
     torch.save(model, model_fn)
     utils.plotTrainValCurve(trainLosses, valLosses, args.model, args.criterion, args)
-    preds, targets = utils.getPredictions(args, data['val_loader'].get_iterator(), model)
+    preds, targets, datas = utils.getPredictions(args, data['val_loader'].get_iterator(), model, data)
     torch.save(preds, saveDir+"validation_preds")
     torch.save(targets, saveDir+"validation_targets")
+    torch.save(datas, saveDir+"validation_datas")
     return valLosses[-1]
 
 if __name__ == '__main__':

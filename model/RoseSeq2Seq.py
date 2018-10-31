@@ -13,14 +13,15 @@ class EncoderRNN(nn.Module):
 
         self.n_layers = n_layers
         self.hidden_size = hidden_size
-
         self.embedding = nn.Linear(input_size, hidden_size)
         self.gru = nn.GRU(hidden_size, hidden_size, n_layers)
 
     def forward(self, input, hidden):
+        #print("encoder input",input[10,31])
         embedded = self.embedding(input)
         embedded = torch.unsqueeze(embedded, 0)
         output, hidden = self.gru(embedded, hidden)
+        #print("hidden state cell", output[0,10,31])
         return output, hidden
 
     def initHidden(self):
@@ -43,11 +44,13 @@ class DecoderRNN(nn.Module):
         self.out = nn.Linear(hidden_size, output_size)
 
     def forward(self, input, hidden):
+        #print("decoder input cell",input[10,31])
         embedded = self.embedding(input)
         embedded = F.relu(embedded)
         embedded = torch.unsqueeze(embedded, 0)
         output, hidden = self.gru(embedded, hidden)
         output = self.out(output.squeeze(0))
+        #print("decoder output", output[10,31])
         return output, hidden
 
     def initHidden(self):
@@ -130,7 +133,7 @@ class Seq2Seq(nn.Module):
 
     def forward(self, x):
         encoder_hidden = self.enc.initHidden()
-
+        #print("seq2seq forward x size",x.size())
         hs = []
         for t in range(self.args.sequence_len):
             encoder_output, encoder_hidden = self.enc(x[t], encoder_hidden)
@@ -154,5 +157,5 @@ class Seq2Seq(nn.Module):
                 decoder_output, decoder_hidden = self.dec(inp, decoder_hidden)
                 inp = decoder_output
                 ys += [decoder_output]
-
+        #uncomment to stop after 1 iteration
         return torch.cat([torch.unsqueeze(y, dim=0) for y in ys])

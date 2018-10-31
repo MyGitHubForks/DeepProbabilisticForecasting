@@ -9,6 +9,9 @@ import numpy as np
 import os
 from model.Data import DataLoader
 
+def normalizeData(data):
+    return (data - np.mean(data))/np.std(data), np.mean(data), np.std(data)
+
 def load_dataset(dataset_dir, batch_size, down_sample=None, **kwargs):
     data = {}
     for category in ['train', 'val', 'test']:
@@ -22,6 +25,8 @@ def load_dataset(dataset_dir, batch_size, down_sample=None, **kwargs):
         else:
             data['x_' + category] = cat_data['x'][:,:,:,0]
             data['y_' + category] = cat_data['y'][:,:,:,0]
+        data["x_"+category], data["x_"+category+"_mean"], data["x_"+category+"_std"] = normalizeData(data["x_"+category])
+        data["y_"+category], data["y_"+category+"_mean"], data["y_"+category+"_std"] = normalizeData(data["y_"+category])
     data['sequence_len'] = cat_data['x'].shape[1]
     data['x_dim'] = cat_data['x'].shape[2]
     assert data['sequence_len'] == 12
@@ -66,16 +71,24 @@ def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription
 #kld_loss += self._kld_gauss(enc_mean_t, enc_std_t, prior_mean_t, prior_std_t)
 #nll_loss += self._nll_gauss(dec_mean_t, dec_std_t, x[t])
 # nll_loss += self._nll_bernoulli(dec_mean_t, x[t])
-def getPredictions(args, data_loader, model):
+
+def unNormalize(val, mean, std):
+    return (val *std)+mean
+
+def getPredictions(args, data_loader, model, dataDict):
     targets = []
     preds = []
+    datas = []
     for batch_idx, (data, target) in enumerate(data_loader):
         data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
         target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
         output = model(data)
-        targets.append(target)
-        preds.append(output)
-    return preds, targets
+        targets.append(unNormalize(target, dataDict["y_val_mean"],dataDict["y_val_std"]))
+        #targets.append(target)
+        preds.append(unNormalize(output, dataDict["y_val_mean"], dataDict["y_val_std"]))
+        #preds.append(output)
+        datas.append(unNormalize(data, dataDict["x_val_mean"], dataDict["x_val_std"]))
+    return preds, targets, datas
 
 def kld_gauss(mean_1, std_1, mean_2, std_2):
         """Using std to compute KLD"""
@@ -85,7 +98,7 @@ def kld_gauss(mean_1, std_1, mean_2, std_2):
             std_2.pow(2) - 1)
         return  0.5 * torch.sum(kld_element)
 
-def train(train_loader, val_loader, model, lr, args):
+def train(train_loader, val_loader, model, lr, args, dataDict):
     clip = 10
     train_loss = 0.0
     val_loss = 0.0
@@ -121,10 +134,14 @@ def train(train_loader, val_loader, model, lr, args):
                 loss += predLoss
 
         elif args.criterion == "RMSE":
-            loss = torch.sqrt(torch.mean((output - target)**2))
+                o = unNormalize(output, dataDict["y_train_mean"], dataDict["y_train_std"])
+                t = unNormalize(target, dataDict["y_train_mean"], dataDict["y_train_std"])
+                loss = torch.sqrt(torch.mean((o - t)**2))
 
         elif args.criterion == "L1Loss":
-            loss = torch.mean(torch.abs(output - target))
+            o = unNormalize(output, dataDict["y_train_mean"], dataDict["y_train_std"])
+            t = unNormalize(target, dataDict["y_train_mean"], dataDict["y_train_std"])
+            loss = torch.mean(torch.abs(o - t))
         else:
             assert False, "bad loss function"
         loss.backward()
@@ -151,12 +168,15 @@ def train(train_loader, val_loader, model, lr, args):
             if args.model == "vrnn":
                 encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds = output
                 output = torch.cat([torch.unsqueeze(y, dim=0) for y in decoder_means])
-
-            if args.criterion == "RMSE":
-                loss = torch.sqrt(torch.mean((output - target)**2))
+            elif args.criterion == "RMSE":
+                o = unNormalize(output, dataDict["y_val_mean"], dataDict["y_val_std"])
+                t = unNormalize(target, dataDict["y_val_mean"], dataDict["y_val_std"])
+                loss = torch.sqrt(torch.mean((o - t)**2))
 
             elif args.criterion == "L1Loss":
-                loss = torch.mean(torch.abs(output - target))
+                o = unNormalize(output, dataDict["y_val_mean"], dataDict["y_val_std"])
+                t = unNormalize(target, dataDict["y_val_mean"], dataDict["y_val_std"])
+                loss = torch.mean(torch.abs(o - t))
             else:
                 assert False, "bad loss function"
             val_loss += loss.item()
