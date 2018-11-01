@@ -81,25 +81,31 @@ def getPredictions(args, data_loader, model, xMean, xStd, yMean, yStd):
     datas = []
     means = []
     stds = []
-    for batch_idx, (data, target) in enumerate(data_loader):
-        data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
-        target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
-        targets.append(unNormalize(target.detach(), yMean,yStd))
-        datas.append(unNormalize(data.detach(), xMean, xStd))
-
-        modelOutput = model(data)
-        if args.model == "vrnn":
-            all_enc_mean, all_enc_std, all_dec_mean, all_dec_std, all_prior_mean, all_prior_std = modelOutput
-            decoder_means_mat = torch.cat([torch.unsqueeze(y, dim=0) for y in all_dec_mean])
-            decoder_std_mat = torch.cat([torch.unsqueeze(y, dim=0) for y in all_dec_std])
-            means.append(unNormalize(decoder_means_mat, yMean, yStd))
-            stds.append(unNormalize(decoder_std_mat, yMean, yStd))
-        elif args.model="rnn":
-            output = modelOutput
-            preds.append(unNormalize(output.detach(), yMean, yStd))
-        else:
-            assert False, "can't match model"  
-    return preds, targets, datas, means, stds
+    with torch.no_grad():
+        for batch_idx, (data, target) in enumerate(data_loader):
+            data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
+            target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
+            targets.append(unNormalize(target, yMean,yStd))
+            datas.append(unNormalize(data, xMean, xStd))
+            modelOutput = model(data)
+            del target
+            del data
+            if args.model == "vrnn":
+                all_enc_mean, all_enc_std, all_dec_mean, all_dec_std, all_prior_mean, all_prior_std = modelOutput
+                del all_enc_mean
+                del all_enc_std
+                del all_prior_mean
+                del all_prior_std
+                decoder_means_mat = np.concatenate([torch.unsqueeze(y, dim=0).cpu().data.numpy() for y in all_dec_mean], axis=0)
+                decoder_std_mat = np.concatenate([torch.unsqueeze(y, dim=0).cpu().data.numpy() for y in all_dec_std], axis=0)
+                means.append(unNormalize(decoder_means_mat, yMean, yStd))
+                stds.append(unNormalize(decoder_std_mat, yMean, yStd))
+            elif args.model=="rnn":
+                output = modelOutput.cpu().detach()
+                preds.append(unNormalize(output, yMean, yStd))
+            else:
+                assert False, "can't match model"  
+        return preds, targets, datas, means, stds
 
 def kld_gauss(mean_1, std_1, mean_2, std_2):
         """Using std to compute KLD"""
