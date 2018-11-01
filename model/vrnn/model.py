@@ -78,6 +78,7 @@ class VRNN(nn.Module):
 		all_enc_mean, all_enc_std = [], []
 		all_dec_mean, all_dec_std = [], []
 		all_prior_mean, all_prior_std = [],[]
+		all_samples = []
 
 		h = self.init_hidden()
 		for t in range(x.size(0)):
@@ -105,7 +106,7 @@ class VRNN(nn.Module):
 
 			#recurrence
 			_, h = self.rnn(torch.cat([phi_x_t, phi_z_t], 1).unsqueeze(0), h)
-
+			sample = self._reparameterized_sample(dec_mean_t, dec_std_t)
 
 			all_enc_std.append(enc_std_t)
 			all_enc_mean.append(enc_mean_t)
@@ -113,8 +114,9 @@ class VRNN(nn.Module):
 			all_prior_std.append(prior_std_t)
 			all_dec_mean.append(dec_mean_t)
 			all_dec_std.append(dec_std_t)
+			all_samples.append(sample)
 		del h
-		return (all_enc_mean, all_enc_std, all_dec_mean, all_dec_std, all_prior_mean, all_prior_std)
+		return (all_enc_mean, all_enc_std, all_dec_mean, all_dec_std, all_prior_mean, all_prior_std, all_samples)
 
 
 	def sample(self, seq_len):

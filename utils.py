@@ -91,11 +91,12 @@ def getPredictions(args, data_loader, model, xMean, xStd, yMean, yStd):
             del target
             del data
             if args.model == "vrnn":
-                all_enc_mean, all_enc_std, all_dec_mean, all_dec_std, all_prior_mean, all_prior_std = modelOutput
+                all_enc_mean, all_enc_std, all_dec_mean, all_dec_std, all_prior_mean, all_prior_std, all_samples = modelOutput
                 del all_enc_mean
                 del all_enc_std
                 del all_prior_mean
                 del all_prior_std
+                del all_samples
                 decoder_means_mat = np.concatenate([torch.unsqueeze(y, dim=0).cpu().data.numpy() for y in all_dec_mean], axis=0)
                 decoder_std_mat = np.concatenate([torch.unsqueeze(y, dim=0).cpu().data.numpy() for y in all_dec_std], axis=0)
                 means.append(unNormalize(decoder_means_mat, yMean, yStd))
@@ -133,15 +134,15 @@ def train(train_loader, val_loader, model, lr, args, dataDict):
         #print("output", output[0,0,:5])
         #print("target", target[0,0,:5])
         if args.model == "vrnn":
-            encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds = output
+            encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds, all_samples = output
             # Calculate KLDivergence part
             loss = 0.0
-            for enc_mean_t, enc_std_t, decoder_mean_t, decoder_std_t, prior_mean_t, prior_std_t in zip(encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds):
+            for enc_mean_t, enc_std_t, decoder_mean_t, decoder_std_t, prior_mean_t, prior_std_t, sample in zip(encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds):
                 kldLoss = kld_gauss(enc_mean_t, enc_std_t, prior_mean_t, prior_std_t)
                 loss += kldLoss
 
             #Calculate Prediction Loss
-            pred = torch.cat([torch.unsqueeze(y, dim=0) for y in decoder_means])
+            pred = torch.cat([torch.unsqueeze(y, dim=0) for y in all_samples])
             unNPred = unNormalize(pred.detach(), dataDict["y_train_mean"], dataDict["y_train_std"])
             unNTarget = unNormalize(target.detach(), dataDict["y_train_mean"], dataDict["y_train_std"])
             if args.criterion == "RMSE":
@@ -188,8 +189,8 @@ def train(train_loader, val_loader, model, lr, args, dataDict):
             target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
             output = model(data)
             if args.model == "vrnn":
-                encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds = output
-                pred = torch.cat([torch.unsqueeze(y, dim=0) for y in decoder_means])
+                encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds, all_samples = output
+                pred = torch.cat([torch.unsqueeze(y, dim=0) for y in all_samples])
                 unNPred = unNormalize(pred.detach(), dataDict["y_val_mean"], dataDict["y_val_std"])
                 unNTarget = unNormalize(target.detach(), dataDict["y_val_mean"], dataDict["y_val_std"])
                 if args.criterion == "RMSE":
