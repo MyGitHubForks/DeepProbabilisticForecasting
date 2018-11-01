@@ -75,7 +75,7 @@ def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription
 def unNormalize(val, mean, std):
     return (val *std)+mean
 
-def getPredictions(args, data_loader, model, dataDict):
+def getPredictions(args, data_loader, model, xMean, xStd, yMean, yStd):
     targets = []
     preds = []
     datas = []
@@ -83,11 +83,11 @@ def getPredictions(args, data_loader, model, dataDict):
         data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
         target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
         output = model(data)
-        targets.append(unNormalize(target, dataDict["y_val_mean"],dataDict["y_val_std"]))
+        targets.append(unNormalize(target.detach(), yMean,yStd))
         #targets.append(target)
-        preds.append(unNormalize(output, dataDict["y_val_mean"], dataDict["y_val_std"]))
+        preds.append(unNormalize(output.detach(), yMean, yStd))
         #preds.append(output)
-        datas.append(unNormalize(data, dataDict["x_val_mean"], dataDict["x_val_std"]))
+        datas.append(unNormalize(data.detach(), xMean, xStd))
     return preds, targets, datas
 
 def kld_gauss(mean_1, std_1, mean_2, std_2):
@@ -105,7 +105,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict):
     start = time.time()
 
     # Define Criterion
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=args.weight_decay)
 
     # Train
     for batch_idx, (data, target) in enumerate(train_loader):
