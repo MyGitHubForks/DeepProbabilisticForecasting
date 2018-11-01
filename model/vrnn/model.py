@@ -106,10 +106,6 @@ class VRNN(nn.Module):
 			#recurrence
 			_, h = self.rnn(torch.cat([phi_x_t, phi_z_t], 1).unsqueeze(0), h)
 
-			#computing losses
-			#kld_loss += self._kld_gauss(enc_mean_t, enc_std_t, prior_mean_t, prior_std_t)
-			#nll_loss += self._nll_gauss(dec_mean_t, dec_std_t, x[t])
-			# nll_loss += self._nll_bernoulli(dec_mean_t, x[t])
 
 			all_enc_std.append(enc_std_t)
 			all_enc_mean.append(enc_mean_t)

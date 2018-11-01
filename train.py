@@ -95,18 +95,29 @@ def train(suggestions=None):
     model_fn = saveDir + '{}_full_model'.format(args.model) +".pth"
     torch.save(model, model_fn)
     utils.plotTrainValCurve(trainLosses, valLosses, args.model, args.criterion, args)
-    predsV, targetsV, datasV = utils.getPredictions(args, data['val_loader'].get_iterator(), model, data["x_val_mean"], data["x_val_std"], data["y_val_mean"], data["y_val_std"])
-    torch.save(predsV, saveDir+"validation_preds")
-    torch.save(targetsV, saveDir+"validation_targets")
-    torch.save(datasV, saveDir+"validation_datas")
-    predsT, targetsT, datasT = utils.getPredictions(args, data['train_loader'].get_iterator(), model, data["x_train_mean"], data["x_train_std"], data["y_train_mean"], data["y_train_std"])
-    torch.save(predsT, saveDir+"train_preds")
-    torch.save(targetsT, saveDir+"train_targets")
-    torch.save(datasT, saveDir+"train_datas")
-    predsTest, targetsTest, dataTest = utils.getPredictions(args, data["test_loader"].get_iterator(), model, data["x_test_mean"], data["x_test_std"], data["y_test_mean"], data["y_test_std"])
-    torch.save(predsTest, saveDir+"test_preds")
-    torch.save(targetsTest, saveDir+"test_targets")
-    torch.save(dataTest, saveDir+"test_datas")
+    predsV, targetsV, datasV, meansV, stdsV = utils.getPredictions(args, data['val_loader'].get_iterator(), model, data["x_val_mean"], data["x_val_std"], data["y_val_mean"], data["y_val_std"])
+    
+    predsT, targetsT, datasT, meansT, stdsT = utils.getPredictions(args, data['train_loader'].get_iterator(), model, data["x_train_mean"], data["x_train_std"], data["y_train_mean"], data["y_train_std"])
+
+    # Save predictions based on model output
+    if args.model == "rnn":
+        torch.save(predsT, saveDir+"train_preds")
+        torch.save(targetsT, saveDir+"train_targets")
+        torch.save(datasT, saveDir+"train_datas")
+        torch.save(predsV, saveDir+"validation_preds")
+        torch.save(targetsV, saveDir+"validation_targets")
+        torch.save(datasV, saveDir+"validation_datas")
+    elif args.model == "vrnn":
+        # Save train prediction data
+        torch.save(meansT, saveDir+"train_means")
+        torch.save(stdsT, saveDir+"train_stds")
+        torch.save(targetsT, saveDir+"train_targets")
+        torch.save(datasT, saveDir+"train_datas")
+        # Validation prediction data
+        torch.save(meansV, saveDir+"validation_means")
+        torch.save(stdsV, saveDir+"validation_stds")
+        torch.save(targetsV, saveDir+"validation_targets")
+        torch.save(datasV, saveDir+"validation_datas")
     return valLosses[-1]
 
 if __name__ == '__main__':

@@ -79,16 +79,27 @@ def getPredictions(args, data_loader, model, xMean, xStd, yMean, yStd):
     targets = []
     preds = []
     datas = []
+    means = []
+    stds = []
     for batch_idx, (data, target) in enumerate(data_loader):
         data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
         target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
-        output = model(data)
         targets.append(unNormalize(target.detach(), yMean,yStd))
-        #targets.append(target)
-        preds.append(unNormalize(output.detach(), yMean, yStd))
-        #preds.append(output)
         datas.append(unNormalize(data.detach(), xMean, xStd))
-    return preds, targets, datas
+
+        modelOutput = model(data)
+        if args.model == "vrnn":
+            all_enc_mean, all_enc_std, all_dec_mean, all_dec_std, all_prior_mean, all_prior_std = modelOutput
+            decoder_means_mat = torch.cat([torch.unsqueeze(y, dim=0) for y in all_dec_mean])
+            decoder_std_mat = torch.cat([torch.unsqueeze(y, dim=0) for y in all_dec_std])
+            means.append(unNormalize(decoder_means_mat, yMean, yStd))
+            stds.append(unNormalize(decoder_std_mat, yMean, yStd))
+        elif args.model="rnn":
+            output = modelOutput
+            preds.append(unNormalize(output.detach(), yMean, yStd))
+        else:
+            assert False, "can't match model"  
+    return preds, targets, datas, means, stds
 
 def kld_gauss(mean_1, std_1, mean_2, std_2):
         """Using std to compute KLD"""
@@ -125,13 +136,18 @@ def train(train_loader, val_loader, model, lr, args, dataDict):
 
             #Calculate Prediction Loss
             pred = torch.cat([torch.unsqueeze(y, dim=0) for y in decoder_means])
+            unNPred = unNormalize(pred.detach(), dataDict["y_train_mean"], dataDict["y_train_std"])
+            unNTarget = unNormalize(target.detach(), dataDict["y_train_mean"], dataDict["y_train_std"])
             if args.criterion == "RMSE":
-                predLoss = torch.sqrt(torch.mean((pred - target)**2))
+                predLoss = torch.sqrt(torch.mean((pred - target)**2))    
+                unNormalizedLoss = torch.sqrt(torch.mean((unNPred - unNTarget)))
                 loss += predLoss
 
             elif args.criterion == "L1Loss":
                 predLoss = torch.mean(torch.abs(pred - target))
+                unNormalizedLoss = torch.mean(torch.abs(unNPred - unNTarget))
                 loss += predLoss
+
 
         elif args.criterion == "RMSE":
                 o = unNormalize(output, dataDict["y_train_mean"], dataDict["y_train_std"])
@@ -151,7 +167,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict):
 
         #printing
         if args.model == "vrnn":
-            bLoss = predLoss
+            bLoss = unNormalizedLoss.data.item()
         else:
             bLoss = loss.data.item()
 
@@ -167,7 +183,19 @@ def train(train_loader, val_loader, model, lr, args, dataDict):
             output = model(data)
             if args.model == "vrnn":
                 encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds = output
-                output = torch.cat([torch.unsqueeze(y, dim=0) for y in decoder_means])
+                pred = torch.cat([torch.unsqueeze(y, dim=0) for y in decoder_means])
+                unNPred = unNormalize(pred.detach(), dataDict["y_val_mean"], dataDict["y_val_std"])
+                unNTarget = unNormalize(target.detach(), dataDict["y_val_mean"], dataDict["y_val_std"])
+                if args.criterion == "RMSE":
+                    predLoss = torch.sqrt(torch.mean((pred - target)**2))    
+                    unNormalizedLoss = torch.sqrt(torch.mean((unNPred - unNTarget)))
+                    loss = predLoss
+
+                elif args.criterion == "L1Loss":
+                    predLoss = torch.mean(torch.abs(pred - target))
+                    unNormalizedLoss = torch.mean(torch.abs(unNPred - unNTarget))
+                    loss = predLoss
+
             elif args.criterion == "RMSE":
                 o = unNormalize(output, dataDict["y_val_mean"], dataDict["y_val_std"])
                 t = unNormalize(target, dataDict["y_val_mean"], dataDict["y_val_std"])
@@ -179,7 +207,11 @@ def train(train_loader, val_loader, model, lr, args, dataDict):
                 loss = torch.mean(torch.abs(o - t))
             else:
                 assert False, "bad loss function"
-            val_loss += loss.item()
+
+            if args.model == "vrnn":
+                val_loss += unNormalizedLoss.item()
+            else:
+                val_loss += loss.item()
     nValBatches = batch_idx + 1
     avgTrainLoss = train_loss / nTrainBatches
     avgValLoss = val_loss / nValBatches
