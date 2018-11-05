@@ -14,6 +14,9 @@ def main():
 	batch_size integer [1, 128] [64]
 	n_layers integer [1,3] [2]
 	initial_lr real [.00001, .01] [.001]
+	weight_decay real [.000005, .5] [.0005]
+	scheduling_start real [.3, .8] [.5]
+	scheduling_end real [0.0, 0.3] [.10]
 	"""
 
 	optimizer.set_params(params)
@@ -29,10 +32,12 @@ def main():
 		project_name="trafficrnn", workspace="zeiberg-d")
 
 		# Test the model
-		val_loss = train(suggestion)
+		train_loss, val_loss, save_dir = train(suggestion)
 
 		# Report the score back
+		suggestion.report_score("train_loss", train_loss)
 		suggestion.report_score("validation_loss",val_loss)
+		suggestion.report_score("save_dir", save_dir)
 
 """
 def testVals(x, y):

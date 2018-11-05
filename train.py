@@ -19,10 +19,10 @@ parser.add_argument("--z_dim", type=int, default=256)
 parser.add_argument('--no_cuda', action='store_true', default=False,
                                         help='disables CUDA training')
 parser.add_argument("--no_attn", action="store_true", default=True, help="Do not use AttnDecoder")
-parser.add_argument("--n_epochs", type=int, default=100)
-parser.add_argument("--batch_size", type=int, default= 32)
+parser.add_argument("--n_epochs", type=int, default=600)
+parser.add_argument("--batch_size", type=int, default= 1)
 parser.add_argument("--n_layers", type=int, default=2)
-parser.add_argument("--initial_lr", type=float, default=1e-4)
+parser.add_argument("--initial_lr", type=float, default=1e-3)
 parser.add_argument("--no_lr_decay", action="store_true", default=False)
 parser.add_argument("--lr_decay_ratio", type=float, default=0.10)
 parser.add_argument("--lr_decay_beginning", type=int, default=20)
@@ -41,7 +41,9 @@ parser.add_argument("--scheduling_end", type=float, default=0)
 def train(suggestions=None):
     saveDir = './save/models/model0/'
     while os.path.isdir(saveDir):
-        saveDir = saveDir[:-2] + str(int(saveDir[-2])+1) + "/"
+        numStart = saveDir.rfind("model")+5
+        numEnd = saveDir.rfind("/")
+        saveDir = saveDir[:numStart] + str(int(saveDir[numStart:numEnd])+1) + "/"
     os.mkdir(saveDir)
     args = parser.parse_args()
     args.save_dir = saveDir
@@ -51,6 +53,10 @@ def train(suggestions=None):
         args.batch_size = suggestions["batch_size"]
         args.n_layers = suggestions["n_layers"]
         args.initial_lr = suggestions["initial_lr"]
+        args.weight_decay = suggestions["weight_decay"]
+        args.scheduling_start = suggestions["scheduling_start"]
+        args.scheduling_end = suggestions["scheduling_end"]
+        #args.n_epochs = suggestions["n_epochs"]
 
     print("loading data")
     data = utils.load_dataset(args.data_dir, args.batch_size, down_sample=args.down_sample)
@@ -123,7 +129,7 @@ def train(suggestions=None):
         torch.save(stdsV, saveDir+"validation_stds")
         torch.save(targetsV, saveDir+"validation_targets")
         torch.save(datasV, saveDir+"validation_datas")
-    return valLosses[-1]
+    return trainLosses[-1], valLosses[-1], saveDir
 
 if __name__ == '__main__':
         cProfile.run("train()", "restats")
