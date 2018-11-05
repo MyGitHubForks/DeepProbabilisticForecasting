@@ -87,7 +87,7 @@ def getPredictions(args, data_loader, model, xMean, xStd, yMean, yStd):
             target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
             targets.append(unNormalize(target, yMean,yStd))
             datas.append(unNormalize(data, xMean, xStd))
-            modelOutput = model(data)
+            modelOutput = model(data, target, 0, noSample=True)
             del target
             del data
             if args.model == "vrnn":
@@ -187,7 +187,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch):
         for batch_idx, (data, target) in enumerate(val_loader):
             data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
             target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
-            output = model(data)
+            output = model(data, target, 0, noSample=True)
             if args.model == "vrnn":
                 encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds, all_samples = output
                 pred = torch.cat([torch.unsqueeze(y, dim=0) for y in all_samples])
