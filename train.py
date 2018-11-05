@@ -62,6 +62,7 @@ def train(suggestions=None):
     args.x_dim = data['x_dim']
     args.sequence_len = data['sequence_len']
     args.use_schedule_sampling = not args.no_schedule_sampling
+    print("use schedule sampling", args.use_schedule_sampling)
 
     print("generating model")
     if args.model == "vrnn":

@@ -131,16 +131,16 @@ class Seq2Seq(nn.Module):
 
         self.use_schedule_sampling = args.use_schedule_sampling
         self.scheduling_start = args.scheduling_start
-        self.scheduleing_end = args.scheduleing_end
+        self.scheduling_end = args.scheduling_end
 
     def parameters(self):
         return list(self.enc.parameters()) + list(self.dec.parameters())
 
     def scheduleSample(self, epoch):
         eps = max(self.args.scheduling_start - 
-            (self.args.scheduling_start - self.args.scheduleing_end)* epoch / self.args.n_epochs,
-            self.args.scheduleing_end)
-        return np.random.binomial(eps)
+            (self.args.scheduling_start - self.args.scheduling_end)* epoch / self.args.n_epochs,
+            self.args.scheduling_end)
+        return np.random.binomial(1, eps)
 
     def forward(self, x, target, epoch):
         encoder_hidden = self.enc.initHidden()
