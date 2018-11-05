@@ -116,7 +116,7 @@ def kld_gauss(mean_1, std_1, mean_2, std_2):
             std_2.pow(2) - 1)
         return  0.5 * torch.sum(kld_element)
 
-def train(train_loader, val_loader, model, lr, args, dataDict):
+def train(train_loader, val_loader, model, lr, args, dataDict, epoch):
     clip = 10
     train_loss = 0.0
     val_loss = 0.0
@@ -130,7 +130,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict):
         data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1).requires_grad_()
         target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1).requires_grad_()
         optimizer.zero_grad()
-        output = model(data)
+        output = model(data, target, epoch)
         #print("output", output[0,0,:5])
         #print("target", target[0,0,:5])
         if args.model == "vrnn":

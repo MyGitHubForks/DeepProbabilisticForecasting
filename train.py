@@ -35,7 +35,9 @@ parser.add_argument("--down_sample", type=float, default=0.8, help="Keep this fr
 parser.add_argument("--data_dir", type=str, default="./data")
 parser.add_argument("--model", type=str, default="rnn")
 parser.add_argument("--weight_decay", type=float, default=5e-2)
-
+parser.add_argument("--no_schedule_sampling", action="store_true", default=False)
+parser.add_argument("--scheduling_start", type=float, default=0.5)
+parser.add_argument("--scheduling_end", type=float, default=0)
 def train(suggestions=None):
     saveDir = './save/models/model0/'
     while os.path.isdir(saveDir):
@@ -59,6 +61,8 @@ def train(suggestions=None):
     args.use_attn = not args.no_attn
     args.x_dim = data['x_dim']
     args.sequence_len = data['sequence_len']
+    args.use_schedule_sampling = not args.no_schedule_sampling
+
     print("generating model")
     if args.model == "vrnn":
         print("using vrnn")
@@ -83,7 +87,7 @@ def train(suggestions=None):
         print("epoch {}".format(epoch))
         if not args.no_lr_decay and epoch > args.lr_decay_beginning and epoch % args.lr_decay_every:
             lr = lr * (1 - args.lr_decay_ratio)
-        avgTrainLoss, avgValLoss = utils.train(data['train_loader'].get_iterator(), data['val_loader'].get_iterator(), model, lr, args, data)
+        avgTrainLoss, avgValLoss = utils.train(data['train_loader'].get_iterator(), data['val_loader'].get_iterator(), model, lr, args, data, epoch)
         if (epoch % args.plot_every) == 0:
             trainLosses.append(avgTrainLoss)
             valLosses.append(avgValLoss)

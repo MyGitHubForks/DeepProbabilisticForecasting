@@ -5,6 +5,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.nn import Parameter
 from torch.autograd import Variable
+import numpy as np
 
 class EncoderRNN(nn.Module):
     def __init__(self, input_size, hidden_size, n_layers=1, args=None):
@@ -128,10 +129,20 @@ class Seq2Seq(nn.Module):
         else:
             self.dec = DecoderRNN(self.args.h_dim, self.args.x_dim, args=args)
 
+        self.use_schedule_sampling = args.use_schedule_sampling
+        self.scheduling_start = args.scheduling_start
+        self.scheduleing_end = args.scheduleing_end
+
     def parameters(self):
         return list(self.enc.parameters()) + list(self.dec.parameters())
 
-    def forward(self, x):
+    def scheduleSample(self, epoch):
+        eps = max(self.args.scheduling_start - 
+            (self.args.scheduling_start - self.args.scheduleing_end)* epoch / self.args.n_epochs,
+            self.args.scheduleing_end)
+        return np.random.binomial(eps)
+
+    def forward(self, x, target, epoch):
         encoder_hidden = self.enc.initHidden()
         #print("seq2seq forward x size",x.size())
         hs = []
@@ -146,16 +157,22 @@ class Seq2Seq(nn.Module):
         inp = Variable(torch.zeros(self.args.batch_size, self.args.x_dim))
         if self.args.cuda: inp = inp.cuda()
         ys = []
-
+        sample = self.scheduleSample(epoch)
         if self.args.use_attn:
             for t in range(self.args.sequence_len):
                 decoder_output, decoder_hidden = self.dec(inp, decoder_hidden, hs)
-                inp = decoder_output
+                if sample:
+                    inp = target[t-1]
+                else:
+                    inp = decoder_output
                 ys += [decoder_output]
         else:
             for t in range(self.args.sequence_len):
                 decoder_output, decoder_hidden = self.dec(inp, decoder_hidden)
-                inp = decoder_output
+                if sample:
+                    inp = target[t-1]
+                else:
+                    inp = decoder_output
                 ys += [decoder_output]
         #uncomment to stop after 1 iteration
         return torch.cat([torch.unsqueeze(y, dim=0) for y in ys])
