@@ -17,7 +17,7 @@ def load_dataset(dataset_dir, batch_size, down_sample=None, **kwargs):
     for category in ['train', 'val', 'test']:
         print(category)
         cat_data = np.load(os.path.join(dataset_dir, category + '.npz'))
-        if down_sample and category=="train":
+        if down_sample:
             nRows = cat_data['x'].shape[0]
             down_sampled_rows = np.random.choice(range(nRows), size=np.ceil(nRows * down_sample).astype(int), replace=False)
             data['x_' + category] = cat_data['x'][down_sampled_rows,:,:,0]
@@ -137,7 +137,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict):
             encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds, all_samples = output
             # Calculate KLDivergence part
             loss = 0.0
-            for enc_mean_t, enc_std_t, decoder_mean_t, decoder_std_t, prior_mean_t, prior_std_t, sample in zip(encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds):
+            for enc_mean_t, enc_std_t, decoder_mean_t, decoder_std_t, prior_mean_t, prior_std_t, sample in zip(encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds, all_samples):
                 kldLoss = kld_gauss(enc_mean_t, enc_std_t, prior_mean_t, prior_std_t)
                 loss += kldLoss
 
