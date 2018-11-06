@@ -19,7 +19,7 @@ parser.add_argument("--z_dim", type=int, default=256)
 parser.add_argument('--no_cuda', action='store_true', default=False,
                                         help='disables CUDA training')
 parser.add_argument("--no_attn", action="store_true", default=True, help="Do not use AttnDecoder")
-parser.add_argument("--n_epochs", type=int, default=20)
+parser.add_argument("--n_epochs", type=int, default=40)
 parser.add_argument("--batch_size", type=int, default= 1)
 parser.add_argument("--n_layers", type=int, default=2)
 parser.add_argument("--initial_lr", type=float, default=1e-3)
@@ -31,14 +31,16 @@ parser.add_argument("--print_every", type=int, default = 20)
 parser.add_argument("--plot_every", type=int, default = 1)
 parser.add_argument("--criterion", type=str, default="L1Loss")
 parser.add_argument("--save_freq", type=int, default=10)
-parser.add_argument("--down_sample", type=float, default=0.8, help="Keep this fraction of the training data")
+parser.add_argument("--down_sample", type=float, default=0, help="Keep this fraction of the training data")
 parser.add_argument("--data_dir", type=str, default="./data")
 parser.add_argument("--model", type=str, default="rnn")
 parser.add_argument("--weight_decay", type=float, default=5e-2)
 parser.add_argument("--no_schedule_sampling", action="store_true", default=False)
 parser.add_argument("--scheduling_start", type=float, default=0.5)
 parser.add_argument("--scheduling_end", type=float, default=0)
-def train(suggestions=None):
+parser.add_argument("--tries", type=int, default=10)
+
+def trainF(suggestions=None):
     saveDir = './save/models/model0/'
     while os.path.isdir(saveDir):
         numStart = saveDir.rfind("model")+5
@@ -48,6 +50,7 @@ def train(suggestions=None):
     args = parser.parse_args()
     args.save_dir = saveDir
     if suggestions:
+        args.model = suggestions["model"]
         args.h_dim = suggestions["h_dim"]
         args.z_dim = suggestions["z_dim"]
         args.batch_size = suggestions["batch_size"]
@@ -132,6 +135,6 @@ def train(suggestions=None):
     return trainLosses[-1], valLosses[-1], saveDir
 
 if __name__ == '__main__':
-        cProfile.run("train()", "restats")
+        cProfile.run("trainF()", "restats")
         p = pstats.Stats('restats')
         p.sort_stats("tottime").print_stats(10)
