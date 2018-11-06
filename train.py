@@ -19,7 +19,7 @@ parser.add_argument("--z_dim", type=int, default=256)
 parser.add_argument('--no_cuda', action='store_true', default=False,
                                         help='disables CUDA training')
 parser.add_argument("--no_attn", action="store_true", default=True, help="Do not use AttnDecoder")
-parser.add_argument("--n_epochs", type=int, default=600)
+parser.add_argument("--n_epochs", type=int, default=20)
 parser.add_argument("--batch_size", type=int, default= 1)
 parser.add_argument("--n_layers", type=int, default=2)
 parser.add_argument("--initial_lr", type=float, default=1e-3)
