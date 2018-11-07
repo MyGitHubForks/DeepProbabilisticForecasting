@@ -4,31 +4,35 @@ import os
 import numpy as np
 import argparse
 
-params = {"h_dim": (250, 1024),
-	"z_dim": (250, 1024),
-	"batch_size": (16, 257),
-	"n_layers": (1,4),
-	"initial_lr": (-5, -3),
-	"weight_decay": (-8, -2),
-	"scheduling_start": (.3, .8),
-	"scheduling_end": (0.0, 0.3)}
+params = {"h_dim": (4, 9, 2),
+	"z_dim": (4, 9, 2),
+	"batch_size": (1, 10, 5),
+	"n_layers": (1, 3, 1),
+	"initial_lr": (-4, -2, 10)}
+
+def getSaveDir():
+    saveDir = './save/models/model0/'
+    while os.path.isdir(saveDir):
+        numStart = saveDir.rfind("model")+5
+        numEnd = saveDir.rfind("/")
+        saveDir = saveDir[:numStart] + str(int(saveDir[numStart:numEnd])+1) + "/"
+    os.mkdir(saveDir)
+    return saveDir
 
 def getParams(args):
 	p = {}
+	p["save_dir"] = getSaveDir()
 	p["model"] = args.model
-	for key in ["h_dim", "z_dim", "batch_size", "n_layers"]:
+	for key in ["batch_size", "n_layers"]:
 		vals = params[key]
-		p[key] = np.random.randint(vals[0], vals[1])
+		p[key] = np.random.randint(vals[0], vals[1]) * vals[2]
+		print(key, p[key])
 
-	for key in ["weight_decay", "initial_lr"]:
+	for key in ["h_dim", "z_dim", "initial_lr"]:
 		vals = params[key]
-		possib = np.logspace(vals[0], vals[1], num=5)
+		possib = np.logspace(vals[0], vals[1], base=vals[2], num=vals[1]-vals[0]+1)
 		p[key] = np.random.choice(possib)
-
-	for key in ["scheduling_end", "scheduling_start"]:
-		vals = params[key]
-		possib = np.linspace(vals[0], vals[1], num=5)
-		p[key] = np.random.choice(possib)
+		print(key, p[key])
 	return p
 
 def runExperiment(args):

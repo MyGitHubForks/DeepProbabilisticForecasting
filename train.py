@@ -36,30 +36,28 @@ parser.add_argument("--data_dir", type=str, default="./data")
 parser.add_argument("--model", type=str, default="rnn")
 parser.add_argument("--weight_decay", type=float, default=5e-2)
 parser.add_argument("--no_schedule_sampling", action="store_true", default=False)
-parser.add_argument("--scheduling_start", type=float, default=0.5)
-parser.add_argument("--scheduling_end", type=float, default=0)
+parser.add_argument("--scheduling_start", type=float, default=1.0)
+parser.add_argument("--scheduling_end", type=float, default=0.0)
 parser.add_argument("--tries", type=int, default=10)
 
 def trainF(suggestions=None):
-    saveDir = './save/models/model0/'
-    while os.path.isdir(saveDir):
-        numStart = saveDir.rfind("model")+5
-        numEnd = saveDir.rfind("/")
-        saveDir = saveDir[:numStart] + str(int(saveDir[numStart:numEnd])+1) + "/"
-    os.mkdir(saveDir)
     args = parser.parse_args()
-    args.save_dir = saveDir
+    if not suggestions:
+        saveDir = './save/models/model0/'
+        while os.path.isdir(saveDir):
+            numStart = saveDir.rfind("model")+5
+            numEnd = saveDir.rfind("/")
+            saveDir = saveDir[:numStart] + str(int(saveDir[numStart:numEnd])+1) + "/"
+        os.mkdir(saveDir)
+        args.save_dir = saveDir
     if suggestions:
         args.model = suggestions["model"]
-        args.h_dim = suggestions["h_dim"]
-        args.z_dim = suggestions["z_dim"]
+        args.h_dim = int(suggestions["h_dim"])
+        args.z_dim = int(suggestions["z_dim"])
         args.batch_size = suggestions["batch_size"]
         args.n_layers = suggestions["n_layers"]
         args.initial_lr = suggestions["initial_lr"]
-        args.weight_decay = suggestions["weight_decay"]
-        args.scheduling_start = suggestions["scheduling_start"]
-        args.scheduling_end = suggestions["scheduling_end"]
-        #args.n_epochs = suggestions["n_epochs"]
+        args.save_dir = suggestions["save_dir"]
 
     print("loading data")
     data = utils.load_dataset(args.data_dir, args.batch_size, down_sample=args.down_sample)
@@ -88,7 +86,7 @@ def trainF(suggestions=None):
     trainLosses = []
     valLosses = []
     lr = args.initial_lr
-    argsFile = saveDir + "args.txt"
+    argsFile = args.save_dir + "args.txt"
     with open(argsFile, "w") as f:
         f.write(json.dumps(vars(args)))
     print("saved args to "+argsFile)
@@ -103,10 +101,10 @@ def trainF(suggestions=None):
             valLosses.append(avgValLoss)
         #saving model
         if (epoch % args.save_freq) == 0:
-            fn = saveDir+'{}_state_dict_'.format(args.model)+str(epoch)+'.pth'
+            fn = args.save_dir+'{}_state_dict_'.format(args.model)+str(epoch)+'.pth'
             torch.save(model.state_dict(), fn)
             print('Saved model to '+fn)
-    model_fn = saveDir + '{}_full_model'.format(args.model) +".pth"
+    model_fn = args.save_dir + '{}_full_model'.format(args.model) +".pth"
     torch.save(model, model_fn)
     utils.plotTrainValCurve(trainLosses, valLosses, args.model, args.criterion, args)
     predsV, targetsV, datasV, meansV, stdsV = utils.getPredictions(args, data['val_loader'].get_iterator(), model, data["x_val_mean"], data["x_val_std"], data["y_val_mean"], data["y_val_std"])
@@ -115,23 +113,23 @@ def trainF(suggestions=None):
 
     # Save predictions based on model output
     if args.model == "rnn":
-        torch.save(predsT, saveDir+"train_preds")
-        torch.save(targetsT, saveDir+"train_targets")
-        torch.save(datasT, saveDir+"train_datas")
-        torch.save(predsV, saveDir+"validation_preds")
-        torch.save(targetsV, saveDir+"validation_targets")
-        torch.save(datasV, saveDir+"validation_datas")
+        torch.save(predsT, args.save_dir+"train_preds")
+        torch.save(targetsT, args.save_dir+"train_targets")
+        torch.save(datasT, args.save_dir+"train_datas")
+        torch.save(predsV, args.save_dir+"validation_preds")
+        torch.save(targetsV, args.save_dir+"validation_targets")
+        torch.save(datasV, args.save_dir+"validation_datas")
     elif args.model == "vrnn":
         # Save train prediction data
-        torch.save(meansT, saveDir+"train_means")
-        torch.save(stdsT, saveDir+"train_stds")
-        torch.save(targetsT, saveDir+"train_targets")
-        torch.save(datasT, saveDir+"train_datas")
+        torch.save(meansT, args.save_dir+"train_means")
+        torch.save(stdsT, args.save_dir+"train_stds")
+        torch.save(targetsT, args.save_dir+"train_targets")
+        torch.save(datasT, args.save_dir+"train_datas")
         # Validation prediction data
-        torch.save(meansV, saveDir+"validation_means")
-        torch.save(stdsV, saveDir+"validation_stds")
-        torch.save(targetsV, saveDir+"validation_targets")
-        torch.save(datasV, saveDir+"validation_datas")
+        torch.save(meansV, args.save_dir+"validation_means")
+        torch.save(stdsV, args.save_dir+"validation_stds")
+        torch.save(targetsV, args.save_dir+"validation_targets")
+        torch.save(datasV, args.save_dir+"validation_datas")
     return trainLosses[-1], valLosses[-1], saveDir
 
 if __name__ == '__main__':
