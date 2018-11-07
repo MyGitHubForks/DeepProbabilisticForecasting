@@ -3,3 +3,4 @@ data/
 restats
 save/
 utils.py~
+*.out
