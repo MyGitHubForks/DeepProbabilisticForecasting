@@ -90,13 +90,15 @@ def get_model(args):
         model = model.cuda()
     return model
 
+
 def save_args(args):
     argsFile = args.save_dir + "args.txt"
     with open(argsFile, "w") as f:
         f.write(json.dumps(vars(args)))
     print("saved args to "+argsFile)
 
-def runEpoch(lr, epoch, args, data):
+
+def runEpoch(lr, epoch, args, data, model):
     print("epoch {}".format(epoch))
     if not args.no_lr_decay and epoch > args.lr_decay_beginning and epoch % args.lr_decay_every:
         lr = lr * (1 - args.lr_decay_ratio)
@@ -116,7 +118,7 @@ def trainF(suggestions=None):
     lr = args.initial_lr
     print("beginning training")
     for epoch in range(1, args.n_epochs + 1):
-        avgTrainLoss, avgValLoss, lr = runEpoch(lr, epoch, args, data)
+        avgTrainLoss, avgValLoss, lr = runEpoch(lr, epoch, args, data, model)
         # Add to plot data
         if (epoch % args.plot_every) == 0:
             trainLosses.append(avgTrainLoss)
@@ -130,9 +132,21 @@ def trainF(suggestions=None):
     model_fn = args.save_dir + '{}_full_model'.format(args.model) +".pth"
     torch.save(model, model_fn)
     utils.plotTrainValCurve(trainLosses, valLosses, args.model, args.criterion, args)
-    predsV, targetsV, datasV, meansV, stdsV = utils.getPredictions(args, data['val_loader'].get_iterator(), model, data["x_val_mean"], data["x_val_std"], data["y_val_mean"], data["y_val_std"])
+    predsV, targetsV, datasV, meansV, stdsV = utils.getPredictions(args,
+                                                                   data['val_loader'].get_iterator(),
+                                                                   model,
+                                                                   data["x_val_mean"],
+                                                                   data["x_val_std"],
+                                                                   data["y_val_mean"],
+                                                                   data["y_val_std"])
     
-    predsT, targetsT, datasT, meansT, stdsT = utils.getPredictions(args, data['train_loader'].get_iterator(), model, data["x_train_mean"], data["x_train_std"], data["y_train_mean"], data["y_train_std"])
+    predsT, targetsT, datasT, meansT, stdsT = utils.getPredictions(args,
+                                                                   data['train_loader'].get_iterator(),
+                                                                   model,
+                                                                   data["x_train_mean"],
+                                                                   data["x_train_std"],
+                                                                   data["y_train_mean"],
+                                                                   data["y_train_std"])
 
     # Save predictions based on model output
     if args.model == "rnn":
