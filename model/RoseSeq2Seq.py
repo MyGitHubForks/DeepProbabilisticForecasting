@@ -120,8 +120,6 @@ class Seq2Seq(nn.Module):
         super(Seq2Seq, self).__init__()
         self.args = args
 
-        T = torch.cuda if self.args.cuda else torch
-
         self.enc = EncoderRNN(self.args.x_dim, self.args.h_dim, args=args)
 
         if self.args.use_attn:

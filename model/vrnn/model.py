@@ -124,7 +124,7 @@ class VRNN(nn.Module):
 		sample = torch.zeros(seq_len, self.x_dim)
 
 		h = Variable(torch.zeros(self.n_layers, 1, self.h_dim))
-		if self.cuda:
+		if self.useCuda:
 			h = h.cuda()
 
 		for t in range(seq_len):

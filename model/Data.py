@@ -2,22 +2,6 @@ import torch
 import numpy as np
 from torch.utils import data
 
-# class DataLoader(data.Dataset):
-#     def __init__(self, dataPath, batch_size):
-#         self.data = np.load(dataPath)
-#         self.batch_size = batch_size
-#         self._device = "cuda: 0" if torch.cuda.is_available() else "cpu"
-
-#         self.size = 
-#     def __len__(self):
-#         #total number of samples
-#         return self.data["x"].shape[0]
-
-#     def __getitem__(self, index):
-#         x = torch.FloatTensor(self.data["x"][index, :, :, 0], device=self._device)
-#         y = torch.FloatTensor(self.data["y"][index, :, :, 0], device=self._device)
-#         return x, y
-
 class DataLoader(object):
     def __init__(self, xs, ys, batch_size, pad_with_last_sample=True, shuffle=True):
         """

@@ -40,7 +40,7 @@ parser.add_argument("--scheduling_start", type=float, default=1.0)
 parser.add_argument("--scheduling_end", type=float, default=0.0)
 parser.add_argument("--tries", type=int, default=10)
 
-def trainF(suggestions=None):
+def get_args(suggestions):
     args = parser.parse_args()
     if not suggestions:
         saveDir = './save/models/model0/'
@@ -58,9 +58,14 @@ def trainF(suggestions=None):
         args.n_layers = suggestions["n_layers"]
         args.initial_lr = suggestions["initial_lr"]
         args.save_dir = suggestions["save_dir"]
+    return args
 
+def load_data(args):
     print("loading data")
     data = utils.load_dataset(args.data_dir, args.batch_size, down_sample=args.down_sample)
+    return data
+
+def set_data_params(args, data):
     print("setting additional params")
     # Set additional arguments
     args.cuda = not args.no_cuda and torch.cuda.is_available()
@@ -69,8 +74,9 @@ def trainF(suggestions=None):
     args.x_dim = data['x_dim']
     args.sequence_len = data['sequence_len']
     args.use_schedule_sampling = not args.no_schedule_sampling
-    print("use schedule sampling", args.use_schedule_sampling)
+    return args
 
+def get_model(args):
     print("generating model")
     if args.model == "vrnn":
         print("using vrnn")
@@ -82,28 +88,45 @@ def trainF(suggestions=None):
         assert False, "Model incorrectly specified"
     if args.cuda:
         model = model.cuda()
+    return model
 
-    trainLosses = []
-    valLosses = []
-    lr = args.initial_lr
+def save_args(args):
     argsFile = args.save_dir + "args.txt"
     with open(argsFile, "w") as f:
         f.write(json.dumps(vars(args)))
     print("saved args to "+argsFile)
+
+def runEpoch(lr, epoch, args, data):
+    print("epoch {}".format(epoch))
+    if not args.no_lr_decay and epoch > args.lr_decay_beginning and epoch % args.lr_decay_every:
+        lr = lr * (1 - args.lr_decay_ratio)
+    avgTrainLoss, avgValLoss = utils.train(data['train_loader'].get_iterator(),
+        data['val_loader'].get_iterator(),
+        model, lr, args, data, epoch)
+    return avgTrainLoss, avgValLoss, lr
+
+def trainF(suggestions=None):
+    args = get_args(suggestions)
+    data = load_data(args)
+    args = set_data_params(args, data)
+    save_args(args)
+    model = get_model(args)
+    trainLosses = []
+    valLosses = []
+    lr = args.initial_lr
     print("beginning training")
     for epoch in range(1, args.n_epochs + 1):
-        print("epoch {}".format(epoch))
-        if not args.no_lr_decay and epoch > args.lr_decay_beginning and epoch % args.lr_decay_every:
-            lr = lr * (1 - args.lr_decay_ratio)
-        avgTrainLoss, avgValLoss = utils.train(data['train_loader'].get_iterator(), data['val_loader'].get_iterator(), model, lr, args, data, epoch)
+        avgTrainLoss, avgValLoss, lr = runEpoch(lr, epoch, args, data)
+        # Add to plot data
         if (epoch % args.plot_every) == 0:
             trainLosses.append(avgTrainLoss)
             valLosses.append(avgValLoss)
-        #saving model
+        #Save model
         if (epoch % args.save_freq) == 0:
             fn = args.save_dir+'{}_state_dict_'.format(args.model)+str(epoch)+'.pth'
             torch.save(model.state_dict(), fn)
             print('Saved model to '+fn)
+    print("Done training")
     model_fn = args.save_dir + '{}_full_model'.format(args.model) +".pth"
     torch.save(model, model_fn)
     utils.plotTrainValCurve(trainLosses, valLosses, args.model, args.criterion, args)
