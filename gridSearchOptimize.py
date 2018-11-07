@@ -19,9 +19,9 @@ def getSaveDir():
     os.mkdir(saveDir)
     return saveDir
 
-def getParams(args):
+def getParams(args, saveDir):
 	p = {}
-	p["save_dir"] = getSaveDir()
+	p["save_dir"] = saveDir
 	p["model"] = args.model
 	for key in ["batch_size", "n_layers"]:
 		vals = params[key]
@@ -35,8 +35,8 @@ def getParams(args):
 		print(key, p[key])
 	return p
 
-def runExperiment(args):
-	p = getParams(args)
+def runExperiment(args, saveDir):
+	p = getParams(args, saveDir)
 	return trainF(p)
 
 def getSaveFile():
@@ -54,9 +54,10 @@ def getSaveFile():
 def main():
 	args = parser.parse_args()
 	tries = args.tries
-	saveFile = getSaveFile()
-	results = Parallel(n_jobs=3)(delayed(runExperiment)(args) for i in range(tries)) # train, val, saveDir
+	saveDirs = [getSaveDir() for i in range(tries)]
+	results = Parallel(n_jobs=10)(delayed(runExperiment)(args, saveDirs[i]) for i in range(tries)) # train, val, saveDir
 	results = sorted(results, key=lambda x: x[1])
+	saveFile = getSaveFile()
 	with open(saveFile, "w+") as f:
 		f.write("Save Directory\t\tTrain Loss\t\tValidation Loss\n")
 		for tup in results:
