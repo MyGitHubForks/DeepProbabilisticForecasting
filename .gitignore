@@ -4,3 +4,7 @@ restats
 save/
 utils.py~
 *.out
+.idea/
+.ipynb_checkpoints/
+figs/
+scripts/
