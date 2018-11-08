@@ -108,7 +108,7 @@ def runEpoch(lr, epoch, args, data, model):
         model, lr, args, data, epoch)
     return avgTrainLoss, avgValLoss, lr
 
-@profile
+
 def trainF(suggestions=None):
     args = get_args(suggestions)
     data = load_data(args)

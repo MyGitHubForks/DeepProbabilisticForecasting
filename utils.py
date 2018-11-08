@@ -228,7 +228,6 @@ def getValLoss(args, dataDict, target, output):
     else:
         return loss.item()
 
-@profile
 def train(train_loader, val_loader, model, lr, args, dataDict, epoch):
     clip = 10
     train_loss = 0.0
