@@ -131,8 +131,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch):
         target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1).requires_grad_()
         optimizer.zero_grad()
         output = model(data, target, epoch)
-        #print("output", output[0,0,:5])
-        #print("target", target[0,0,:5])
+        del data
         if args.model == "vrnn":
             encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds, all_samples = output
             # Calculate KLDivergence part
@@ -145,6 +144,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch):
             pred = torch.cat([torch.unsqueeze(y, dim=0) for y in all_samples])
             unNPred = unNormalize(pred.detach(), dataDict["y_train_mean"], dataDict["y_train_std"])
             unNTarget = unNormalize(target.detach(), dataDict["y_train_mean"], dataDict["y_train_std"])
+            assert pred.size() == target.size()
             if args.criterion == "RMSE":
                 predLoss = torch.sqrt(torch.mean((pred - target)**2))    
                 unNormalizedLoss = torch.sqrt(torch.mean((unNPred - unNTarget)))
@@ -188,6 +188,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch):
             data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
             target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
             output = model(data, target, 0, noSample=True)
+            del data
             if args.model == "vrnn":
                 encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds, all_samples = output
                 pred = torch.cat([torch.unsqueeze(y, dim=0) for y in all_samples])
