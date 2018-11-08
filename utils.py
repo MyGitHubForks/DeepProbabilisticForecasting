@@ -10,7 +10,7 @@ import os
 from model.Data import DataLoader
 
 def normalizeData(x, y):
-    allData = npstack((x,y), axis=1)
+    allData = np.stack((x,y), axis=1)
     mean = np.mean(allData)
     std = np.std(allData)
     return (x-mean)/std, (y-mean)/std, mean, std
