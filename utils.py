@@ -28,7 +28,7 @@ def load_dataset(dataset_dir, batch_size, down_sample=None, **kwargs):
         else:
             data['x_' + category] = cat_data['x'][:,:,:,0]
             data['y_' + category] = cat_data['y'][:,:,:,0]
-        data["x_"+category], data["y_"+category], data[category+"_mean"], data[category+"_std"] =
+        data["x_"+category], data["y_"+category], data[category+"_mean"], data[category+"_std"] =\
          normalizeData(data["x_"+category], data["y_"+category])
     data['sequence_len'] = cat_data['x'].shape[1]
     data['x_dim'] = cat_data['x'].shape[2]
@@ -101,9 +101,9 @@ def getPredictions(args, data_loader, model, mean, std):
                 del all_prior_mean
                 del all_prior_std
                 del all_samples
-                decoder_means_mat = np.concatenate([torch.unsqueeze(y, dim=0).cpu().data.numpy()
+                decoder_means_mat = np.concatenate([torch.unsqueeze(y, dim=0).cpu().data.numpy()\
                  for y in all_dec_mean], axis=0)
-                decoder_std_mat = np.concatenate([torch.unsqueeze(y, dim=0).cpu().data.numpy()
+                decoder_std_mat = np.concatenate([torch.unsqueeze(y, dim=0).cpu().data.numpy()\
                  for y in all_dec_std], axis=0)
                 means.append(decoder_means_mat)
                 stds.append(decoder_std_mat)
