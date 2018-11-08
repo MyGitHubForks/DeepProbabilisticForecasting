@@ -130,8 +130,6 @@ def kld_gauss(mean_1, std_1, mean_2, std_2):
 
 
 def runBatch(data, target, optimizer, model, args, epoch):
-    data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0, 1).requires_grad_()
-    target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0, 1).requires_grad_()
     optimizer.zero_grad()
     output = model(data, target, epoch)
     return output
@@ -169,8 +167,6 @@ def getRNNLoss(output, target, dataDict, args):
     elif args.criterion == "L1Loss":
         o = unNormalize(output, dataDict["y_train_mean"], dataDict["y_train_std"])
         t = unNormalize(target, dataDict["y_train_mean"], dataDict["y_train_std"])
-        print(type(o))
-        print(type(t))
         loss = torch.mean(torch.abs(o - t))
     else:
         assert False, "bad loss function"
@@ -247,6 +243,8 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch):
     # Train
     nTrainBatches = 0
     for batch_idx, (data, target) in enumerate(train_loader):
+        data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0, 1).requires_grad_()
+        target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0, 1).requires_grad_()
         nTrainBatches += 1
         output = runBatch(data, target, optimizer, model, args, epoch)
         bLoss = backProp(output, target, dataDict, args, optimizer, model, clip)
