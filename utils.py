@@ -169,6 +169,8 @@ def getRNNLoss(output, target, dataDict, args):
     elif args.criterion == "L1Loss":
         o = unNormalize(output, dataDict["y_train_mean"], dataDict["y_train_std"])
         t = unNormalize(target, dataDict["y_train_mean"], dataDict["y_train_std"])
+        print(type(o))
+        print(type(t))
         loss = torch.mean(torch.abs(o - t))
     else:
         assert False, "bad loss function"
