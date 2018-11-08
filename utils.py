@@ -9,8 +9,11 @@ import numpy as np
 import os
 from model.Data import DataLoader
 
-def normalizeData(data):
-    return (data - np.mean(data))/np.std(data), np.mean(data), np.std(data)
+def normalizeData(x, y):
+    allData = npstack((x,y), axis=1)
+    mean = np.mean(allData)
+    std = np.std(allData)
+    return (x-mean)/std, (y-mean)/std, mean, std
 
 def load_dataset(dataset_dir, batch_size, down_sample=None, **kwargs):
     data = {}
@@ -25,8 +28,8 @@ def load_dataset(dataset_dir, batch_size, down_sample=None, **kwargs):
         else:
             data['x_' + category] = cat_data['x'][:,:,:,0]
             data['y_' + category] = cat_data['y'][:,:,:,0]
-        data["x_"+category], data["x_"+category+"_mean"], data["x_"+category+"_std"] = normalizeData(data["x_"+category])
-        data["y_"+category], data["y_"+category+"_mean"], data["y_"+category+"_std"] = normalizeData(data["y_"+category])
+        data["x_"+category], data["y_"+category], data[category+"_mean"], data[category+"_std"] =
+         normalizeData(data["x_"+category], data["y_"+category])
     data['sequence_len'] = cat_data['x'].shape[1]
     data['x_dim'] = cat_data['x'].shape[2]
     assert data['sequence_len'] == 12
@@ -75,7 +78,7 @@ def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription
 def unNormalize(val, mean, std):
     return (val *std)+mean
 
-def getPredictions(args, data_loader, model, xMean, xStd, yMean, yStd):
+def getPredictions(args, data_loader, model, mean, std):
     targets = []
     preds = []
     datas = []
@@ -85,25 +88,28 @@ def getPredictions(args, data_loader, model, xMean, xStd, yMean, yStd):
         for batch_idx, (data, target) in enumerate(data_loader):
             data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
             target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
-            targets.append(unNormalize(target, yMean,yStd))
-            datas.append(unNormalize(data, xMean, xStd))
+            targets.append(unNormalize(target, mean, std))
+            datas.append(unNormalize(data, mean, std))
             modelOutput = model(data, target, 0, noSample=True)
             del target
             del data
             if args.model == "vrnn":
-                all_enc_mean, all_enc_std, all_dec_mean, all_dec_std, all_prior_mean, all_prior_std, all_samples = modelOutput
+                all_enc_mean, all_enc_std, all_dec_mean, all_dec_std,
+                all_prior_mean, all_prior_std, all_samples = modelOutput
                 del all_enc_mean
                 del all_enc_std
                 del all_prior_mean
                 del all_prior_std
                 del all_samples
-                decoder_means_mat = np.concatenate([torch.unsqueeze(y, dim=0).cpu().data.numpy() for y in all_dec_mean], axis=0)
-                decoder_std_mat = np.concatenate([torch.unsqueeze(y, dim=0).cpu().data.numpy() for y in all_dec_std], axis=0)
-                means.append(unNormalize(decoder_means_mat, yMean, yStd))
-                stds.append(unNormalize(decoder_std_mat, yMean, yStd))
+                decoder_means_mat = np.concatenate([torch.unsqueeze(y, dim=0).cpu().data.numpy()
+                 for y in all_dec_mean], axis=0)
+                decoder_std_mat = np.concatenate([torch.unsqueeze(y, dim=0).cpu().data.numpy()
+                 for y in all_dec_std], axis=0)
+                means.append(decoder_means_mat)
+                stds.append(decoder_std_mat)
             elif args.model=="rnn":
                 output = modelOutput.cpu().detach()
-                preds.append(unNormalize(output, yMean, yStd))
+                preds.append(unNormalize(output, mean, std))
             else:
                 assert False, "can't match model"  
         return preds, targets, datas, means, stds
@@ -142,8 +148,8 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch):
 
             #Calculate Prediction Loss
             pred = torch.cat([torch.unsqueeze(y, dim=0) for y in all_samples])
-            unNPred = unNormalize(pred.detach(), dataDict["y_train_mean"], dataDict["y_train_std"])
-            unNTarget = unNormalize(target.detach(), dataDict["y_train_mean"], dataDict["y_train_std"])
+            unNPred = unNormalize(pred.detach(), dataDict["train_mean"], dataDict["train_std"])
+            unNTarget = unNormalize(target.detach(), dataDict["train_mean"], dataDict[" train_std"])
             assert pred.size() == target.size()
             if args.criterion == "RMSE":
                 predLoss = torch.sqrt(torch.mean((pred - target)**2))    
@@ -157,13 +163,13 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch):
 
 
         elif args.criterion == "RMSE":
-                o = unNormalize(output, dataDict["y_train_mean"], dataDict["y_train_std"])
-                t = unNormalize(target, dataDict["y_train_mean"], dataDict["y_train_std"])
+                o = unNormalize(output, dataDict["train_mean"], dataDict["train_std"])
+                t = unNormalize(target, dataDict["train_mean"], dataDict["train_std"])
                 loss = torch.sqrt(torch.mean((o - t)**2))
 
         elif args.criterion == "L1Loss":
-            o = unNormalize(output, dataDict["y_train_mean"], dataDict["y_train_std"])
-            t = unNormalize(target, dataDict["y_train_mean"], dataDict["y_train_std"])
+            o = unNormalize(output, dataDict["train_mean"], dataDict["train_std"])
+            t = unNormalize(target, dataDict["train_mean"], dataDict["train_std"])
             loss = torch.mean(torch.abs(o - t))
         else:
             assert False, "bad loss function"
@@ -192,8 +198,8 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch):
             if args.model == "vrnn":
                 encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds, all_samples = output
                 pred = torch.cat([torch.unsqueeze(y, dim=0) for y in all_samples])
-                unNPred = unNormalize(pred.detach(), dataDict["y_val_mean"], dataDict["y_val_std"])
-                unNTarget = unNormalize(target.detach(), dataDict["y_val_mean"], dataDict["y_val_std"])
+                unNPred = unNormalize(pred.detach(), dataDict["val_mean"], dataDict["val_std"])
+                unNTarget = unNormalize(target.detach(), dataDict["val_mean"], dataDict["val_std"])
                 if args.criterion == "RMSE":
                     predLoss = torch.sqrt(torch.mean((pred - target)**2))    
                     unNormalizedLoss = torch.sqrt(torch.mean((unNPred - unNTarget)))
@@ -205,13 +211,13 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch):
                     loss = predLoss
 
             elif args.criterion == "RMSE":
-                o = unNormalize(output, dataDict["y_val_mean"], dataDict["y_val_std"])
-                t = unNormalize(target, dataDict["y_val_mean"], dataDict["y_val_std"])
+                o = unNormalize(output, dataDict["val_mean"], dataDict["val_std"])
+                t = unNormalize(target, dataDict["val_mean"], dataDict["val_std"])
                 loss = torch.sqrt(torch.mean((o - t)**2))
 
             elif args.criterion == "L1Loss":
-                o = unNormalize(output, dataDict["y_val_mean"], dataDict["y_val_std"])
-                t = unNormalize(target, dataDict["y_val_mean"], dataDict["y_val_std"])
+                o = unNormalize(output, dataDict["val_mean"], dataDict["val_std"])
+                t = unNormalize(target, dataDict["val_mean"], dataDict["val_std"])
                 loss = torch.mean(torch.abs(o - t))
             else:
                 assert False, "bad loss function"
