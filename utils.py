@@ -149,7 +149,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch):
             #Calculate Prediction Loss
             pred = torch.cat([torch.unsqueeze(y, dim=0) for y in all_samples])
             unNPred = unNormalize(pred.detach(), dataDict["train_mean"], dataDict["train_std"])
-            unNTarget = unNormalize(target.detach(), dataDict["train_mean"], dataDict[" train_std"])
+            unNTarget = unNormalize(target.detach(), dataDict["train_mean"], dataDict["train_std"])
             assert pred.size() == target.size()
             if args.criterion == "RMSE":
                 predLoss = torch.sqrt(torch.mean((pred - target)**2))    
