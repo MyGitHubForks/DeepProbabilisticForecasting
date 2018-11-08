@@ -141,7 +141,6 @@ class Seq2Seq(nn.Module):
             self.args.scheduling_end)
         return np.random.binomial(1, eps)
 
-    @profile()
     def forward(self, x, target, epoch, noSample=False):
         encoder_hidden = self.enc.initHidden()
         #print("seq2seq forward x size",x.size())

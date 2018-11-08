@@ -41,7 +41,6 @@ parser.add_argument("--scheduling_start", type=float, default=1.0)
 parser.add_argument("--scheduling_end", type=float, default=0.0)
 parser.add_argument("--tries", type=int, default=10)
 
-@profile
 def get_args(suggestions):
     args = parser.parse_args()
     if not suggestions:
@@ -62,13 +61,11 @@ def get_args(suggestions):
         args.save_dir = suggestions["save_dir"]
     return args
 
-@profile
 def load_data(args):
     print("loading data")
     data = utils.load_dataset(args.data_dir, args.batch_size, down_sample=args.down_sample)
     return data
 
-@profile
 def set_data_params(args, data):
     print("setting additional params")
     # Set additional arguments
@@ -80,7 +77,6 @@ def set_data_params(args, data):
     args.use_schedule_sampling = not args.no_schedule_sampling
     return args
 
-@profile
 def get_model(args):
     print("generating model")
     if args.model == "vrnn":
@@ -96,7 +92,6 @@ def get_model(args):
     return model
 
 
-@profile
 def save_args(args):
     argsFile = args.save_dir + "args.txt"
     with open(argsFile, "w") as f:
@@ -104,7 +99,6 @@ def save_args(args):
     print("saved args to "+argsFile)
 
 
-@profile
 def runEpoch(lr, epoch, args, data, model):
     print("epoch {}".format(epoch))
     if not args.no_lr_decay and epoch > args.lr_decay_beginning and epoch % args.lr_decay_every:
