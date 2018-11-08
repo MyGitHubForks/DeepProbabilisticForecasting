@@ -8,12 +8,14 @@ import matplotlib.ticker as ticker
 import numpy as np
 import os
 from model.Data import DataLoader
+from memory_profiler import profile
 
-
+@profile
 def normalizeData(data):
     return (data - np.mean(data)) / np.std(data), np.mean(data), np.std(data)
 
 
+@profile
 def load_dataset(dataset_dir, batch_size, down_sample=None, **kwargs):
     data = {}
     for category in ['train', 'val', 'test']:
@@ -45,12 +47,14 @@ def load_dataset(dataset_dir, batch_size, down_sample=None, **kwargs):
     return data
 
 
+@profile
 def asMinutes(s):
     m = math.floor(s / 60)
     s -= m * 60
     return '%dm %ds' % (m, s)
 
 
+@profile
 def timeSince(since, percent):
     now = time.time()
     s = now - since
@@ -59,6 +63,7 @@ def timeSince(since, percent):
     return '%s (- %s)' % (asMinutes(s), asMinutes(rs))
 
 
+@profile
 def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription, args):
     plt.rcParams.update({'font.size': 8})
     plt.figure()
@@ -80,10 +85,12 @@ def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription
 # nll_loss += self._nll_gauss(dec_mean_t, dec_std_t, x[t])
 # nll_loss += self._nll_bernoulli(dec_mean_t, x[t])
 
+@profile
 def unNormalize(val, mean, std):
     return (val * std) + mean
 
 
+@profile
 def getPredictions(args, data_loader, model, xMean, xStd, yMean, yStd):
     targets = []
     preds = []
@@ -120,6 +127,7 @@ def getPredictions(args, data_loader, model, xMean, xStd, yMean, yStd):
         return preds, targets, datas, means, stds
 
 
+@profile
 def kld_gauss(mean_1, std_1, mean_2, std_2):
     """Using std to compute KLD"""
 
@@ -129,12 +137,14 @@ def kld_gauss(mean_1, std_1, mean_2, std_2):
     return 0.5 * torch.sum(kld_element)
 
 
+@profile
 def runBatch(data, target, optimizer, model, args, epoch):
     optimizer.zero_grad()
     output = model(data, target, epoch)
     return output
 
 
+@profile
 def getVRNNLoss(output, target, dataDict, args):
     encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds, all_samples = output
     # Calculate KLDivergence part
@@ -159,6 +169,7 @@ def getVRNNLoss(output, target, dataDict, args):
     return loss, unNormalizedLoss
 
 
+@profile
 def getRNNLoss(output, target, dataDict, args):
     if args.criterion == "RMSE":
         o = unNormalize(output, dataDict["y_train_mean"], dataDict["y_train_std"])
@@ -173,6 +184,7 @@ def getRNNLoss(output, target, dataDict, args):
     return loss
 
 
+@profile
 def backProp(output, target, dataDict, args, optimizer, model, clip):
     if args.model == "vrnn":
         loss, unNormalizedLoss = getVRNNLoss(output, target, dataDict, args)
@@ -190,11 +202,13 @@ def backProp(output, target, dataDict, args, optimizer, model, clip):
     return bLoss
 
 
+@profile
 def runValBatch(data, target, args, model):
     output = model(data, target, 0, noSample=True)
     return output
 
 
+@profile
 def getValLoss(args, dataDict, target, output):
     if args.model == "vrnn":
         encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds, all_samples = output
@@ -229,6 +243,7 @@ def getValLoss(args, dataDict, target, output):
         return loss.item()
 
 
+@profile
 def train(train_loader, val_loader, model, lr, args, dataDict, epoch):
     clip = 10
     train_loss = 0.0

@@ -6,6 +6,7 @@ import torch.optim as optim
 from torch.nn import Parameter
 from torch.autograd import Variable
 import numpy as np
+from memory_profiler import profile
 
 class EncoderRNN(nn.Module):
     def __init__(self, input_size, hidden_size, n_layers=1, args=None):
@@ -140,6 +141,7 @@ class Seq2Seq(nn.Module):
             self.args.scheduling_end)
         return np.random.binomial(1, eps)
 
+    @profile()
     def forward(self, x, target, epoch, noSample=False):
         encoder_hidden = self.enc.initHidden()
         #print("seq2seq forward x size",x.size())
