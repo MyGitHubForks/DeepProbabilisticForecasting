@@ -83,8 +83,10 @@ def trainF(suggestions=None):
     if args.cuda:
         model = model.cuda()
 
-    trainLosses = []
-    valLosses = []
+    trainReconLosses = []
+    valReconLosses = []
+    trainKLDLosses = []
+    valKLDLosses = []
     lr = args.initial_lr
     argsFile = args.save_dir + "args.txt"
     with open(argsFile, "w") as f:
@@ -95,10 +97,12 @@ def trainF(suggestions=None):
         print("epoch {}".format(epoch))
         if not args.no_lr_decay and epoch > args.lr_decay_beginning and epoch % args.lr_decay_every:
             lr = lr * (1 - args.lr_decay_ratio)
-        avgTrainLoss, avgValLoss = utils.train(data['train_loader'].get_iterator(), data['val_loader'].get_iterator(), model, lr, args, data, epoch)
+        avgTrainReconLoss, avgTrainKLDLoss, avgValReconLoss, avgValKLDLoss = utils.train(data['train_loader'].get_iterator(), data['val_loader'].get_iterator(), model, lr, args, data, epoch)
         if (epoch % args.plot_every) == 0:
-            trainLosses.append(avgTrainLoss)
-            valLosses.append(avgValLoss)
+            trainReconLosses.append(avgTrainReconLoss)
+            valReconLosses.append(avgValReconLoss)
+            trainKLDLosses.append(avgTrainKLDLoss)
+            valKLDLosses.append(avgValKLDLoss)
         #saving model
         if (epoch % args.save_freq) == 0:
             fn = args.save_dir+'{}_state_dict_'.format(args.model)+str(epoch)+'.pth'
@@ -106,7 +110,7 @@ def trainF(suggestions=None):
             print('Saved model to '+fn)
     model_fn = args.save_dir + '{}_full_model'.format(args.model) +".pth"
     torch.save(model, model_fn)
-    utils.plotTrainValCurve(trainLosses, valLosses, args.model, args.criterion, args)
+    utils.plotTrainValCurve(trainReconLosses, valReconLosses, args.model, args.criterion, args, trainKLDLosses=trainKLDLosses, valKLDLosses=valKLDLosses)
     predsV, targetsV, datasV, meansV, stdsV = utils.getPredictions(args,\
         data['val_loader'].get_iterator(), model, data["val_mean"], data["val_std"])
     
