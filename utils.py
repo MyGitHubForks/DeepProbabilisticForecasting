@@ -191,8 +191,6 @@ def backProp(output, target, dataDict, args, optimizer, model, clip):
 
 
 def runValBatch(data, target, args, model):
-    data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0, 1)
-    target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0, 1)
     output = model(data, target, 0, noSample=True)
     return output
 
@@ -256,6 +254,8 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch):
     with torch.no_grad():
         nValBatches += 1
         for batch_idx, (data, target) in enumerate(val_loader):
+            data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0, 1)
+            target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0, 1)
             output = runValBatch(data, target, args, model)
             val_loss += getValLoss(args, dataDict, target, output)
     avgTrainLoss = train_loss / nTrainBatches
