@@ -127,11 +127,15 @@ def trainF(suggestions=None):
         torch.save(stdsT, args.save_dir+"train_stds")
         torch.save(targetsT, args.save_dir+"train_targets")
         torch.save(datasT, args.save_dir+"train_datas")
+        torch.save(data["train_mean"], args.save_dir+"train_mean")
+        torch.save(data["train_std"], args.save_dir+"train_std")
         # Validation prediction data
         torch.save(meansV, args.save_dir+"validation_means")
         torch.save(stdsV, args.save_dir+"validation_stds")
         torch.save(targetsV, args.save_dir+"validation_targets")
         torch.save(datasV, args.save_dir+"validation_datas")
+        torch.save(data["val_mean"], args.save_dir+"val_mean")
+        torch.save(data["val_std"], args.save_dir+"val_std")
     return trainLosses[-1], valLosses[-1], args.save_dir
 
 if __name__ == '__main__':
