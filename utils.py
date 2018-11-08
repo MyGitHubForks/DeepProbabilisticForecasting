@@ -94,8 +94,7 @@ def getPredictions(args, data_loader, model, mean, std):
             del target
             del data
             if args.model == "vrnn":
-                all_enc_mean, all_enc_std, all_dec_mean, all_dec_std,
-                all_prior_mean, all_prior_std, all_samples = modelOutput
+                all_enc_mean, all_enc_std, all_dec_mean, all_dec_std, all_prior_mean, all_prior_std, all_samples = modelOutput
                 del all_enc_mean
                 del all_enc_std
                 del all_prior_mean
