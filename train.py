@@ -140,7 +140,7 @@ def trainF(suggestions=None):
         torch.save(datasV, args.save_dir+"validation_datas")
         torch.save(data["val_mean"], args.save_dir+"val_mean")
         torch.save(data["val_std"], args.save_dir+"val_std")
-    return trainLosses[-1], valLosses[-1], args.save_dir
+    return trainReconLosses[-1], trainKLDLosses[-1], valReconLosses[-1], valKLDLosses[-1], args.save_dir
 
 if __name__ == '__main__':
         cProfile.run("trainF()", "restats")
