@@ -165,9 +165,9 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch):
             loss = totalKLDLoss + predLoss
 
         elif args.criterion == "RMSE":
-                o = unNormalize(output, dataDict["train_mean"], dataDict["train_std"])
-                t = unNormalize(target, dataDict["train_mean"], dataDict["train_std"])
-                loss = torch.sqrt(torch.mean((o - t)**2))
+            o = unNormalize(output, dataDict["train_mean"], dataDict["train_std"])
+            t = unNormalize(target, dataDict["train_mean"], dataDict["train_std"])
+            loss = torch.sqrt(torch.mean((o - t)**2))
 
         elif args.criterion == "L1Loss":
             o = unNormalize(output, dataDict["train_mean"], dataDict["train_std"])
