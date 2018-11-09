@@ -299,7 +299,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch):
             bReconLoss = unNormalizedLoss.data.item()
             bKLDLoss = totalKLDLoss.data.item()
             if batch_idx % args.print_every == 0:
-                print("batch index: {}, recon loss: {}, kld loss: {}".format(batch_idx, bReconLoss, bReconLoss))
+                print("batch index: {}, recon loss: {}, kld loss: {}".format(batch_idx, bReconLoss, bKLDLoss))
             train_recon_loss += bReconLoss
             train_kld_loss += bKLDLoss
         else:
