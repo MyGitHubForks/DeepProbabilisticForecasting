@@ -136,7 +136,9 @@ def getPredictions(args, data_loader, model, mean, std):
                 assert False, "can't match model"
         if args.model == "vrnn":
             kldLossesMat = np.array(kldLossesArr)
+            print("KLD Losses Matrix shape", kldLossesMat.shape)
             meanKLDLosses = np.mean(kldLossesMat, axis=1)
+            print("Average KLD Losses shape ", meanKLDLosses.shape)
         return preds, targets, datas, means, stds, meanKLDLosses
 
 
