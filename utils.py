@@ -64,8 +64,8 @@ def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription
     plt.plot(np.arange(1, len(trainLosses)+1)*args.plot_every, trainLosses, color="red", label="train loss")
     plt.plot(np.arange(1, len(valLosses)+1)*args.plot_every, valLosses, color="blue", label="validation loss")
     if trainKLDLosses:
-        plt.plot(np.arange(1, len(trainKLDLosses)+1)*args.plot_every, trainKLDLosses, color="red", label="train KLD loss")
-        plt.plot(np.arange(1, len(valKLDLosses)+1)*args.plot_every, valKLDLosses, color="red", label="val KLD loss")
+        plt.plot(np.arange(1, len(trainKLDLosses)+1)*args.plot_every, trainKLDLosses, color="orange", label="train KLD loss")
+        plt.plot(np.arange(1, len(valKLDLosses)+1)*args.plot_every, valKLDLosses, color="green", label="val KLD loss")
     plt.grid()
     plt.legend()
     plt.title("Losses for {}".format(model_description))
