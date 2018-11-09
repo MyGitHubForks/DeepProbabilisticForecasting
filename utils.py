@@ -60,15 +60,20 @@ def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription
     plt.figure()
     fig, ax1 = plt.subplots()
     ax1.set_xlabel("Epoch")
-    ax1.set_ylabel(lossDescription)
+    ax1.set_ylabel(lossDescription, color="r")
+    ax1.tick_params('y', colors='r')
     ax1.plot(np.arange(1, len(trainLosses)+1)*args.plot_every, trainLosses, "r--", label="train loss")
     ax1.plot(np.arange(1, len(valLosses)+1)*args.plot_every, valLosses, color="red", label="validation loss")
+    ax1.legend()
     if trainKLDLosses:
         ax2 = ax1.twinx()
+        ax2.set_ylabel("KLD Loss", color="b")
+        ax2.tick_params('y', colors='b')
         ax2.plot(np.arange(1, len(trainKLDLosses)+1)*args.plot_every, trainKLDLosses, "b--", label="train KLD loss")
         ax2.plot(np.arange(1, len(valKLDLosses)+1)*args.plot_every, valKLDLosses, color="blue", label="val KLD loss")
+        ax2.legend()
     plt.grid()
-    plt.legend()
+    
     plt.title("Losses for {}".format(model_description))
     plt.savefig(args.save_dir+"train_val_loss_plot.png")
 
