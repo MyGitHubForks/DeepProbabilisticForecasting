@@ -235,7 +235,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch):
                 val_recon_loss += unNormalizedLoss.data.item()
                 val_kld_loss += totalKLDLoss.data.item()
             else:
-                val_loss += loss.data.item()
+                val_recon_loss += loss.data.item()
     nValBatches = batch_idx + 1
     avgTrainReconLoss = train_recon_loss / nTrainBatches
     avgTrainKLDLoss = train_kld_loss / nTrainBatches
