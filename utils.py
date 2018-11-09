@@ -139,17 +139,17 @@ def getPredictions(args, data_loader, model, mean, std):
         return preds, targets, datas, means, stds, meanKLDLosses
 
 
-def kld_gauss(mean_1, std_1, mean_2, std_2):
-    """Using std to compute KLD"""
-
-    kld_element = (2 * torch.log(std_2) - 2 * torch.log(std_1) +
-                   (std_1.pow(2) + (mean_1 - mean_2).pow(2)) /
-                   std_2.pow(2) - 1)
-    return 0.5 * torch.sum(kld_element)
-
 # def kld_gauss(mean_1, std_1, mean_2, std_2):
-#     elt = (1 + std_1 - mean_1.pow(2) - torch.exp(std_1))
-#     return .5 * elt
+#     """Using std to compute KLD"""
+
+#     kld_element = (2 * torch.log(std_2) - 2 * torch.log(std_1) +
+#                    (std_1.pow(2) + (mean_1 - mean_2).pow(2)) /
+#                    std_2.pow(2) - 1)
+#     return 0.5 * torch.sum(kld_element)
+
+def kld_gauss(mean_1, std_1, mean_2, std_2):
+    elt = (1 + std_1 - mean_1.pow(2) - torch.exp(std_1))
+    return .5 * torch.sum(elt)
 
 
 def runBatch(data, target, optimizer, model, args, epoch):
