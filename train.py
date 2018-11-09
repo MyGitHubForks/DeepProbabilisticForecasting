@@ -115,10 +115,10 @@ def trainF(suggestions=None):
         utils.plotTrainValCurve(trainReconLosses, valReconLosses, args.model, args.criterion, args, trainKLDLosses=trainKLDLosses, valKLDLosses=valKLDLosses)
     else:
         utils.plotTrainValCurve(trainReconLosses, valReconLosses, args.model, args.criterion, args)
-    predsV, targetsV, datasV, meansV, stdsV = utils.getPredictions(args,\
+    predsV, targetsV, datasV, meansV, stdsV, meanKLDLossesV = utils.getPredictions(args,\
         data['val_loader'].get_iterator(), model, data["val_mean"], data["val_std"])
     
-    predsT, targetsT, datasT, meansT, stdsT = utils.getPredictions(args, \
+    predsT, targetsT, datasT, meansT, stdsT, meanKLDLossesT = utils.getPredictions(args, \
         data['train_loader'].get_iterator(), model, data["train_mean"], data["train_std"])
 
     # Save predictions based on model output
@@ -137,6 +137,7 @@ def trainF(suggestions=None):
         torch.save(datasT, args.save_dir+"train_datas")
         torch.save(data["train_mean"], args.save_dir+"train_mean")
         torch.save(data["train_std"], args.save_dir+"train_std")
+        torch.save(meanKLDLossesT, args.save_dir+"train_kld_losses")
         # Validation prediction data
         torch.save(meansV, args.save_dir+"validation_means")
         torch.save(stdsV, args.save_dir+"validation_stds")
@@ -144,6 +145,7 @@ def trainF(suggestions=None):
         torch.save(datasV, args.save_dir+"validation_datas")
         torch.save(data["val_mean"], args.save_dir+"val_mean")
         torch.save(data["val_std"], args.save_dir+"val_std")
+        torch.save(meanKLDLossesV, args.save_dir+"validation_kld_losses")
     return trainReconLosses[-1], trainKLDLosses[-1], valReconLosses[-1], valKLDLosses[-1], args.save_dir
 
 if __name__ == '__main__':

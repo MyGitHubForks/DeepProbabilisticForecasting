@@ -99,6 +99,8 @@ def getPredictions(args, data_loader, model, mean, std):
     datas = []
     means = []
     stds = []
+    kldLossesArr = []
+    meanKLDLosses = None
     with torch.no_grad():
         for batch_idx, (data, target) in enumerate(data_loader):
             data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
@@ -106,10 +108,15 @@ def getPredictions(args, data_loader, model, mean, std):
             targets.append(unNormalize(target, mean, std))
             datas.append(unNormalize(data, mean, std))
             modelOutput = model(data, target, 0, noSample=True)
-            del target
-            del data
+            #del target
+            #del data
             if args.model == "vrnn":
                 all_enc_mean, all_enc_std, all_dec_mean, all_dec_std, all_prior_mean, all_prior_std, all_samples = modelOutput
+                kldLossArr = []
+                for enc_mean_t, enc_std_t, decoder_mean_t, decoder_std_t, prior_mean_t, prior_std_t, sample in zip(encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds, all_samples):
+                    kldLoss = kld_gauss(enc_mean_t, enc_std_t, prior_mean_t, prior_std_t)
+                    kldLossArr.append(kldLoss)
+                kldLossesArr.append(kldLossArr)
                 del all_enc_mean
                 del all_enc_std
                 del all_prior_mean
@@ -126,7 +133,10 @@ def getPredictions(args, data_loader, model, mean, std):
                 preds.append(unNormalize(output, mean, std))
             else:
                 assert False, "can't match model"
-        return preds, targets, datas, means, stds
+        if args.model == "vrnn":
+            kldLossesMat = np.array(kldLossesArr)
+            meanKLDLosses = np.mean(kldLossesMat, axis=1)
+        return preds, targets, datas, means, stds, meanKLDLosses
 
 
 def kld_gauss(mean_1, std_1, mean_2, std_2):
