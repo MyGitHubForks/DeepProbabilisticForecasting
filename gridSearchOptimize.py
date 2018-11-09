@@ -59,16 +59,18 @@ def main():
 	# trainReconLosses, trainKLDLosses, valReconLosses, valKLDLosses, args.save_dir
 	results = sorted(results, key=lambda x: x[2])
 	saveFile = getSaveFile()
-	if args.model == "RNN":
+	if args.model == "rnn":
 		with open(saveFile, "w+") as f:
 			f.write("Save Directory\t\tTrain Loss\t\tValidation Loss\n")
 			for tup in results:
 				f.write("{}\t\t{:.3f}\t\t{:.3f}\n".format(tup[4], tup[0], tup[2]))
-	if args.model == "VRNN":
+	if args.model == "vrnn":
 		with open(saveFile, "w+") as f:
 			f.write("Save Directory\t\tTrain Recon Loss\t\tTrain KLD Loss\t\tValidation Recon Loss\t\tValidation KLD Loss\n")
 			for tup in results:
 				f.write("{}\t\t{:.3f}\t\t{:.3f}\n".format(tup[4], tup[0],tup[1],tup[2], tup[3]))
+	else:
+		assert False, "bad model"
 
 
 
