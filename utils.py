@@ -63,7 +63,7 @@ def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription
     plt.ylabel(lossDescription)
     plt.plot(np.arange(1, len(trainLosses)+1)*args.plot_every, trainLosses, color="red", label="train loss")
     plt.plot(np.arange(1, len(valLosses)+1)*args.plot_every, valLosses, color="blue", label="validation loss")
-    if not np.all(trainKLDLosses==0) and not np.all(valKLDLosses==0):
+    if trainKLDLosses:
         plt.plot(np.arange(1, len(trainKLDLosses)+1)*args.plot_every, trainKLDLosses, color="orange", label="train KLD loss")
         plt.plot(np.arange(1, len(valKLDLosses)+1)*args.plot_every, valKLDLosses, color="green", label="val KLD loss")
     plt.grid()
@@ -241,8 +241,10 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch):
     avgTrainKLDLoss = train_kld_loss / nTrainBatches
     avgValReconLoss = val_recon_loss / nValBatches
     avgValKLDLoss = val_kld_loss / nValBatches
-    if args.model == "VRNN":
+    if args.model == "vrnn":
         print('====> Average Train Recon Loss: {} Average Train KLD Loss: {} Average Val Recon Loss: {} Average Val KLD Loss: {}'.format(avgTrainReconLoss, avgTrainKLDLoss, avgValReconLoss, avgValKLDLoss))
-    else:
+    elif args.model == "rnn":
         print("===> Average Train Loss: {} Average Val Loss: {}".format(avgTrainReconLoss, avgValReconLoss))
+    else:
+        assert False
     return avgTrainReconLoss, avgTrainKLDLoss, avgValReconLoss, avgValKLDLoss
