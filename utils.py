@@ -63,7 +63,7 @@ def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription
     plt.ylabel(lossDescription)
     plt.plot(np.arange(1, len(trainLosses)+1)*args.plot_every, trainLosses, color="red", label="train loss")
     plt.plot(np.arange(1, len(valLosses)+1)*args.plot_every, valLosses, color="blue", label="validation loss")
-    if trainKLDLosses:
+    if not np.all(trainKLDLosses==0) and not np.all(valKLDLosses==0):
         plt.plot(np.arange(1, len(trainKLDLosses)+1)*args.plot_every, trainKLDLosses, color="orange", label="train KLD loss")
         plt.plot(np.arange(1, len(valKLDLosses)+1)*args.plot_every, valKLDLosses, color="green", label="val KLD loss")
     plt.grid()
