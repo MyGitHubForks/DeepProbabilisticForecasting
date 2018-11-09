@@ -116,7 +116,6 @@ def getPredictions(args, data_loader, model, mean, std):
                 for enc_mean_t, enc_std_t, decoder_mean_t, decoder_std_t, prior_mean_t, prior_std_t, sample in zip(all_enc_mean, all_enc_std, all_dec_mean, all_dec_std, all_prior_mean, all_prior_std, all_samples):
                     kldLoss = kld_gauss(enc_mean_t, enc_std_t, prior_mean_t, prior_std_t)
                     kldLossArr.append(kldLoss)
-                assert len(kldLossArr) == 12
                 kldLossesArr.append(kldLossArr)
                 del all_enc_mean
                 del all_enc_std
@@ -136,9 +135,7 @@ def getPredictions(args, data_loader, model, mean, std):
                 assert False, "can't match model"
         if args.model == "vrnn":
             kldLossesMat = np.array(kldLossesArr)
-            print("KLD Losses Matrix shape", kldLossesMat.shape)
-            meanKLDLosses = np.mean(kldLossesMat, axis=1)
-            print("Average KLD Losses shape ", meanKLDLosses.shape)
+            meanKLDLosses = np.mean(kldLossesMat, axis=0)
         return preds, targets, datas, means, stds, meanKLDLosses
 
 
