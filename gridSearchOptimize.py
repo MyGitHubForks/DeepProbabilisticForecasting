@@ -55,13 +55,22 @@ def main():
 	args = parser.parse_args()
 	tries = args.tries
 	saveDirs = [getSaveDir() for i in range(tries)]
-	results = Parallel(n_jobs=2)(delayed(runExperiment)(args, saveDirs[i]) for i in range(tries)) # train, val, saveDir
-	results = sorted(results, key=lambda x: x[1])
+	results = Parallel(n_jobs=4)(delayed(runExperiment)(args, saveDirs[i]) for i in range(tries))
+	# trainReconLosses, trainKLDLosses, valReconLosses, valKLDLosses, args.save_dir
+	results = sorted(results, key=lambda x: x[2])
 	saveFile = getSaveFile()
-	with open(saveFile, "w+") as f:
-		f.write("Save Directory\t\tTrain Loss\t\tValidation Loss\n")
-		for tup in results:
-			f.write("{}\t\t{:.3f}\t\t{:.3f}\n".format(tup[2], tup[0], tup[1]))
+	if args.model == "rnn":
+		with open(saveFile, "w+") as f:
+			f.write("Save Directory\t\tTrain Loss\t\tValidation Loss\n")
+			for tup in results:
+				f.write("{}\t\t{:.3f}\t\t{:.3f}\n".format(tup[4], tup[0], tup[2]))
+	if args.model == "vrnn":
+		with open(saveFile, "w+") as f:
+			f.write("Save Directory\t\tTrain Recon Loss\tTrain KLD Loss\tValidation Recon Loss\tValidation KLD Loss\n")
+			for tup in results:
+				f.write("{}\t\t{:.3f}\t\t{:.3f}\t\t{:.3f}\t\t\t{:.3f}\n".format(tup[4], tup[0],tup[1],tup[2], tup[3]))
+	else:
+		assert False, "bad model"
 
 
 
