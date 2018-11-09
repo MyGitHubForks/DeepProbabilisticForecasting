@@ -55,7 +55,7 @@ def main():
 	args = parser.parse_args()
 	tries = args.tries
 	saveDirs = [getSaveDir() for i in range(tries)]
-	results = Parallel(n_jobs=4)(delayed(runExperiment)(args, saveDirs[i]) for i in range(tries))
+	results = Parallel(n_jobs=2)(delayed(runExperiment)(args, saveDirs[i]) for i in range(tries))
 	# trainReconLosses, trainKLDLosses, valReconLosses, valKLDLosses, args.save_dir
 	results = sorted(results, key=lambda x: x[2])
 	saveFile = getSaveFile()
