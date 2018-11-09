@@ -69,6 +69,8 @@ def main():
 			f.write("Save Directory\t\tTrain Recon Loss\t\tTrain KLD Loss\t\tValidation Recon Loss\t\tValidation KLD Loss\n")
 			for tup in results:
 				f.write("{}\t\t{:.3f}\t\t{:.3f}\t\t{:.3f}\t\t{:.3f}\n".format(tup[4], tup[0],tup[1],tup[2], tup[3]))
+	else:
+		assert False, "bad model"
 
 
 
