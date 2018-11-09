@@ -110,7 +110,7 @@ def trainF(suggestions=None):
             print('Saved model to '+fn)
     model_fn = args.save_dir + '{}_full_model'.format(args.model) +".pth"
     torch.save(model, model_fn)
-    if args.model == "VRNN":
+    if args.model == "vrnn":
         utils.plotTrainValCurve(trainReconLosses, valReconLosses, args.model, args.criterion, args, trainKLDLosses=trainKLDLosses, valKLDLosses=valKLDLosses)
     else:
         utils.plotTrainValCurve(trainReconLosses, valReconLosses, args.model, args.criterion, args)
