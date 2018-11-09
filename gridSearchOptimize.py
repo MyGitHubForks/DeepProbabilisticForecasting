@@ -66,7 +66,7 @@ def main():
 				f.write("{}\t\t{:.3f}\t\t{:.3f}\n".format(tup[4], tup[0], tup[2]))
 	if args.model == "vrnn":
 		with open(saveFile, "w+") as f:
-			f.write("Save Directory\t\tTrain Recon Loss\t\tTrain KLD Loss\t\tValidation Recon Loss\t\tValidation KLD Loss\n")
+			f.write("Save Directory\t\tTrain Recon Loss\tTrain KLD Loss\tValidation Recon Loss\tValidation KLD Loss\n")
 			for tup in results:
 				f.write("{}\t\t{:.3f}\t\t{:.3f}\t\t{:.3f}\t\t{:.3f}\n".format(tup[4], tup[0],tup[1],tup[2], tup[3]))
 	else:
