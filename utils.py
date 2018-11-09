@@ -64,14 +64,14 @@ def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription
     ax1.tick_params('y', colors='r')
     ax1.plot(np.arange(1, len(trainLosses)+1)*args.plot_every, trainLosses, "r--", label="train loss")
     ax1.plot(np.arange(1, len(valLosses)+1)*args.plot_every, valLosses, color="red", label="validation loss")
-    ax1.legend(bbox_to_anchor=(1.05, 1), loc=1, borderaxespad=0.)
+    ax1.legend(bbox_to_anchor=(1.05, 1), borderaxespad=0.)
     if trainKLDLosses:
         ax2 = ax1.twinx()
         ax2.set_ylabel("KLD Loss", color="b")
         ax2.tick_params('y', colors='b')
         ax2.plot(np.arange(1, len(trainKLDLosses)+1)*args.plot_every, trainKLDLosses, "b--", label="train KLD loss")
         ax2.plot(np.arange(1, len(valKLDLosses)+1)*args.plot_every, valKLDLosses, color="blue", label="val KLD loss")
-        ax2.legend(bbox_to_anchor=(1.05, 1), loc=4, borderaxespad=0.)
+        ax2.legend(bbox_to_anchor=(1.05, 1), borderaxespad=0.)
     plt.grid()
     
     plt.title("Losses for {}".format(model_description))
