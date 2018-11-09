@@ -39,6 +39,7 @@ parser.add_argument("--no_schedule_sampling", action="store_true", default=False
 parser.add_argument("--scheduling_start", type=float, default=1.0)
 parser.add_argument("--scheduling_end", type=float, default=0.0)
 parser.add_argument("--tries", type=int, default=10)
+parser.add_argument("--kld_weight", type=float, default=0.10)
 
 def trainF(suggestions=None):
     args = parser.parse_args()
