@@ -64,7 +64,7 @@ def main():
 			f.write("Save Directory\t\tTrain Loss\t\tValidation Loss\n")
 			for tup in results:
 				f.write("{}\t\t{:.3f}\t\t{:.3f}\n".format(tup[4], tup[0], tup[2]))
-	if args.model == "vrnn":
+	elif args.model == "vrnn":
 		with open(saveFile, "w+") as f:
 			f.write("Save Directory\t\tTrain Recon Loss\tTrain KLD Loss\tValidation Recon Loss\tValidation KLD Loss\n")
 			for tup in results:
