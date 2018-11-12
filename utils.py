@@ -318,7 +318,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch):
         #printing
         if args.model == "vrnn":
             bReconLoss = unNormalizedLoss.data.item()
-            bKLDLoss = totalKLDLoss.data.item()
+            bKLDLoss = totalKLDLoss.data.item() / args.kld_weight
             if batch_idx % args.print_every == 0:
                 print("batch index: {}, recon loss: {}, kld loss: {}".format(batch_idx, bReconLoss, bKLDLoss))
             train_recon_loss += bReconLoss
@@ -370,7 +370,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch):
 
             if args.model == "vrnn":
                 val_recon_loss += unNormalizedLoss.data.item()
-                val_kld_loss += totalKLDLoss.data.item()
+                val_kld_loss += totalKLDLoss.data.item() / args.kld_weight
             else:
                 val_recon_loss += loss.data.item()
     nValBatches = batch_idx + 1
