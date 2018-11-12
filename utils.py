@@ -350,7 +350,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch):
                     totalKLDLoss += args.kld_weight * kldLoss
                 if args.criterion == "RMSE":
                     predLoss = torch.sqrt(torch.mean((pred - target)**2))    
-                    unNormalizedLoss = torch.sqrt(torch.mean((unNPred - unNTarget)))
+                    unNormalizedLoss = torch.sqrt(torch.mean((unNPred - unNTarget)**2))
 
                 elif args.criterion == "L1Loss":
                     predLoss = torch.mean(torch.abs(pred - target))
