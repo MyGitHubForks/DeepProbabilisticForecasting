@@ -81,8 +81,8 @@ def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription
     plt.title("Losses for {}".format(model_description))
     plt.savefig(args.save_dir + "train_val_loss_plot.png")
     if trainKLDLosses:
-        totalTrainLoss = trainKLDLosses + trainLosses
-        totalValLoss = valKLDLosses + valLosses
+        totalTrainLoss = np.array(trainKLDLosses) + np.array(trainLosses)
+        totalValLoss = np.array(valKLDLosses) + np.array(valLosses)
         plt.figure()
         plt.plot(np.arange(1, len(trainLosses)+1)*args.plot_every, totalTrainLoss, label="Total Train Loss")
         plt.plot(np.arange(1, len(valLosses)+1)*args.plot_every, totalValLoss, label="Total Validation Loss")
