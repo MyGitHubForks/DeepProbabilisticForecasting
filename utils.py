@@ -138,9 +138,18 @@ def getPredictions(args, data_loader, model, mean, std):
             meanKLDLosses = np.mean(kldLossesMat, axis=0)
         return preds, targets, datas, means, stds, meanKLDLosses
 
+
 def kld_gauss(mean_1, std_1, mean_2, std_2):
-    kld_element = torch.log(std_2) - torch.log(std_1) + (std_1.pow(2) + (mean_1 - mean_2).pow(2)) / (2 * std_2.pow(2)) - 1/2
-    return torch.sum(kld_element)
+    """Using std to compute KLD"""
+
+    kld_element = (2 * torch.log(std_2) - 2 * torch.log(std_1) +
+                   (std_1.pow(2) + (mean_1 - mean_2).pow(2)) /
+                   std_2.pow(2) - 1)
+    return 0.5 * torch.sum(kld_element)
+
+# def kld_gauss(mean_1, std_1, mean_2, std_2):
+#     kld_element = torch.log(std_2) - torch.log(std_1) + (std_1.pow(2) + (mean_1 - mean_2).pow(2)) / (2 * std_2.pow(2)) - 1/2
+#     return torch.sum(kld_element)
 
 def runBatch(data, target, optimizer, model, args, epoch):
     optimizer.zero_grad()
