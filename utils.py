@@ -87,6 +87,8 @@ def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription
         plt.plot(np.arange(1, len(trainLosses)+1)*args.plot_every, totalTrainLoss, label="Total Train Loss")
         plt.plot(np.arange(1, len(valLosses)+1)*args.plot_every, totalValLoss, label="Total Validation Loss")
         plt.legend()
+        plt.xlabel("Epoch")
+        plt.ylabel(lossDescription)
         plt.savefig(args.save_dir + "total_train_val_loss.png")
 
 
