@@ -36,8 +36,8 @@ def load_dataset(dataset_dir, batch_size, down_sample=None, **kwargs):
             data["y_times_"+category] = cat_data["targetTimes"]
         data["x_"+category], data["y_"+category], data[category+"_mean"], data[category+"_std"] =\
          normalizeData(data["x_"+category], data["y_"+category])
-    data['sequence_len'] = cat_data['x'].shape[1]
-    data['x_dim'] = cat_data['x'].shape[2]
+    data['sequence_len'] = cat_data['inputs'].shape[1]
+    data['x_dim'] = cat_data['inputs'].shape[2]
 
     assert data['sequence_len'] == 12
     assert data['x_dim'] == 207
