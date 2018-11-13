@@ -54,13 +54,13 @@ def savePredData(predsT, targetsT, datasT, predsV, targetsV, datasV, meansT,\
         torch.save(stdsT, args.save_dir+"train_stds")
         torch.save(data["train_mean"], args.save_dir+"train_mean")
         torch.save(data["train_std"], args.save_dir+"train_std")
-        torch.save(meanKLDLossesT, args.save_dir+"train_kld_losses")
+        torch.save(meanKLDLossesT, args.save_dir+"mean_train_kld_losses_per_timestep")
         # Validation prediction data
         torch.save(meansV, args.save_dir+"validation_means")
         torch.save(stdsV, args.save_dir+"validation_stds")
         torch.save(data["val_mean"], args.save_dir+"val_mean")
         torch.save(data["val_std"], args.save_dir+"val_std")
-        torch.save(meanKLDLossesV, args.save_dir+"validation_kld_losses")
+        torch.save(meanKLDLossesV, args.save_dir+"mean_validation_kld_losses_per_timestep")
 
 def trainF(suggestions=None):
     args = parser.parse_args()

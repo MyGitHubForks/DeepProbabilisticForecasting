@@ -60,11 +60,11 @@ def timeSince(since, percent):
 
 
 def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription, args, trainKLDLosses=None, valKLDLosses=None):
-    torch.save(trainLosses, args.save_dir+"train_recon_losses")
-    torch.save(valLosses, args.save_dir+"val_recon_losses")
+    torch.save(trainLosses, args.save_dir+"plot_train_recon_losses")
+    torch.save(valLosses, args.save_dir+"plot_val_recon_losses")
     if trainKLDLosses:
-        torch.save(trainKLDLosses, args.save_dir+"train_KLD_losses")
-        torch.save(valKLDLosses, args.save_dir+"val_KLD_losses")
+        torch.save(trainKLDLosses, args.save_dir+"plot_train_KLD_losses")
+        torch.save(valKLDLosses, args.save_dir+"plot_val_KLD_losses")
     plt.rcParams.update({'font.size': 8})
     plt.figure()
     fig, ax1 = plt.subplots()
