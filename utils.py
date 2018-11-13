@@ -258,17 +258,13 @@ def getValLoss(args, dataDict, target, output):
     else:
         return loss.item()
 
-def train(train_loader, val_loader, model, lr, args, dataDict, epoch):
+def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer):
     clip = 10
     train_kld_loss = 0.0
     train_recon_loss = 0.0
     val_recon_loss = 0.0
     val_kld_loss = 0.0
     start = time.time()
-
-    # Define Criterion
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=args.weight_decay)
-
     # Train
     nTrainBatches = 0
     for batch_idx, (data, target) in enumerate(train_loader):

@@ -24,10 +24,6 @@ parser.add_argument("--n_epochs", type=int, default=500)
 parser.add_argument("--batch_size", type=int, default= 10)
 parser.add_argument("--n_layers", type=int, default=2)
 parser.add_argument("--initial_lr", type=float, default=1e-3)
-parser.add_argument("--no_lr_decay", action="store_true", default=True)
-parser.add_argument("--lr_decay_ratio", type=float, default=0.10)
-parser.add_argument("--lr_decay_beginning", type=int, default=20)
-parser.add_argument("--lr_decay_every", type=int, default=10)
 parser.add_argument("--print_every", type=int, default = 20)
 parser.add_argument("--plot_every", type=int, default = 1)
 parser.add_argument("--criterion", type=str, default="RMSE")
@@ -121,12 +117,14 @@ def trainF(suggestions=None):
     trainKLDLosses = []
     valKLDLosses = []
     lr = args.initial_lr
+    # Define Optimizer
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=args.weight_decay)
     print("beginning training")
     for epoch in range(1, args.n_epochs + 1):
         print("epoch {}".format(epoch))
-        if not args.no_lr_decay and epoch > args.lr_decay_beginning and epoch % args.lr_decay_every:
-            lr = lr * (1 - args.lr_decay_ratio)
-        avgTrainReconLoss, avgTrainKLDLoss, avgValReconLoss, avgValKLDLoss = utils.train(data['train_loader'].get_iterator(), data['val_loader'].get_iterator(), model, lr, args, data, epoch)
+        avgTrainReconLoss, avgTrainKLDLoss, avgValReconLoss, avgValKLDLoss = \
+                    utils.train(data['train_loader'].get_iterator(), data['val_loader'].get_iterator(),\
+                                model, lr, args, data, epoch, optimizer)
         if (epoch % args.plot_every) == 0:
             trainReconLosses.append(avgTrainReconLoss)
             valReconLosses.append(avgValReconLoss)
