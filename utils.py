@@ -299,17 +299,18 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch):
             elif args.criterion == "L1Loss":
                 predLoss = torch.mean(torch.abs(pred - target))
                 unNormalizedLoss = torch.mean(torch.abs(unNPred - unNTarget))
-            loss = (totalKLDLoss + predLoss) / args.sequence_len
-
+            #loss = (totalKLDLoss + predLoss) / args.sequence_len
+            loss = (totalKLDLoss + predLoss)
         elif args.criterion == "RMSE":
             o = unNormalize(output, dataDict["train_mean"], dataDict["train_std"])
             t = unNormalize(target, dataDict["train_mean"], dataDict["train_std"])
-            loss = torch.sqrt(torch.mean((o - t)**2)) / args.sequence_len
-
+            #loss = torch.sqrt(torch.mean((o - t)**2)) / args.sequence_len
+            loss = torch.sqrt(torch.mean((o - t)**2))
         elif args.criterion == "L1Loss":
             o = unNormalize(output, dataDict["train_mean"], dataDict["train_std"])
             t = unNormalize(target, dataDict["train_mean"], dataDict["train_std"])
-            loss = torch.mean(torch.abs(o - t)) / args.sequence_len
+            #loss = torch.mean(torch.abs(o - t)) / args.sequence_len
+            loss = torch.mean(torch.abs(o - t))
         else:
             assert False, "bad loss function"
         loss.backward()
