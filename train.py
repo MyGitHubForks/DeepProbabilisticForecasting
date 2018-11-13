@@ -96,7 +96,7 @@ def trainF(suggestions=None):
         f.write(json.dumps(vars(args)))
     copy2("./train.py", args.save_dir+"train.py")
     copy2("./utils.py", args.save_dir+"utils.py")
-    copy2("./gridsearchOptimize.py", args.save_dir+"gridsearchOptimize.py")
+    copy2("./gridSearchOptimize.py", args.save_dir+"gridsearchOptimize.py")
     copytree("./model", args.save_dir+"model/")
     print("saved args to "+argsFile)
     
