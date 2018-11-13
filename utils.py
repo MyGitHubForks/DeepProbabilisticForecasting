@@ -22,25 +22,30 @@ def load_dataset(dataset_dir, batch_size, down_sample=None, **kwargs):
         print(category)
         cat_data = np.load(os.path.join(dataset_dir, category + '.npz'))
         if down_sample:
-            nRows = cat_data['x'].shape[0]
+            nRows = cat_data['inputs'].shape[0]
             down_sampled_rows = np.random.choice(range(nRows), size=np.ceil(nRows * down_sample).astype(int),
                                                  replace=False)
-            data['x_' + category] = cat_data['x'][down_sampled_rows, :, :, 0]
-            data['y_' + category] = cat_data['y'][down_sampled_rows, :, :, 0]
+            data['x_' + category] = cat_data['inputs'][down_sampled_rows, ...]
+            data['y_' + category] = cat_data['targets'][down_sampled_rows, ...]
+            data["x_times_"+category] = cat_data["inputTimes"][down_sampled_rows]
+            data["y_times_"+category] = cat_data["targetTimes"][down_sampled_rows]
         else:
-            data['x_' + category] = cat_data['x'][:,:,:,0]
-            data['y_' + category] = cat_data['y'][:,:,:,0]
+            data['x_' + category] = cat_data['inputs']
+            data['y_' + category] = cat_data['targets']
+            data["x_times_"+category] = cat_data["inputTimes"]
+            data["y_times_"+category] = cat_data["targetTimes"]
         data["x_"+category], data["y_"+category], data[category+"_mean"], data[category+"_std"] =\
          normalizeData(data["x_"+category], data["y_"+category])
     data['sequence_len'] = cat_data['x'].shape[1]
     data['x_dim'] = cat_data['x'].shape[2]
+
     assert data['sequence_len'] == 12
     assert data['x_dim'] == 207
     # Data format
     for category in ['train', 'val', 'test']:
-        data['train_loader'] = DataLoader(data['x_train'], data['y_train'], batch_size, shuffle=True)
-        data['val_loader'] = DataLoader(data['x_val'], data['y_val'], batch_size, shuffle=False)
-        data['test_loader'] = DataLoader(data['x_test'], data['y_test'], batch_size, shuffle=False)
+        data['train_loader'] = DataLoader(data['x_train'], data['y_train'], data["x_times_train"], data["y_times_train"], batch_size, shuffle=True)
+        data['val_loader'] = DataLoader(data['x_val'], data['y_val'], data["x_times_val"], data["y_times_val"], batch_size, shuffle=False)
+        data['test_loader'] = DataLoader(data['x_test'], data['y_test'], data["x_times_test"], data["y_times_test"], batch_size, shuffle=False)
 
     return data
 
@@ -110,7 +115,7 @@ def getPredictions(args, data_loader, model, mean, std):
     kldLossesArr = []
     meanKLDLosses = None
     with torch.no_grad():
-        for batch_idx, (data, target) in enumerate(data_loader):
+        for batch_idx, (data, target, dataTimes, targetTimes) in enumerate(data_loader):
             data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
             target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
             targets.append(unNormalize(target, mean, std))
@@ -267,7 +272,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer)
     start = time.time()
     # Train
     nTrainBatches = 0
-    for batch_idx, (data, target) in enumerate(train_loader):
+    for batch_idx, (data, target, dataTimes, targetTimes) in enumerate(train_loader):
         data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1).requires_grad_()
         target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1).requires_grad_()
         optimizer.zero_grad()
@@ -293,17 +298,14 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer)
             elif args.criterion == "L1Loss":
                 predLoss = torch.mean(torch.abs(pred - target))
                 unNormalizedLoss = torch.mean(torch.abs(unNPred - unNTarget))
-            #loss = (totalKLDLoss + predLoss) / args.sequence_len
-            loss = (totalKLDLoss + predLoss)
+            loss = ((totalKLDLoss / args.sequence_len) + predLoss)
         elif args.criterion == "RMSE":
             o = unNormalize(output, dataDict["train_mean"], dataDict["train_std"])
             t = unNormalize(target, dataDict["train_mean"], dataDict["train_std"])
-            #loss = torch.sqrt(torch.mean((o - t)**2)) / args.sequence_len
             loss = torch.sqrt(torch.mean((o - t)**2))
         elif args.criterion == "L1Loss":
             o = unNormalize(output, dataDict["train_mean"], dataDict["train_std"])
             t = unNormalize(target, dataDict["train_mean"], dataDict["train_std"])
-            #loss = torch.mean(torch.abs(o - t)) / args.sequence_len
             loss = torch.mean(torch.abs(o - t))
         else:
             assert False, "bad loss function"
@@ -315,7 +317,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer)
         #printing
         if args.model == "vrnn":
             bReconLoss = unNormalizedLoss.data.item()
-            bKLDLoss = totalKLDLoss.data.item() / args.kld_weight
+            bKLDLoss = totalKLDLoss.data.item() / args.sequence_len / args.kld_weight
             if batch_idx % args.print_every == 0:
                 print("batch index: {}, recon loss: {}, kld loss: {}".format(batch_idx, bReconLoss, bKLDLoss))
             train_recon_loss += bReconLoss
@@ -331,7 +333,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer)
     nValBatches = 0
     with torch.no_grad():
         nValBatches += 1
-        for batch_idx, (data, target) in enumerate(val_loader):
+        for batch_idx, (data, target, dataTimes, targetTimes) in enumerate(val_loader):
             data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
             target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
             output = model(data, target, 0, noSample=True)
@@ -367,7 +369,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer)
 
             if args.model == "vrnn":
                 val_recon_loss += unNormalizedLoss.data.item()
-                val_kld_loss += totalKLDLoss.data.item() / args.kld_weight
+                val_kld_loss += totalKLDLoss.data.item() / args.sequence_len / args.kld_weight
             else:
                 val_recon_loss += loss.data.item()
     nValBatches = batch_idx + 1

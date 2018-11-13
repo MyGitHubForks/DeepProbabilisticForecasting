@@ -3,7 +3,7 @@ import numpy as np
 from torch.utils import data
 
 class DataLoader(object):
-    def __init__(self, xs, ys, batch_size, pad_with_last_sample=True, shuffle=True):
+    def __init__(self, xs, ys, tx, ty, batch_size, pad_with_last_sample=True, shuffle=True):
         """
 
         :param xs:
@@ -17,15 +17,21 @@ class DataLoader(object):
             num_padding = (batch_size - (len(xs) % batch_size)) % batch_size
             x_padding = np.repeat(xs[-1:], num_padding, axis=0)
             y_padding = np.repeat(ys[-1:], num_padding, axis=0)
+            tx_padding = np.repeat(tx[-1:], num_padding, axis=0)
+            ty_padding = np.repeat(ty[-1:], num_padding, axis=0)
             xs = np.concatenate([xs, x_padding], axis=0)
             ys = np.concatenate([ys, y_padding], axis=0)
+            tx = np.concatenate([tx, tx_padding], axis=0)
+            ty = np.concatenate([ty, ty_padding], axis=0)
         self.size = len(xs)
         self.num_batch = int(self.size // self.batch_size)
         if shuffle:
             permutation = np.random.permutation(self.size)
-            xs, ys = xs[permutation], ys[permutation]
+            xs, ys, tx, ty = xs[permutation], ys[permutation], tx[permutation], ty[permutation]
         self.xs = xs
         self.ys = ys
+        self.tx = tx
+        self.ty = ty
 
     def get_iterator(self):
         self.current_ind = 0
@@ -36,7 +42,9 @@ class DataLoader(object):
                 end_ind = min(self.size, self.batch_size * (self.current_ind + 1))
                 x_i = self.xs[start_ind: end_ind, ...]
                 y_i = self.ys[start_ind: end_ind, ...]
-                yield (x_i, y_i)
+                tx_i = self.tx[start_ind: end_ind, ...]
+                ty_i = self.ty[start_ind: end_ind, ...]
+                yield (x_i, y_i, tx_i, ty_i)
                 self.current_ind += 1
 
         return _wrapper()
