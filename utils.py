@@ -60,6 +60,11 @@ def timeSince(since, percent):
 
 
 def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription, args, trainKLDLosses=None, valKLDLosses=None):
+    torch.save(trainLosses, args.save_dir+"train_recon_losses")
+    torch.save(valLosses, args.save_dir+"val_recon_losses")
+    if trainKLDLosses:
+        torch.save(trainKLDLosses, args+"train_KLD_losses")
+        torch.save(valKLDLosses, args+"val_KLD_losses")
     plt.rcParams.update({'font.size': 8})
     plt.figure()
     fig, ax1 = plt.subplots()
@@ -91,13 +96,6 @@ def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription
         plt.ylabel(lossDescription)
         plt.savefig(args.save_dir + "total_train_val_loss.png")
 
-
-# Loss functions for VRNN
-
-# computing losses
-# kld_loss += self._kld_gauss(enc_mean_t, enc_std_t, prior_mean_t, prior_std_t)
-# nll_loss += self._nll_gauss(dec_mean_t, dec_std_t, x[t])
-# nll_loss += self._nll_bernoulli(dec_mean_t, x[t])
 
 def unNormalize(val, mean, std):
     return (val * std) + mean

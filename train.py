@@ -12,6 +12,7 @@ from model.vrnn.model import VRNN
 import os
 import argparse
 import json
+from shutil import copy2, copyfile, copytree
 
 parser = argparse.ArgumentParser(description='Batched Sequence to Sequence')
 parser.add_argument('--h_dim', type=int, default=512)
@@ -40,6 +41,30 @@ parser.add_argument("--scheduling_start", type=float, default=1.0)
 parser.add_argument("--scheduling_end", type=float, default=0.0)
 parser.add_argument("--tries", type=int, default=10)
 parser.add_argument("--kld_weight", type=float, default=0.10)
+
+def savePredData(predsT, targetsT, datasT, predsV, targetsV, datasV, meansT,\
+                 stdsT, data, meanKLDLossesT, meanKLDLossesV, meansV, stdsV, args):
+    # Save predictions based on model output
+    torch.save(targetsT, args.save_dir+"train_targets")
+    torch.save(datasT, args.save_dir+"train_datas")
+    torch.save(targetsV, args.save_dir+"validation_targets")
+    torch.save(datasV, args.save_dir+"validation_datas")
+    if args.model == "rnn":
+        torch.save(predsT, args.save_dir+"train_preds")
+        torch.save(predsV, args.save_dir+"validation_preds")
+    elif args.model == "vrnn":
+        # Save train prediction data
+        torch.save(meansT, args.save_dir+"train_means")
+        torch.save(stdsT, args.save_dir+"train_stds")
+        torch.save(data["train_mean"], args.save_dir+"train_mean")
+        torch.save(data["train_std"], args.save_dir+"train_std")
+        torch.save(meanKLDLossesT, args.save_dir+"train_kld_losses")
+        # Validation prediction data
+        torch.save(meansV, args.save_dir+"validation_means")
+        torch.save(stdsV, args.save_dir+"validation_stds")
+        torch.save(data["val_mean"], args.save_dir+"val_mean")
+        torch.save(data["val_std"], args.save_dir+"val_std")
+        torch.save(meanKLDLossesV, args.save_dir+"validation_kld_losses")
 
 def trainF(suggestions=None):
     args = parser.parse_args()
@@ -70,8 +95,15 @@ def trainF(suggestions=None):
     args.x_dim = data['x_dim']
     args.sequence_len = data['sequence_len']
     args.use_schedule_sampling = not args.no_schedule_sampling
-    print("use schedule sampling", args.use_schedule_sampling)
-
+    argsFile = args.save_dir + "args.txt"
+    with open(argsFile, "w") as f:
+        f.write(json.dumps(vars(args)))
+    copy2("./train.py", args.save_dir+"train.py")
+    copy2("./utils.py", args.save_dir+"utils.py")
+    copy2("./gridsearchOptimize.py", args.save_dir+"gridsearchOptimize.py")
+    copytree("./model", args.save_dir+"model/")
+    print("saved args to "+argsFile)
+    
     print("generating model")
     if args.model == "vrnn":
         print("using vrnn")
@@ -89,10 +121,6 @@ def trainF(suggestions=None):
     trainKLDLosses = []
     valKLDLosses = []
     lr = args.initial_lr
-    argsFile = args.save_dir + "args.txt"
-    with open(argsFile, "w") as f:
-        f.write(json.dumps(vars(args)))
-    print("saved args to "+argsFile)
     print("beginning training")
     for epoch in range(1, args.n_epochs + 1):
         print("epoch {}".format(epoch))
@@ -120,32 +148,8 @@ def trainF(suggestions=None):
     
     predsT, targetsT, datasT, meansT, stdsT, meanKLDLossesT = utils.getPredictions(args, \
         data['train_loader'].get_iterator(), model, data["train_mean"], data["train_std"])
-
-    # Save predictions based on model output
-    if args.model == "rnn":
-        torch.save(predsT, args.save_dir+"train_preds")
-        torch.save(targetsT, args.save_dir+"train_targets")
-        torch.save(datasT, args.save_dir+"train_datas")
-        torch.save(predsV, args.save_dir+"validation_preds")
-        torch.save(targetsV, args.save_dir+"validation_targets")
-        torch.save(datasV, args.save_dir+"validation_datas")
-    elif args.model == "vrnn":
-        # Save train prediction data
-        torch.save(meansT, args.save_dir+"train_means")
-        torch.save(stdsT, args.save_dir+"train_stds")
-        torch.save(targetsT, args.save_dir+"train_targets")
-        torch.save(datasT, args.save_dir+"train_datas")
-        torch.save(data["train_mean"], args.save_dir+"train_mean")
-        torch.save(data["train_std"], args.save_dir+"train_std")
-        torch.save(meanKLDLossesT, args.save_dir+"train_kld_losses")
-        # Validation prediction data
-        torch.save(meansV, args.save_dir+"validation_means")
-        torch.save(stdsV, args.save_dir+"validation_stds")
-        torch.save(targetsV, args.save_dir+"validation_targets")
-        torch.save(datasV, args.save_dir+"validation_datas")
-        torch.save(data["val_mean"], args.save_dir+"val_mean")
-        torch.save(data["val_std"], args.save_dir+"val_std")
-        torch.save(meanKLDLossesV, args.save_dir+"validation_kld_losses")
+    savePredData(predsT, targetsT, datasT, predsV, targetsV, datasV, meansT,\
+                 stdsT, data, meanKLDLossesT, meanKLDLossesV, meansV, stdsV, args)
     return trainReconLosses[-1], trainKLDLosses[-1], valReconLosses[-1], valKLDLosses[-1], args.save_dir
 
 if __name__ == '__main__':
