@@ -51,4 +51,4 @@ class DataLoader(object):
 
     def shuffle(self):
         permutation = np.random.permutation(self.size)
-        self.xs, self.ys, self.tx, self.ty = xs[permutation], ys[permutation], tx[permutation], ty[permutation]
+        self.xs, self.ys, self.tx, self.ty = self.xs[permutation], self.ys[permutation], self.tx[permutation], self.ty[permutation]
