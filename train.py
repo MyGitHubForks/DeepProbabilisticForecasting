@@ -88,7 +88,7 @@ def trainF(suggestions=None):
     data = utils.load_dataset(args.data_dir, args.batch_size, down_sample=args.down_sample)
     print("setting additional params")
     # Set additional arguments
-    assert args.kld_warmup_until <= args.n_epohcs, "KLD Warm up stop > n_epochs"
+    assert args.kld_warmup_until <= args.n_epochs, "KLD Warm up stop > n_epochs"
     args.cuda = not args.no_cuda and torch.cuda.is_available()
     args._device = "cuda" if args.cuda else "cpu"
     args.use_attn = not args.no_attn
