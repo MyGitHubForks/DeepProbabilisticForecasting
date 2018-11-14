@@ -9,6 +9,7 @@ import numpy as np
 import os
 from model.Data import DataLoader
 from memory_profiler import profile
+plt.ioff()
 
 def normalizeData(x, y):
     allData = np.stack((x,y), axis=1)
