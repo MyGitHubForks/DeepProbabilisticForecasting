@@ -37,6 +37,7 @@ parser.add_argument("--scheduling_start", type=float, default=1.0)
 parser.add_argument("--scheduling_end", type=float, default=0.0)
 parser.add_argument("--tries", type=int, default=10)
 parser.add_argument("--kld_weight", type=float, default=0.10)
+parser.add_argument("--shuffle_after_epoch", action="store_true", default=True)
 
 def savePredData(learningRates, predsT, targetsT, datasT, predsV, targetsV, datasV, meansT,\
                  stdsT, data, meanKLDLossesT, meanKLDLossesV, meansV, stdsV, args):
@@ -141,8 +142,9 @@ def trainF(suggestions=None):
             fn = args.save_dir+'{}_state_dict_'.format(args.model)+str(epoch)+'.pth'
             torch.save(model.state_dict(), fn)
             print('Saved model to '+fn)
-        # Shuffle training examples for next epoch
-        data['train_loader'].shuffle()
+        if args.shuffle_after_epoch:
+            # Shuffle training examples for next epoch
+            data['train_loader'].shuffle()
     model_fn = args.save_dir + '{}_full_model'.format(args.model) +".pth"
     torch.save(model, model_fn)
     if args.model == "vrnn":
