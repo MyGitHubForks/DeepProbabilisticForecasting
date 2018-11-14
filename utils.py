@@ -72,7 +72,6 @@ def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription
         torch.save(trainKLDLosses, args.save_dir+"plot_train_KLD_losses")
         torch.save(valKLDLosses, args.save_dir+"plot_val_KLD_losses")
     plt.rcParams.update({'font.size': 8})
-    plt.figure()
     fig, ax1 = plt.subplots()
     ax1.set_xlabel("Epoch")
     ax1.set_ylabel(lossDescription, color="r")
