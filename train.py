@@ -38,13 +38,14 @@ parser.add_argument("--scheduling_end", type=float, default=0.0)
 parser.add_argument("--tries", type=int, default=10)
 parser.add_argument("--kld_weight", type=float, default=0.10)
 
-def savePredData(predsT, targetsT, datasT, predsV, targetsV, datasV, meansT,\
+def savePredData(learningRates, predsT, targetsT, datasT, predsV, targetsV, datasV, meansT,\
                  stdsT, data, meanKLDLossesT, meanKLDLossesV, meansV, stdsV, args):
     # Save predictions based on model output
     torch.save(targetsT, args.save_dir+"train_targets")
     torch.save(datasT, args.save_dir+"train_datas")
     torch.save(targetsV, args.save_dir+"validation_targets")
     torch.save(datasV, args.save_dir+"validation_datas")
+    torch.save(learningRates, args.save_dir+"learningRates")
     if args.model == "rnn":
         torch.save(predsT, args.save_dir+"train_preds")
         torch.save(predsV, args.save_dir+"validation_preds")
@@ -116,6 +117,7 @@ def trainF(suggestions=None):
     valReconLosses = []
     trainKLDLosses = []
     valKLDLosses = []
+    learningRates = []
     lr = args.initial_lr
     # Define Optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=args.weight_decay)
@@ -130,6 +132,10 @@ def trainF(suggestions=None):
             valReconLosses.append(avgValReconLoss)
             trainKLDLosses.append(avgTrainKLDLoss)
             valKLDLosses.append(avgValKLDLoss)
+            lrs = []
+            for param_group in optimizer.param_groups:
+                lrs.append(param_group["lr"])
+            learningRates.append(lrs)
         #saving model
         if (epoch % args.save_freq) == 0:
             fn = args.save_dir+'{}_state_dict_'.format(args.model)+str(epoch)+'.pth'
@@ -146,7 +152,7 @@ def trainF(suggestions=None):
     
     predsT, targetsT, datasT, meansT, stdsT, meanKLDLossesT = utils.getPredictions(args, \
         data['train_loader'].get_iterator(), model, data["train_mean"], data["train_std"])
-    savePredData(predsT, targetsT, datasT, predsV, targetsV, datasV, meansT,\
+    savePredData(learningRates, predsT, targetsT, datasT, predsV, targetsV, datasV, meansT,\
                  stdsT, data, meanKLDLossesT, meanKLDLossesV, meansV, stdsV, args)
     return trainReconLosses[-1], trainKLDLosses[-1], valReconLosses[-1], valKLDLosses[-1], args.save_dir
 
