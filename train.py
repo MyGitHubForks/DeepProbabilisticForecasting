@@ -36,7 +36,8 @@ parser.add_argument("--no_schedule_sampling", action="store_true", default=False
 parser.add_argument("--scheduling_start", type=float, default=1.0)
 parser.add_argument("--scheduling_end", type=float, default=0.0)
 parser.add_argument("--tries", type=int, default=10)
-parser.add_argument("--kld_weight", type=float, default=0.10)
+parser.add_argument("--kld_warmup_until", type=int, default=30)
+parser.add_argument("--kld_weight_max", type=float, default=0.10)
 parser.add_argument("--no_shuffle_after_epoch", action="store_true", default=False)
 
 def savePredData(learningRates, predsT, targetsT, datasT, predsV, targetsV, datasV, meansT,\
@@ -87,6 +88,7 @@ def trainF(suggestions=None):
     data = utils.load_dataset(args.data_dir, args.batch_size, down_sample=args.down_sample)
     print("setting additional params")
     # Set additional arguments
+    assert args.kld_warmup_until <= args.n_epohcs, "KLD Warm up stop > n_epochs"
     args.cuda = not args.no_cuda and torch.cuda.is_available()
     args._device = "cuda" if args.cuda else "cpu"
     args.use_attn = not args.no_attn
@@ -125,9 +127,10 @@ def trainF(suggestions=None):
     print("beginning training")
     for epoch in range(1, args.n_epochs + 1):
         print("epoch {}".format(epoch))
+        kldLossWeight = args.kld_weight_max * (epoch / (args.kld_warmup_until))
         avgTrainReconLoss, avgTrainKLDLoss, avgValReconLoss, avgValKLDLoss = \
                     utils.train(data['train_loader'].get_iterator(), data['val_loader'].get_iterator(),\
-                                model, lr, args, data, epoch, optimizer)
+                                model, lr, args, data, epoch, optimizer, kldLossWeight)
         if (epoch % args.plot_every) == 0:
             trainReconLosses.append(avgTrainReconLoss)
             valReconLosses.append(avgValReconLoss)

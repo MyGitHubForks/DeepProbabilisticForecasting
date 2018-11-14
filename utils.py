@@ -265,7 +265,7 @@ def getValLoss(args, dataDict, target, output):
     else:
         return loss.item()
 
-def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer):
+def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer, kldLossWeight):
     clip = 10
     train_kld_loss = 0.0
     train_recon_loss = 0.0
@@ -286,7 +286,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer)
             totalKLDLoss = 0.0
             for enc_mean_t, enc_std_t, decoder_mean_t, decoder_std_t, prior_mean_t, prior_std_t, sample in zip(encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds, all_samples):
                 kldLoss = kld_gauss(enc_mean_t, enc_std_t, prior_mean_t, prior_std_t)
-                totalKLDLoss += args.kld_weight * kldLoss
+                totalKLDLoss += kldLossWeight * kldLoss
 
             #Calculate Prediction Loss
             pred = torch.cat([torch.unsqueeze(y, dim=0) for y in all_samples])
@@ -319,7 +319,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer)
         #printing
         if args.model == "vrnn":
             bReconLoss = unNormalizedLoss.data.item()
-            bKLDLoss = totalKLDLoss.data.item() / args.sequence_len / args.kld_weight
+            bKLDLoss = totalKLDLoss.data.item() / args.sequence_len / kldLossWeight
             if batch_idx % args.print_every == 0:
                 print("batch index: {}, recon loss: {}, kld loss: {}".format(batch_idx, bReconLoss, bKLDLoss))
             train_recon_loss += bReconLoss
@@ -348,7 +348,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer)
                 totalKLDLoss = 0.0
                 for enc_mean_t, enc_std_t, decoder_mean_t, decoder_std_t, prior_mean_t, prior_std_t, sample in zip(encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds, all_samples):
                     kldLoss = kld_gauss(enc_mean_t, enc_std_t, prior_mean_t, prior_std_t)
-                    totalKLDLoss += args.kld_weight * kldLoss
+                    totalKLDLoss += kldLossWeight * kldLoss
                 if args.criterion == "RMSE":
                     predLoss = torch.sqrt(torch.mean((pred - target)**2))    
                     unNormalizedLoss = torch.sqrt(torch.mean((unNPred - unNTarget)**2))
@@ -371,7 +371,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer)
 
             if args.model == "vrnn":
                 val_recon_loss += unNormalizedLoss.data.item()
-                val_kld_loss += totalKLDLoss.data.item() / args.sequence_len / args.kld_weight
+                val_kld_loss += totalKLDLoss.data.item() / args.sequence_len / kldLossWeight
             else:
                 val_recon_loss += loss.data.item()
     nValBatches = batch_idx + 1
