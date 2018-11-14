@@ -141,6 +141,8 @@ def trainF(suggestions=None):
             fn = args.save_dir+'{}_state_dict_'.format(args.model)+str(epoch)+'.pth'
             torch.save(model.state_dict(), fn)
             print('Saved model to '+fn)
+        # Shuffle training examples for next epoch
+        data['train_loader'].shuffle()
     model_fn = args.save_dir + '{}_full_model'.format(args.model) +".pth"
     torch.save(model, model_fn)
     if args.model == "vrnn":

@@ -48,3 +48,7 @@ class DataLoader(object):
                 self.current_ind += 1
 
         return _wrapper()
+
+    def shuffle(self):
+        permutation = np.random.permutation(self.size)
+        self.xs, self.ys, self.tx, self.ty = xs[permutation], ys[permutation], tx[permutation], ty[permutation]
