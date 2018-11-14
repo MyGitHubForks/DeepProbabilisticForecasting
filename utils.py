@@ -3,6 +3,7 @@ import torch.nn as nn
 from torch import optim
 import time
 import math
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
@@ -10,6 +11,7 @@ import os
 from model.Data import DataLoader
 from memory_profiler import profile
 plt.ioff()
+matplotlib.use('Agg')
 
 def normalizeData(x, y):
     allData = np.stack((x,y), axis=1)
