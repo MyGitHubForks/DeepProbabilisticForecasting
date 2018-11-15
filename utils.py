@@ -155,7 +155,7 @@ def getPredictions(args, data_loader, model, mean, std):
         if args.model == "vrnn":
             kldLossesMat = np.array(kldLossesArr)
             meanKLDLosses = np.mean(kldLossesMat, axis=0)
-        return preds, targets, datas, means, stds, meanKLDLosses dataTimesArr, targetTimesArr
+        return preds, targets, datas, means, stds, meanKLDLosses, dataTimesArr, targetTimesArr
 
 
 def kld_gauss(mean_1, std_1, mean_2, std_2):
