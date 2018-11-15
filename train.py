@@ -40,7 +40,7 @@ parser.add_argument("--kld_warmup_until", type=int, default=30)
 parser.add_argument("--kld_weight_max", type=float, default=0.10)
 parser.add_argument("--no_shuffle_after_epoch", action="store_true", default=False)
 
-def savePredData(learningRates, predsT, targetsT, datasT, predsV, targetsV, datasV, meansT,\
+def savePredData(dataTimesArrTrain, targetTimesArrTrain, dataTimesArrVal, targetTimesArrVal, learningRates, predsT, targetsT, datasT, predsV, targetsV, datasV, meansT,\
                  stdsT, data, meanKLDLossesT, meanKLDLossesV, meansV, stdsV, args):
     # Save predictions based on model output
     torch.save(targetsT, args.save_dir+"train_targets")
@@ -48,6 +48,10 @@ def savePredData(learningRates, predsT, targetsT, datasT, predsV, targetsV, data
     torch.save(targetsV, args.save_dir+"validation_targets")
     torch.save(datasV, args.save_dir+"validation_datas")
     torch.save(learningRates, args.save_dir+"learningRates")
+    torch.save(dataTimesArrTrain, args.save_dir+"dataTimesArrTrain")
+    torch.save(targetTimesArrTrain, args.save_dir+"targetTimesArrTrain")
+    torch.save(dataTimesArrVal, args.save_dir+"dataTimesArrVal")
+    torch.save(targetTimesArrVal, args.save_dir+"targetTimesArrVal")
     if args.model == "rnn":
         torch.save(predsT, args.save_dir+"train_preds")
         torch.save(predsV, args.save_dir+"validation_preds")
@@ -154,12 +158,12 @@ def trainF(suggestions=None):
         utils.plotTrainValCurve(trainReconLosses, valReconLosses, args.model, args.criterion, args, trainKLDLosses=trainKLDLosses, valKLDLosses=valKLDLosses)
     else:
         utils.plotTrainValCurve(trainReconLosses, valReconLosses, args.model, args.criterion, args)
-    predsV, targetsV, datasV, meansV, stdsV, meanKLDLossesV = utils.getPredictions(args,\
+    predsV, targetsV, datasV, meansV, stdsV, meanKLDLossesV, dataTimesArrVal, targetTimesArrVal = utils.getPredictions(args,\
         data['val_loader'].get_iterator(), model, data["val_mean"], data["val_std"])
     
-    predsT, targetsT, datasT, meansT, stdsT, meanKLDLossesT = utils.getPredictions(args, \
+    predsT, targetsT, datasT, meansT, stdsT, meanKLDLossesT, dataTimesArrTrain, targetTimesArrTrain = utils.getPredictions(args, \
         data['train_loader'].get_iterator(), model, data["train_mean"], data["train_std"])
-    savePredData(learningRates, predsT, targetsT, datasT, predsV, targetsV, datasV, meansT,\
+    savePredData(dataTimesArrTrain, targetTimesArrTrain, dataTimesArrVal, targetTimesArrVal, learningRates, predsT, targetsT, datasT, predsV, targetsV, datasV, meansT,\
                  stdsT, data, meanKLDLossesT, meanKLDLossesV, meansV, stdsV, args)
     return trainReconLosses[-1], trainKLDLosses[-1], valReconLosses[-1], valKLDLosses[-1], args.save_dir
 

@@ -114,6 +114,8 @@ def getPredictions(args, data_loader, model, mean, std):
     datas = []
     means = []
     stds = []
+    dataTimesArr = []
+    targetTimesArr = []
     kldLossesArr = []
     meanKLDLosses = None
     with torch.no_grad():
@@ -122,6 +124,8 @@ def getPredictions(args, data_loader, model, mean, std):
             target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
             targets.append(unNormalize(target, mean, std))
             datas.append(unNormalize(data, mean, std))
+            dataTimesArr.append(dataTimes)
+            targetTimesArr.append(targetTimes)
             modelOutput = model(data, target, 0, noSample=True)
             #del target
             #del data
@@ -151,7 +155,7 @@ def getPredictions(args, data_loader, model, mean, std):
         if args.model == "vrnn":
             kldLossesMat = np.array(kldLossesArr)
             meanKLDLosses = np.mean(kldLossesMat, axis=0)
-        return preds, targets, datas, means, stds, meanKLDLosses
+        return preds, targets, datas, means, stds, meanKLDLosses dataTimesArr, targetTimesArr
 
 
 def kld_gauss(mean_1, std_1, mean_2, std_2):
