@@ -195,6 +195,10 @@ def getVRNNLoss(output, target, dataDict, args):
     elif args.criterion == "L1Loss":
         predLoss = torch.mean(torch.abs(pred - target))
         unNormalizedLoss = torch.mean(torch.abs(unNPred - unNTarget))
+    else:
+        assert False, "bad loss function"
+    assert not np.isnan(predLoss)
+    assert not np.isnan(unNormalizedLoss)
     return totalKLDLoss, predLoss, unNormalizedLoss
 
 
