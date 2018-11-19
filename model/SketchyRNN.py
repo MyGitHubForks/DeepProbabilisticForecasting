@@ -72,8 +72,8 @@ class SketchyRNN(nn.Module):
 		#hidden_forward, hidden_backward = torch.split(encoder_hidden,1,0)
 		#encoder_hidden_cat = torch.cat([hidden_forward.squeeze(0), hidden_backward.squeeze(0)],1)
 		# calculate normal distr parameters
-		latentMean = self.mean(encoder_hidden_cat)
-		latentStd = self.std(encoder_hidden_cat)
+		latentMean = self.mean(encoder_hidden)
+		latentStd = self.std(encoder_hidden)
 		# sample z from normal distribution with parameters calculated above
 		# z Shape (2, batch, z_dim)
 		z = self._reparameterized_sample(latentMean, latentStd)
