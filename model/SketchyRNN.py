@@ -42,7 +42,7 @@ class SketchyRNN(nn.Module):
 
 		self.getFirstDecoderHidden = nn.Sequential(
 			nn.Linear(self.z_dim, self.h_dim),
-			nn.tanh())
+			nn.Tanh())
 
 		self.decoder = nn.GRU(self.h_dim + self.z_dim, self.h_dim, self.n_layers)
 
