@@ -141,7 +141,7 @@ class Seq2Seq(nn.Module):
             self.args.scheduling_end)
         return np.random.binomial(1, eps)
 
-    def forward(self, x, target, epoch, noSample=False):
+    def forward(self, x, target, epoch, training=True):
         encoder_hidden = self.enc.initHidden()
         #print("seq2seq forward x size",x.size())
         hs = []
@@ -156,7 +156,7 @@ class Seq2Seq(nn.Module):
         inp = Variable(torch.zeros(self.args.batch_size, self.args.x_dim))
         if self.args.cuda: inp = inp.cuda()
         ys = []
-        if noSample:
+        if not training:
             sample=0
         else:
             sample = self.scheduleSample(epoch)

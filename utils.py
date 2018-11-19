@@ -107,6 +107,16 @@ def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription
 def unNormalize(val, mean, std):
     return (val * std) + mean
 
+def sketchRNNKLD(latentMean, latentStd):
+    return (1 / (2*latentMean.size(1))) * (1 + latentStd - latentMean.pow(2) - torch.exp(latentStd))
+
+def kld_gauss(mean_1, std_1, mean_2, std_2):
+    """Using std to compute KLD"""
+
+    kld_element = (2 * torch.log(std_2) - 2 * torch.log(std_1) +
+                   (std_1.pow(2) + (mean_1 - mean_2).pow(2)) /
+                   std_2.pow(2) - 1)
+    return 0.5 * torch.sum(kld_element)
 
 def getPredictions(args, data_loader, model, mean, std):
     targets = []
@@ -117,6 +127,7 @@ def getPredictions(args, data_loader, model, mean, std):
     dataTimesArr = []
     targetTimesArr = []
     kldLossesArr = []
+    zs = []
     meanKLDLosses = None
     with torch.no_grad():
         for batch_idx, (data, target, dataTimes, targetTimes) in enumerate(data_loader):
@@ -126,9 +137,16 @@ def getPredictions(args, data_loader, model, mean, std):
             datas.append(unNormalize(data, mean, std))
             dataTimesArr.append(dataTimes)
             targetTimesArr.append(targetTimes)
-            modelOutput = model(data, target, 0, noSample=True)
+            modelOutput = model(data, target, 0, training=False)
             #del target
             #del data
+            if args.model == "sketch-rnn":
+                latentMean, latentStd, z, predOut, predMeanOut, predStdOut = modelOutput
+                zs.append(z)
+                kld = sketchRNNKLD(latentMean, latentStd)
+                kldLossesArr.append([kld])
+                means.append(predMeanOut)
+                stds.append(predStdOut)
             if args.model == "vrnn":
                 all_enc_mean, all_enc_std, all_dec_mean, all_dec_std, all_prior_mean, all_prior_std, all_samples = modelOutput
                 kldLossArr = []
@@ -155,35 +173,17 @@ def getPredictions(args, data_loader, model, mean, std):
         if args.model == "vrnn":
             kldLossesMat = np.array(kldLossesArr)
             meanKLDLosses = np.mean(kldLossesMat, axis=0)
-        return preds, targets, datas, means, stds, meanKLDLosses, dataTimesArr, targetTimesArr
-
-
-def kld_gauss(mean_1, std_1, mean_2, std_2):
-    """Using std to compute KLD"""
-
-    kld_element = (2 * torch.log(std_2) - 2 * torch.log(std_1) +
-                   (std_1.pow(2) + (mean_1 - mean_2).pow(2)) /
-                   std_2.pow(2) - 1)
-    return 0.5 * torch.sum(kld_element)
-
-# def kld_gauss(mean_1, std_1, mean_2, std_2):
-#     kld_element = torch.log(std_2) - torch.log(std_1) + (std_1.pow(2) + (mean_1 - mean_2).pow(2)) / (2 * std_2.pow(2)) - 1/2
-#     return torch.sum(kld_element)
-
-def runBatch(data, target, optimizer, model, args, epoch):
-    optimizer.zero_grad()
-    output = model(data, target, epoch)
-    return output
+        return preds, targets, datas, means, stds, meanKLDLosses, dataTimesArr, targetTimesArr, zs
 
 
 def getVRNNLoss(output, target, dataDict, args):
     encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds, all_samples = output
     # Calculate KLDivergence part
-    loss = 0.0
+    totalKLDLoss = 0.0
     for enc_mean_t, enc_std_t, decoder_mean_t, decoder_std_t, prior_mean_t, prior_std_t, sample in \
             zip(encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds, all_samples):
         kldLoss = kld_gauss(enc_mean_t, enc_std_t, prior_mean_t, prior_std_t)
-        loss += kldLoss
+        totalKLDLoss += kldLoss
     # Calculate Prediction Loss
     pred = torch.cat([torch.unsqueeze(y, dim=0) for y in all_samples])
     unNPred = unNormalize(pred.detach(), dataDict["y_train_mean"], dataDict["y_train_std"])
@@ -191,13 +191,10 @@ def getVRNNLoss(output, target, dataDict, args):
     if args.criterion == "RMSE":
         predLoss = torch.sqrt(torch.mean((pred - target) ** 2))
         unNormalizedLoss = torch.sqrt(torch.mean((unNPred - unNTarget)))
-        loss += predLoss
-
     elif args.criterion == "L1Loss":
         predLoss = torch.mean(torch.abs(pred - target))
         unNormalizedLoss = torch.mean(torch.abs(unNPred - unNTarget))
-        loss += predLoss
-    return loss, unNormalizedLoss
+    return totalKLDLoss, predLoss, unNormalizedLoss
 
 
 def getRNNLoss(output, target, dataDict, args):
@@ -214,179 +211,212 @@ def getRNNLoss(output, target, dataDict, args):
     return loss
 
 
-def backProp(output, target, dataDict, args, optimizer, model, clip):
-    if args.model == "vrnn":
-        loss, unNormalizedLoss = getVRNNLoss(output, target, dataDict, args)
-    else:
-        loss = getRNNLoss(output, target, dataDict, args)
-    loss.backward()
-    optimizer.step()
-    # grad norm clipping, only in pytorch version >= 1.10
-    nn.utils.clip_grad_norm_(model.parameters(), clip)
-    if args.model == "vrnn":
-        bLoss = unNormalizedLoss.data.item()
-    else:
-        bLoss = loss.data.item()
-    del loss
-    return bLoss
-
-
-def runValBatch(data, target, args, model):
-    output = model(data, target, 0, noSample=True)
-    return output
-
-
-def getValLoss(args, dataDict, target, output):
-    if args.model == "vrnn":
-        encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds, all_samples = output
-        pred = torch.cat([torch.unsqueeze(y, dim=0) for y in all_samples])
-        unNPred = unNormalize(pred.detach(), dataDict["y_val_mean"], dataDict["y_val_std"])
-        unNTarget = unNormalize(target.detach(), dataDict["y_val_mean"], dataDict["y_val_std"])
-        if args.criterion == "RMSE":
-            predLoss = torch.sqrt(torch.mean((pred - target) ** 2))
-            unNormalizedLoss = torch.sqrt(torch.mean((unNPred - unNTarget)))
-            loss = predLoss
-
-        elif args.criterion == "L1Loss":
-            predLoss = torch.mean(torch.abs(pred - target))
-            unNormalizedLoss = torch.mean(torch.abs(unNPred - unNTarget))
-            loss = predLoss
-
-    elif args.criterion == "RMSE":
-        o = unNormalize(output, dataDict["y_val_mean"], dataDict["y_val_std"])
-        t = unNormalize(target, dataDict["y_val_mean"], dataDict["y_val_std"])
-        loss = torch.sqrt(torch.mean((o - t) ** 2))
-
+def getSketchRNNLoss(latentMean, latentStd, predOut, predMeanOut, predStdOut, args, target):
+    # mean and std of shape (batch_size, z_dim)
+    kld = sketchRNNKLD(latentMean, latentStd)
+    # calculate reconstruction loss
+    unNPred = unNormalize(pred.detach(), dataDict["train_mean"], dataDict["train_std"])
+    unNTarget = unNormalize(target.detach(), dataDict["train_mean"], dataDict["train_std"])
+    if args.criterion == "RMSE":
+        predLoss = torch.sqrt(torch.mean((predOut - target)**2))    
+        unNormalizedLoss = torch.sqrt(torch.mean((unNPred - unNTarget)**2))
     elif args.criterion == "L1Loss":
-        o = unNormalize(output, dataDict["y_val_mean"], dataDict["y_val_std"])
-        t = unNormalize(target, dataDict["y_val_mean"], dataDict["y_val_std"])
-        loss = torch.mean(torch.abs(o - t))
+        predLoss = torch.mean(torch.abs(pred - target))
+        unNormalizedLoss = torch.mean(torch.abs(unNPred - unNTarget))
     else:
         assert False, "bad loss function"
+    return kld, predLoss, unNormalizedLoss
 
+def getValLoss(output, target, dataDict, args):
+    if args.model == "sketch-rnn":
+        latentMean, latentStd, z, predOut, predMeanOut, predStdOut = output
+        kldLoss, predLoss, unNormalizedLoss = getSketchRNNLoss(latentMean, latentStd, predOut, predMeanOut, predStdOut)
+        return kldLoss.item(), unNormalizedLoss.item()
     if args.model == "vrnn":
-        return unNormalizedLoss.item()
-    else:
-        return loss.item()
+        totalKLDLoss, predLoss, unNormalizedLoss = getVRNNLoss(output, target, dataDict, args)
+        return totalKLDLoss.item() / args.sequence_len, unNormalizedLoss.item()
+    elif args.model == "rnn":
+        unNormalizedLoss = getRNNLoss(output, target, dataDict, args)
+        return 0.0, unNormalizedLoss.item()
 
 def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer, kldLossWeight):
-    clip = 10
-    train_kld_loss = 0.0
-    train_recon_loss = 0.0
-    val_recon_loss = 0.0
-    val_kld_loss = 0.0
-    start = time.time()
-    # Train
+    epochKLDLossTrain = 0.0
+    epochReconLossTrain = 0.0
+    epochKLDLossVal = 0.0
+    epochReconLossVal = 0.0
     nTrainBatches = 0
+    nValBatches = 0
     for batch_idx, (data, target, dataTimes, targetTimes) in enumerate(train_loader):
+        nTrainBatches += 1
         data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1).requires_grad_()
         target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1).requires_grad_()
         optimizer.zero_grad()
         output = model(data, target, epoch)
         del data
-        if args.model == "vrnn":
-            encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds, all_samples = output
-            # Calculate KLDivergence part
-            totalKLDLoss = 0.0
-            for enc_mean_t, enc_std_t, decoder_mean_t, decoder_std_t, prior_mean_t, prior_std_t, sample in zip(encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds, all_samples):
-                kldLoss = kld_gauss(enc_mean_t, enc_std_t, prior_mean_t, prior_std_t)
-                totalKLDLoss += kldLossWeight * kldLoss
-
-            #Calculate Prediction Loss
-            pred = torch.cat([torch.unsqueeze(y, dim=0) for y in all_samples])
-            unNPred = unNormalize(pred.detach(), dataDict["train_mean"], dataDict["train_std"])
-            unNTarget = unNormalize(target.detach(), dataDict["train_mean"], dataDict["train_std"])
-            assert pred.size() == target.size()
-            if args.criterion == "RMSE":
-                predLoss = torch.sqrt(torch.mean((pred - target)**2))    
-                unNormalizedLoss = torch.sqrt(torch.mean((unNPred - unNTarget)**2))
-
-            elif args.criterion == "L1Loss":
-                predLoss = torch.mean(torch.abs(pred - target))
-                unNormalizedLoss = torch.mean(torch.abs(unNPred - unNTarget))
-            loss = ((totalKLDLoss / args.sequence_len) + predLoss)
-        elif args.criterion == "RMSE":
-            o = unNormalize(output, dataDict["train_mean"], dataDict["train_std"])
-            t = unNormalize(target, dataDict["train_mean"], dataDict["train_std"])
-            loss = torch.sqrt(torch.mean((o - t)**2))
-        elif args.criterion == "L1Loss":
-            o = unNormalize(output, dataDict["train_mean"], dataDict["train_std"])
-            t = unNormalize(target, dataDict["train_mean"], dataDict["train_std"])
-            loss = torch.mean(torch.abs(o - t))
-        else:
-            assert False, "bad loss function"
+        if args.model == "sketch-rnn":
+            latentMean, latentStd, z, predOut, predMeanOut, predStdOut = output
+            kldLoss, predLoss, unNormalizedLoss = getSketchRNNLoss(latentMean, latentStd, predOut, predMeanOut, predStdOut)
+            loss = (kldLoss * kldLossWeight) + predLoss
+            epochKLDLossTrain += (kldLoss)
+            epochReconLossTrain += (unNormalizedLoss)
+            print("batch index: {}, recon loss: {}, kld loss: {}".format(batch_idx, unNormalizedLoss, kldLoss))
+        elif args.model == "vrnn":
+            kldLoss, predLoss, unNormalizedLoss = getVRNNLoss(output, target, dataDict, args)
+            loss = (kldLoss * kldLossWeight) / args.sequence_len + predLoss
+            epochKLDLossTrain += (kldLoss / args.sequence_len)
+            epochReconLossTrain += (unNormalizedLoss)
+            print("batch index: {}, recon loss: {}, kld loss: {}".format(batch_idx, unNormalizedLoss, kldLoss / args.sequence_len))
+        elif args.model == "rnn":
+            loss = getRNNLoss(output, target, dataDict, args) # unNormalized Loss
+            epochReconLossTrain += (loss)
         loss.backward()
         optimizer.step()
         #grad norm clipping, only in pytorch version >= 1.10
-        nn.utils.clip_grad_norm_(model.parameters(), clip)
-
-        #printing
-        if args.model == "vrnn":
-            bReconLoss = unNormalizedLoss.data.item()
-            bKLDLoss = totalKLDLoss.data.item() / args.sequence_len / kldLossWeight
-            if batch_idx % args.print_every == 0:
-                print("batch index: {}, recon loss: {}, kld loss: {}".format(batch_idx, bReconLoss, bKLDLoss))
-            train_recon_loss += bReconLoss
-            train_kld_loss += bKLDLoss
-        else:
-            bLoss = loss.data.item()
-            train_recon_loss += bLoss
-            if batch_idx % args.print_every == 0:
-                print("batch index: {}, loss: {}".format(batch_idx, bLoss))
-
-    nTrainBatches = batch_idx + 1
-    # Validate
-    nValBatches = 0
-    with torch.no_grad():
+        nn.utils.clip_grad_norm_(model.parameters(), args.clip)
+    for batch_idx, (data, target, dataTimes, targetTimes) in enumerate(train_loader):
         nValBatches += 1
-        for batch_idx, (data, target, dataTimes, targetTimes) in enumerate(val_loader):
-            data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
-            target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
-            output = model(data, target, 0, noSample=True)
-            del data
-            if args.model == "vrnn":
-                encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds, all_samples = output
-                pred = torch.cat([torch.unsqueeze(y, dim=0) for y in all_samples])
-                unNPred = unNormalize(pred.detach(), dataDict["val_mean"], dataDict["val_std"])
-                unNTarget = unNormalize(target.detach(), dataDict["val_mean"], dataDict["val_std"])
-                totalKLDLoss = 0.0
-                for enc_mean_t, enc_std_t, decoder_mean_t, decoder_std_t, prior_mean_t, prior_std_t, sample in zip(encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds, all_samples):
-                    kldLoss = kld_gauss(enc_mean_t, enc_std_t, prior_mean_t, prior_std_t)
-                    totalKLDLoss += kldLossWeight * kldLoss
-                if args.criterion == "RMSE":
-                    predLoss = torch.sqrt(torch.mean((pred - target)**2))    
-                    unNormalizedLoss = torch.sqrt(torch.mean((unNPred - unNTarget)**2))
+        data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
+        target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
+        output = model(data, target, epoch)
+        validationKldLoss, validationReconLoss = getValLoss(output, target, dataDict, args)
+        epochKLDLossVal += validationKldLoss
+        epochReconLossVal += validationReconLoss
 
-                elif args.criterion == "L1Loss":
-                    predLoss = torch.mean(torch.abs(pred - target))
-                    unNormalizedLoss = torch.mean(torch.abs(unNPred - unNTarget))
-
-            elif args.criterion == "RMSE":
-                o = unNormalize(output, dataDict["val_mean"], dataDict["val_std"])
-                t = unNormalize(target, dataDict["val_mean"], dataDict["val_std"])
-                loss = torch.sqrt(torch.mean((o - t)**2))
-
-            elif args.criterion == "L1Loss":
-                o = unNormalize(output, dataDict["val_mean"], dataDict["val_std"])
-                t = unNormalize(target, dataDict["val_mean"], dataDict["val_std"])
-                loss = torch.mean(torch.abs(o - t))
-            else:
-                assert False, "bad loss function"
-
-            if args.model == "vrnn":
-                val_recon_loss += unNormalizedLoss.data.item()
-                val_kld_loss += totalKLDLoss.data.item() / args.sequence_len / kldLossWeight
-            else:
-                val_recon_loss += loss.data.item()
-    nValBatches = batch_idx + 1
-    avgTrainReconLoss = train_recon_loss / nTrainBatches
-    avgTrainKLDLoss = train_kld_loss / nTrainBatches
-    avgValReconLoss = val_recon_loss / nValBatches
-    avgValKLDLoss = val_kld_loss / nValBatches
-    if args.model == "vrnn":
+    avgTrainReconLoss = epochReconLossTrain / nTrainBatches
+    avgTrainKLDLoss = epochKLDLossTrain / nTrainBatches
+    avgValReconLoss = epochReconLossVal / nValBatches
+    avgValKLDLoss = epochKLDLossVal / nValBatches
+    if args.model == "vrnn" or args.model == "sketch-rnn":
         print('====> Average Train Recon Loss: {} Average Train KLD Loss: {} Average Val Recon Loss: {} Average Val KLD Loss: {}'.format(avgTrainReconLoss, avgTrainKLDLoss, avgValReconLoss, avgValKLDLoss))
     elif args.model == "rnn":
         print("===> Average Train Loss: {} Average Val Loss: {}".format(avgTrainReconLoss, avgValReconLoss))
     else:
-        assert False
+        assert False, "Bad model specified"
     return avgTrainReconLoss, avgTrainKLDLoss, avgValReconLoss, avgValKLDLoss
+
+
+# def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer, kldLossWeight):
+#     clip = 10
+#     train_kld_loss = 0.0
+#     train_recon_loss = 0.0
+#     val_recon_loss = 0.0
+#     val_kld_loss = 0.0
+#     start = time.time()
+#     # Train
+#     nTrainBatches = 0
+#     for batch_idx, (data, target, dataTimes, targetTimes) in enumerate(train_loader):
+#         data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1).requires_grad_()
+#         target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1).requires_grad_()
+#         optimizer.zero_grad()
+#         output = model(data, target, epoch)
+#         del data
+#         if args.model == "sketch-rnn":
+#             latentMean, latentStd, z, predOut, predMeanOut, predStdOut = output
+#             kldLoss, predLoss, unNormalizedLoss = getSketchRNNLoss(latentMean, latentStd, predOut, predMeanOut, predStdOut)
+
+#         if args.model == "vrnn":
+#             encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds, all_samples = output
+#             # Calculate KLDivergence part
+#             totalKLDLoss = 0.0
+#             for enc_mean_t, enc_std_t, decoder_mean_t, decoder_std_t, prior_mean_t, prior_std_t, sample in zip(encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds, all_samples):
+#                 kldLoss = kld_gauss(enc_mean_t, enc_std_t, prior_mean_t, prior_std_t)
+#                 totalKLDLoss += kldLossWeight * kldLoss
+
+#             #Calculate Prediction Loss
+#             pred = torch.cat([torch.unsqueeze(y, dim=0) for y in all_samples])
+#             unNPred = unNormalize(pred.detach(), dataDict["train_mean"], dataDict["train_std"])
+#             unNTarget = unNormalize(target.detach(), dataDict["train_mean"], dataDict["train_std"])
+#             assert pred.size() == target.size()
+#             if args.criterion == "RMSE":
+#                 predLoss = torch.sqrt(torch.mean((pred - target)**2))    
+#                 unNormalizedLoss = torch.sqrt(torch.mean((unNPred - unNTarget)**2))
+
+#             elif args.criterion == "L1Loss":
+#                 predLoss = torch.mean(torch.abs(pred - target))
+#                 unNormalizedLoss = torch.mean(torch.abs(unNPred - unNTarget))
+#             loss = ((totalKLDLoss / args.sequence_len) + predLoss)
+#         elif args.criterion == "RMSE":
+#             o = unNormalize(output, dataDict["train_mean"], dataDict["train_std"])
+#             t = unNormalize(target, dataDict["train_mean"], dataDict["train_std"])
+#             loss = torch.sqrt(torch.mean((o - t)**2))
+#         elif args.criterion == "L1Loss":
+#             o = unNormalize(output, dataDict["train_mean"], dataDict["train_std"])
+#             t = unNormalize(target, dataDict["train_mean"], dataDict["train_std"])
+#             loss = torch.mean(torch.abs(o - t))
+#         else:
+#             assert False, "bad loss function"
+#         loss.backward()
+#         optimizer.step()
+#         #grad norm clipping, only in pytorch version >= 1.10
+#         nn.utils.clip_grad_norm_(model.parameters(), clip)
+
+#         #printing
+#         if args.model == "vrnn":
+#             bReconLoss = unNormalizedLoss.data.item()
+#             bKLDLoss = totalKLDLoss.data.item() / args.sequence_len / kldLossWeight
+#             if batch_idx % args.print_every == 0:
+#                 print("batch index: {}, recon loss: {}, kld loss: {}".format(batch_idx, bReconLoss, bKLDLoss))
+#             train_recon_loss += bReconLoss
+#             train_kld_loss += bKLDLoss
+#         else:
+#             bLoss = loss.data.item()
+#             train_recon_loss += bLoss
+#             if batch_idx % args.print_every == 0:
+#                 print("batch index: {}, loss: {}".format(batch_idx, bLoss))
+
+#     nTrainBatches = batch_idx + 1
+#     # Validate
+#     nValBatches = 0
+#     with torch.no_grad():
+#         nValBatches += 1
+#         for batch_idx, (data, target, dataTimes, targetTimes) in enumerate(val_loader):
+#             data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
+#             target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
+#             output = model(data, target, 0, noSample=True)
+#             del data
+#             if args.model == "vrnn":
+#                 encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds, all_samples = output
+#                 pred = torch.cat([torch.unsqueeze(y, dim=0) for y in all_samples])
+#                 unNPred = unNormalize(pred.detach(), dataDict["val_mean"], dataDict["val_std"])
+#                 unNTarget = unNormalize(target.detach(), dataDict["val_mean"], dataDict["val_std"])
+#                 totalKLDLoss = 0.0
+#                 for enc_mean_t, enc_std_t, decoder_mean_t, decoder_std_t, prior_mean_t, prior_std_t, sample in zip(encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds, all_samples):
+#                     kldLoss = kld_gauss(enc_mean_t, enc_std_t, prior_mean_t, prior_std_t)
+#                     totalKLDLoss += kldLossWeight * kldLoss
+#                 if args.criterion == "RMSE":
+#                     predLoss = torch.sqrt(torch.mean((pred - target)**2))    
+#                     unNormalizedLoss = torch.sqrt(torch.mean((unNPred - unNTarget)**2))
+
+#                 elif args.criterion == "L1Loss":
+#                     predLoss = torch.mean(torch.abs(pred - target))
+#                     unNormalizedLoss = torch.mean(torch.abs(unNPred - unNTarget))
+
+#             elif args.criterion == "RMSE":
+#                 o = unNormalize(output, dataDict["val_mean"], dataDict["val_std"])
+#                 t = unNormalize(target, dataDict["val_mean"], dataDict["val_std"])
+#                 loss = torch.sqrt(torch.mean((o - t)**2))
+
+#             elif args.criterion == "L1Loss":
+#                 o = unNormalize(output, dataDict["val_mean"], dataDict["val_std"])
+#                 t = unNormalize(target, dataDict["val_mean"], dataDict["val_std"])
+#                 loss = torch.mean(torch.abs(o - t))
+#             else:
+#                 assert False, "bad loss function"
+
+#             if args.model == "vrnn":
+#                 val_recon_loss += unNormalizedLoss.data.item()
+#                 val_kld_loss += totalKLDLoss.data.item() / args.sequence_len / kldLossWeight
+#             else:
+#                 val_recon_loss += loss.data.item()
+#     nValBatches = batch_idx + 1
+#     avgTrainReconLoss = train_recon_loss / nTrainBatches
+#     avgTrainKLDLoss = train_kld_loss / nTrainBatches
+#     avgValReconLoss = val_recon_loss / nValBatches
+#     avgValKLDLoss = val_kld_loss / nValBatches
+#     if args.model == "vrnn":
+#         print('====> Average Train Recon Loss: {} Average Train KLD Loss: {} Average Val Recon Loss: {} Average Val KLD Loss: {}'.format(avgTrainReconLoss, avgTrainKLDLoss, avgValReconLoss, avgValKLDLoss))
+#     elif args.model == "rnn":
+#         print("===> Average Train Loss: {} Average Val Loss: {}".format(avgTrainReconLoss, avgValReconLoss))
+#     else:
+#         assert False
+#     return avgTrainReconLoss, avgTrainKLDLoss, avgValReconLoss, avgValKLDLoss

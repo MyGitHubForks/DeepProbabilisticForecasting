@@ -74,7 +74,7 @@ class VRNN(nn.Module):
 		self.rnn = nn.GRU(self.h_dim + self.h_dim, self.h_dim, self.n_layers)
 
 
-	def forward(self, x, target, epoch, noSample=False):
+	def forward(self, x, target, epoch, training=True):
 		all_enc_mean, all_enc_std = [], []
 		all_dec_mean, all_dec_std = [], []
 		all_prior_mean, all_prior_std = [],[]

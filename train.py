@@ -39,37 +39,34 @@ parser.add_argument("--tries", type=int, default=10)
 parser.add_argument("--kld_warmup_until", type=int, default=30)
 parser.add_argument("--kld_weight_max", type=float, default=0.10)
 parser.add_argument("--no_shuffle_after_epoch", action="store_true", default=False)
+parser.add_argument("--clip", type=int, default=10)
 
-def savePredData(dataTimesArrTrain, targetTimesArrTrain, dataTimesArrVal, targetTimesArrVal, learningRates, predsT, targetsT, datasT, predsV, targetsV, datasV, meansT,\
-                 stdsT, data, meanKLDLossesT, meanKLDLossesV, meansV, stdsV, args):
+def savePredData(experimentData):
     # Save predictions based on model output
-    torch.save(targetsT, args.save_dir+"train_targets")
-    torch.save(datasT, args.save_dir+"train_datas")
-    torch.save(targetsV, args.save_dir+"validation_targets")
-    torch.save(datasV, args.save_dir+"validation_datas")
-    torch.save(learningRates, args.save_dir+"learningRates")
-    torch.save(dataTimesArrTrain, args.save_dir+"dataTimesArrTrain")
-    torch.save(targetTimesArrTrain, args.save_dir+"targetTimesArrTrain")
-    torch.save(dataTimesArrVal, args.save_dir+"dataTimesArrVal")
-    torch.save(targetTimesArrVal, args.save_dir+"targetTimesArrVal")
+    for f in ["targetsT", "datasT", "targetsV", "datasV", "learningRates", "dataTimesArrTrain", "targetTimesArrTrain", "dataTimesArrVal", "targetTimesArrVal"]
+    torch.save(experimentData[f], args.save_dir+f)
     if args.model == "rnn":
-        torch.save(predsT, args.save_dir+"train_preds")
-        torch.save(predsV, args.save_dir+"validation_preds")
-    elif args.model == "vrnn":
+        torch.save(experimentData["predsT"], args.save_dir+"train_preds")
+        torch.save(experimentData["predsV"], args.save_dir+"validation_preds")
+    elif args.model == "vrnn" or args.model == "sketch-rnn":
         # Save train prediction data
-        torch.save(meansT, args.save_dir+"train_means")
-        torch.save(stdsT, args.save_dir+"train_stds")
-        torch.save(data["train_mean"], args.save_dir+"train_mean")
-        torch.save(data["train_std"], args.save_dir+"train_std")
-        torch.save(meanKLDLossesT, args.save_dir+"mean_train_kld_losses_per_timestep")
+        torch.save(experimentData["meansT"], args.save_dir+"train_means")
+        torch.save(experimentData["stdsT"], args.save_dir+"train_stds")
+        torch.save(experimentData["data"]["train_mean"], args.save_dir+"train_mean")
+        torch.save(experimentData["data"]["train_std"], args.save_dir+"train_std")
+        torch.save(experimentData["meanKLDLossesT"], args.save_dir+"mean_train_kld_losses_per_timestep")
         # Validation prediction data
-        torch.save(meansV, args.save_dir+"validation_means")
-        torch.save(stdsV, args.save_dir+"validation_stds")
-        torch.save(data["val_mean"], args.save_dir+"val_mean")
-        torch.save(data["val_std"], args.save_dir+"val_std")
-        torch.save(meanKLDLossesV, args.save_dir+"mean_validation_kld_losses_per_timestep")
+        torch.save(experimentData["meansV"], args.save_dir+"validation_means")
+        torch.save(experimentData["stdsV"], args.save_dir+"validation_stds")
+        torch.save(experimentData["data"]["val_mean"], args.save_dir+"val_mean")
+        torch.save(experimentData["data"]["val_std"], args.save_dir+"val_std")
+        torch.save(experimentData["meanKLDLossesV"], args.save_dir+"mean_validation_kld_losses_per_timestep")
+    if args.model == "sketch-rnn":
+        torch.save(experimentData["trainingZs"], args.save_dir+"train_Zs")
+        torch.save(experimentData["validationZs"], args.save_dir+"validation_Zs")
 
 def trainF(suggestions=None):
+    experimentData = {}
     args = parser.parse_args()
     if not suggestions:
         saveDir = './save/models/model0/'
@@ -90,6 +87,7 @@ def trainF(suggestions=None):
 
     print("loading data")
     data = utils.load_dataset(args.data_dir, args.batch_size, down_sample=args.down_sample)
+    experimentData["data"] = data
     print("setting additional params")
     # Set additional arguments
     assert args.kld_warmup_until <= args.n_epochs, "KLD Warm up stop > n_epochs"
@@ -109,6 +107,8 @@ def trainF(suggestions=None):
     print("saved args to "+argsFile)
     
     print("generating model")
+    if args.model == "sketch-rnn":
+        model=SketchyRNN(args)
     if args.model == "vrnn":
         print("using vrnn")
         model = VRNN(args)
@@ -119,12 +119,12 @@ def trainF(suggestions=None):
         assert False, "Model incorrectly specified"
     if args.cuda:
         model = model.cuda()
-
-    trainReconLosses = []
-    valReconLosses = []
-    trainKLDLosses = []
-    valKLDLosses = []
-    learningRates = []
+    experimentData["args"] = args
+    experimentData["trainReconLosses"] = []
+    experimentData["valReconLosses"] = []
+    experimentData["trainKLDLosses"] = []
+    experimentData["valKLDLosses"] = []
+    experimentData["learningRates"] = []
     lr = args.initial_lr
     # Define Optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=args.weight_decay)
@@ -136,14 +136,14 @@ def trainF(suggestions=None):
                     utils.train(data['train_loader'].get_iterator(), data['val_loader'].get_iterator(),\
                                 model, lr, args, data, epoch, optimizer, kldLossWeight)
         if (epoch % args.plot_every) == 0:
-            trainReconLosses.append(avgTrainReconLoss)
-            valReconLosses.append(avgValReconLoss)
-            trainKLDLosses.append(avgTrainKLDLoss)
-            valKLDLosses.append(avgValKLDLoss)
+            experimentData["trainReconLosses"].append(avgTrainReconLoss)
+            experimentData["valReconLosses"].append(avgValReconLoss)
+            experimentData["trainKLDLosses"].append(avgTrainKLDLoss)
+            experimentData["trainKLDLosses"].append(avgValKLDLoss)
             lrs = []
             for param_group in optimizer.param_groups:
                 lrs.append(param_group["lr"])
-            learningRates.append(lrs)
+            experimentData["learningRates"].append(lrs)
         #saving model
         if (epoch % args.save_freq) == 0:
             fn = args.save_dir+'{}_state_dict_'.format(args.model)+str(epoch)+'.pth'
@@ -154,17 +154,25 @@ def trainF(suggestions=None):
             data['train_loader'].shuffle()
     model_fn = args.save_dir + '{}_full_model'.format(args.model) +".pth"
     torch.save(model, model_fn)
-    if args.model == "vrnn":
-        utils.plotTrainValCurve(trainReconLosses, valReconLosses, args.model, args.criterion, args, trainKLDLosses=trainKLDLosses, valKLDLosses=valKLDLosses)
+    if args.model == "vrnn" or args.model == "sketch-rnn":
+        utils.plotTrainValCurve(experimentData["trainReconLosses"], experimentData["valReconLosses"],\
+            args.model, args.criterion, args, trainKLDLosses=experimentData["trainKLDLosses"],\
+            valKLDLosses=experimentData["valKLDLosses"])
     else:
-        utils.plotTrainValCurve(trainReconLosses, valReconLosses, args.model, args.criterion, args)
-    predsV, targetsV, datasV, meansV, stdsV, meanKLDLossesV, dataTimesArrVal, targetTimesArrVal = utils.getPredictions(args,\
+        utils.plotTrainValCurve(experimentData["trainReconLosses"], experimentData["valReconLosses"],\
+            args.model, args.criterion, args)
+
+    experimentData["predsV"], experimentData["targetsV"], experimentData["datasV"], experimentData["meansV"],\
+        experimentData["stdsV"], experimentData["meanKLDLossesV"], experimentData["dataTimesArrVal"],\
+        experimentData["targetTimesArrVal"], experimentData["validationZs"] = utils.getPredictions(args,\
         data['val_loader'].get_iterator(), model, data["val_mean"], data["val_std"])
     
-    predsT, targetsT, datasT, meansT, stdsT, meanKLDLossesT, dataTimesArrTrain, targetTimesArrTrain = utils.getPredictions(args, \
+    experimentData["predsT"], experimentData["targetsT"], experimentData["datasT"], experimentData["meansT"],\
+        experimentData["stdsT"], experimentData["meanKLDLossesT"], experimentData["dataTimesArrTrain"],\
+        experimentData["targetTimesArrTrain"], experimentData["trainingZs"] = utils.getPredictions(args, \
         data['train_loader'].get_iterator(), model, data["train_mean"], data["train_std"])
-    savePredData(dataTimesArrTrain, targetTimesArrTrain, dataTimesArrVal, targetTimesArrVal, learningRates, predsT, targetsT, datasT, predsV, targetsV, datasV, meansT,\
-                 stdsT, data, meanKLDLossesT, meanKLDLossesV, meansV, stdsV, args)
+
+    savePredData(experimentData)
     return trainReconLosses[-1], trainKLDLosses[-1], valReconLosses[-1], valKLDLosses[-1], args.save_dir
 
 if __name__ == '__main__':
