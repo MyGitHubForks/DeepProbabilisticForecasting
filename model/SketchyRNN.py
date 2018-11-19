@@ -79,7 +79,7 @@ class SketchyRNN(nn.Module):
 		decoder_h = self.getFirstDecoderHidden(z)
 		# get first input to decoder (NULL Values)
 		s_0 = Variable(torch.zeros(self.args.batch_size, self.h_dim))
-		inp = torch.cat((z, s_0), axis=1)
+		inp = torch.cat((z, s_0), 1)
 
 		# If you are not training or you do not want to use schedule sampling during training
 		if not training or not self.use_schedule_sampling:
