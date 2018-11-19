@@ -43,8 +43,8 @@ parser.add_argument("--clip", type=int, default=10)
 
 def savePredData(experimentData):
     # Save predictions based on model output
-    for f in ["targetsT", "datasT", "targetsV", "datasV", "learningRates", "dataTimesArrTrain", "targetTimesArrTrain", "dataTimesArrVal", "targetTimesArrVal"]
-    torch.save(experimentData[f], args.save_dir+f)
+    for f in ["targetsT", "datasT", "targetsV", "datasV", "learningRates", "dataTimesArrTrain", "targetTimesArrTrain", "dataTimesArrVal", "targetTimesArrVal"]:
+        torch.save(experimentData[f], args.save_dir+f)
     if args.model == "rnn":
         torch.save(experimentData["predsT"], args.save_dir+"train_preds")
         torch.save(experimentData["predsV"], args.save_dir+"validation_preds")
