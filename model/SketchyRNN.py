@@ -119,7 +119,7 @@ class SketchyRNN(nn.Module):
 
 	def initHidden(self):
 		# Encoder is bidirectional, so needs n_layers * 2
-		result = Variable(torch.zeros(self.n_layers * 2, self.args.batch_size, self.hidden_size))
+		result = Variable(torch.zeros(self.n_layers * 2, self.args.batch_size, self.h_dim))
 		if self.args.cuda:
 			return result.cuda()
 		else:
