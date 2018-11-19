@@ -197,8 +197,8 @@ def getVRNNLoss(output, target, dataDict, args):
         unNormalizedLoss = torch.mean(torch.abs(unNPred - unNTarget))
     else:
         assert False, "bad loss function"
-    assert not np.isnan(predLoss.detach().numpy())
-    assert not np.isnan(unNormalizedLoss.detach().numpy())
+    assert not np.isnan(predLoss.cpu().detach().numpy())
+    assert not np.isnan(unNormalizedLoss.cpu().detach().numpy())
     return totalKLDLoss, predLoss, unNormalizedLoss
 
 
