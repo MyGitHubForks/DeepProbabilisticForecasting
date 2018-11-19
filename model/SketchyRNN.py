@@ -94,6 +94,8 @@ class SketchyRNN(nn.Module):
 		means = []
 		stds = []
 		for t in range(self.args.sequence_len):
+			print("inp size", inp.size())
+			print("decoder_h size ", decoder_h.size())
 			decoder_out, decoder_h = self.decoder(inp, decoder_h)
 			if sample:
 				preppedTarget =  self.prepTargetForNextSequence(target[t-1])
