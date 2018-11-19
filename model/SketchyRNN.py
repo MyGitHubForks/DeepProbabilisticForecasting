@@ -27,10 +27,10 @@ class SketchyRNN(nn.Module):
 
 		self.encoder = nn.GRU(self.h_dim, self.h_dim, self.n_layers, bidirectional=True)
 
-		self.mean = nn.Linear(2 * self.h_dim, self.z_dim)
+		self.mean = nn.Linear(self.h_dim, self.z_dim)
 
 		self.std = nn.Sequential(
-			nn.Linear(2 * self.h_dim, self.z_dim),
+			nn.Linear(self.h_dim, self.z_dim),
 			nn.Softplus())
 
 		self.decoder_mean = nn.Sequential(
@@ -45,7 +45,7 @@ class SketchyRNN(nn.Module):
 			nn.Linear(self.z_dim, self.h_dim),
 			nn.Tanh())
 
-		self.decoder = nn.GRU(self.h_dim + self.z_dim, self.h_dim, self.n_layers)
+		self.decoder = nn.GRU(self.h_dim + 2 * self.z_dim, self.h_dim, self.n_layers)
 
 		self.prepDecoderOutputForNextSequence = nn.Linear(self.h_dim + self.z_dim, self.h_dim)
 
@@ -68,21 +68,26 @@ class SketchyRNN(nn.Module):
 		h_0 = self.initHidden()
 		# pass extracted x through encoder GRU
 		encoder_output, encoder_hidden = self.encoder(phiX, h_0)
-		# Reshape encoder_hidden from ()
-		hidden_forward, hidden_backward = torch.split(encoder_hidden,1,0)
-		encoder_hidden_cat = torch.cat([hidden_forward.squeeze(0), hidden_backward.squeeze(0)],1)
+		# Reshape encoder_hidden from (2, batch, h_dim) to (batch, 2*h_dim)
+		#hidden_forward, hidden_backward = torch.split(encoder_hidden,1,0)
+		#encoder_hidden_cat = torch.cat([hidden_forward.squeeze(0), hidden_backward.squeeze(0)],1)
 		# calculate normal distr parameters
 		latentMean = self.mean(encoder_hidden_cat)
 		latentStd = self.std(encoder_hidden_cat)
 		# sample z from normal distribution with parameters calculated above
+		# z Shape (2, batch, z_dim)
 		z = self._reparameterized_sample(latentMean, latentStd)
 		# get h_0 for decoder
+		# decoder_h (2, batch, h_dim)
 		decoder_h = self.getFirstDecoderHidden(z)
 		# get first input to decoder (NULL Values)
+		z_forward, z_backward = torch.split(z,1,0)
+		# shape z_expanded (batch size, 2 * z_dim)
+		z_expanded = torch.cat([z_forward.squeeze(0), z_backward.squeeze(0)],1)
 		s_0 = Variable(torch.zeros(self.args.batch_size, self.h_dim))
 		if self.useCuda:
 			s_0 = s_0.cuda()
-		inp = torch.cat((z, s_0), 1)
+		inp = torch.cat((z_expanded, s_0), 1).unsqueeze(0)
 
 		# If you are not training or you do not want to use schedule sampling during training
 		if not training or not self.use_schedule_sampling:
@@ -96,13 +101,15 @@ class SketchyRNN(nn.Module):
 		for t in range(self.args.sequence_len):
 			print("inp size", inp.size())
 			print("decoder_h size ", decoder_h.size())
+			# input should be (seq_len, batch, h_dim + 2 * z_dim)
+			# decoder_h should be (2, batch, h_dim)
 			decoder_out, decoder_h = self.decoder(inp, decoder_h)
 			if sample:
 				preppedTarget =  self.prepTargetForNextSequence(target[t-1])
-				inp = torch.cat((z, preppedTarget), axis=1)
+				inp = torch.cat((z_expanded, preppedTarget), axis=1).unsqueeze(0)
 			else:
 				preppedDecoderOut = self.prepDecoderOutputForNextSequence(decoder_out)
-				inp = torch.cat((z, preppedDecoderOut), axis=1)
+				inp = torch.cat((z_expanded, preppedDecoderOut), axis=1).unsqueeze(0)
 			outputMean = self.decoder_mean(decoder_out)
 			outputStd = self.decoder_std(decoder_out)
 			pred = self._reparameterized_sample(outputMean, outputStd)
