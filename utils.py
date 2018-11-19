@@ -189,6 +189,10 @@ def getVRNNLoss(output, target, dataDict, args):
     pred = torch.cat([torch.unsqueeze(y, dim=0) for y in all_samples])
     unNPred = unNormalize(pred.detach(), dataDict["train_mean"], dataDict["train_std"])
     unNTarget = unNormalize(target.detach(), dataDict["train_mean"], dataDict["train_std"])
+    print(pred)
+    print(target)
+    print(unNPred)
+    print(unNTarget)
     if args.criterion == "RMSE":
         predLoss = torch.sqrt(torch.mean((pred - target) ** 2))
         unNormalizedLoss = torch.sqrt(torch.mean((unNPred - unNTarget)))
