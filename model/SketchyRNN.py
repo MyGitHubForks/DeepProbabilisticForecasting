@@ -110,7 +110,7 @@ class SketchyRNN(nn.Module):
 				inp = torch.cat((z_expanded, preppedTarget), 1).unsqueeze(0)
 			else:
 				print("no sample")
-				inp = torch.cat((z_expanded, decoder_out), 1).unsqueeze(0)
+				inp = torch.cat((z_expanded, decoder_out.squeeze()), 1).unsqueeze(0)
 			outputMean = self.decoder_mean(decoder_out)
 			outputStd = self.decoder_std(decoder_out)
 			pred = self._reparameterized_sample(outputMean, outputStd)
