@@ -106,10 +106,10 @@ class SketchyRNN(nn.Module):
 			decoder_out, decoder_h = self.decoder(inp, decoder_h)
 			if sample:
 				preppedTarget =  self.prepTargetForNextSequence(target[t-1])
-				inp = torch.cat((z_expanded, preppedTarget), axis=1).unsqueeze(0)
+				inp = torch.cat((z_expanded, preppedTarget), 1).unsqueeze(0)
 			else:
 				preppedDecoderOut = self.prepDecoderOutputForNextSequence(decoder_out)
-				inp = torch.cat((z_expanded, preppedDecoderOut), axis=1).unsqueeze(0)
+				inp = torch.cat((z_expanded, preppedDecoderOut), 1).unsqueeze(0)
 			outputMean = self.decoder_mean(decoder_out)
 			outputStd = self.decoder_std(decoder_out)
 			pred = self._reparameterized_sample(outputMean, outputStd)
