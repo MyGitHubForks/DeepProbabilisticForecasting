@@ -177,6 +177,7 @@ def trainF(suggestions=None):
     return experimentData["trainReconLosses"][-1], experimentData["trainKLDLosses"][-1], experimentData["valReconLosses"][-1], experimentData["valKLDLosses"][-1], args.save_dir
 
 if __name__ == '__main__':
-        cProfile.run("trainF()", "restats")
-        p = pstats.Stats('restats')
-        p.sort_stats("tottime").print_stats(10)
+        #cProfile.run("trainF()", "restats")
+        #p = pstats.Stats('restats')
+        #p.sort_stats("tottime").print_stats(10)
+        trainF()

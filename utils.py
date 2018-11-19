@@ -19,9 +19,13 @@ def normalizeData(x, y):
     std = np.std(allData)
     return (x-mean)/std, (y-mean)/std, mean, std
 
-def load_dataset(dataset_dir, batch_size, down_sample=None, **kwargs):
+def load_dataset(dataset_dir, batch_size, down_sample=None, load_test=False, **kwargs):
     data = {}
-    for category in ['train', 'val', 'test']:
+    if load_test:
+        cats = ["train", "val", "test"]
+    else:
+        cats = ["train", "val"]
+    for category in cats:
         print(category)
         cat_data = np.load(os.path.join(dataset_dir, category + '.npz'))
         if down_sample:
@@ -186,8 +190,8 @@ def getVRNNLoss(output, target, dataDict, args):
         totalKLDLoss += kldLoss
     # Calculate Prediction Loss
     pred = torch.cat([torch.unsqueeze(y, dim=0) for y in all_samples])
-    unNPred = unNormalize(pred.detach(), dataDict["y_train_mean"], dataDict["y_train_std"])
-    unNTarget = unNormalize(target.detach(), dataDict["y_train_mean"], dataDict["y_train_std"])
+    unNPred = unNormalize(pred.detach(), dataDict["train_mean"], dataDict["train_std"])
+    unNTarget = unNormalize(target.detach(), dataDict["train_mean"], dataDict["train_std"])
     if args.criterion == "RMSE":
         predLoss = torch.sqrt(torch.mean((pred - target) ** 2))
         unNormalizedLoss = torch.sqrt(torch.mean((unNPred - unNTarget)))
@@ -199,12 +203,12 @@ def getVRNNLoss(output, target, dataDict, args):
 
 def getRNNLoss(output, target, dataDict, args):
     if args.criterion == "RMSE":
-        o = unNormalize(output, dataDict["y_train_mean"], dataDict["y_train_std"])
-        t = unNormalize(target, dataDict["y_train_mean"], dataDict["y_train_std"])
+        o = unNormalize(output, dataDict["train_mean"], dataDict["train_std"])
+        t = unNormalize(target, dataDict["train_mean"], dataDict["train_std"])
         loss = torch.sqrt(torch.mean((o - t) ** 2))
     elif args.criterion == "L1Loss":
-        o = unNormalize(output, dataDict["y_train_mean"], dataDict["y_train_std"])
-        t = unNormalize(target, dataDict["y_train_mean"], dataDict["y_train_std"])
+        o = unNormalize(output, dataDict["train_mean"], dataDict["train_std"])
+        t = unNormalize(target, dataDict["train_mean"], dataDict["train_std"])
         loss = torch.mean(torch.abs(o - t))
     else:
         assert False, "bad loss function"
