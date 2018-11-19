@@ -273,7 +273,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer,
         optimizer.step()
         #grad norm clipping, only in pytorch version >= 1.10
         nn.utils.clip_grad_norm_(model.parameters(), args.clip)
-    for batch_idx, (data, target, dataTimes, targetTimes) in enumerate(train_loader):
+    for batch_idx, (data, target, dataTimes, targetTimes) in enumerate(val_loader):
         nValBatches += 1
         data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
         target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
