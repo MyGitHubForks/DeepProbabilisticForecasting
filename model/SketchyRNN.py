@@ -42,7 +42,7 @@ class SketchyRNN(nn.Module):
 			nn.Softplus())
 
 		self.getFirstDecoderHidden = nn.Sequential(
-			nn.Linear(self.z_dim, self.h_dim),
+			nn.Linear(2 * self.z_dim, self.h_dim),
 			nn.Tanh())
 
 		self.decoder = nn.GRU(self.h_dim + 2 * self.z_dim, self.h_dim, self.n_layers)
@@ -77,13 +77,13 @@ class SketchyRNN(nn.Module):
 		# sample z from normal distribution with parameters calculated above
 		# z Shape (2, batch, z_dim)
 		z = self._reparameterized_sample(latentMean, latentStd)
-		# get h_0 for decoder
-		# decoder_h (2, batch, h_dim)
-		decoder_h = self.getFirstDecoderHidden(z)
-		# get first input to decoder (NULL Values)
 		z_forward, z_backward = torch.split(z,1,0)
 		# shape z_expanded (batch size, 2 * z_dim)
 		z_expanded = torch.cat([z_forward.squeeze(0), z_backward.squeeze(0)],1)
+		# get h_0 for decoder
+		decoder_h = self.getFirstDecoderHidden(z_expanded).unsqueeze(0)
+		# get first input to decoder (NULL Values)
+		
 		s_0 = Variable(torch.zeros(self.args.batch_size, self.h_dim))
 		if self.useCuda:
 			s_0 = s_0.cuda()
