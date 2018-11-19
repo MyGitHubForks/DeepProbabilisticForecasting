@@ -140,7 +140,7 @@ def trainF(suggestions=None):
             experimentData["trainReconLosses"].append(avgTrainReconLoss)
             experimentData["valReconLosses"].append(avgValReconLoss)
             experimentData["trainKLDLosses"].append(avgTrainKLDLoss)
-            experimentData["trainKLDLosses"].append(avgValKLDLoss)
+            experimentData["valKLDLosses"].append(avgValKLDLoss)
             lrs = []
             for param_group in optimizer.param_groups:
                 lrs.append(param_group["lr"])
