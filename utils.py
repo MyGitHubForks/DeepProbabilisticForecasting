@@ -49,11 +49,8 @@ def load_dataset(dataset_dir, batch_size, down_sample=None, load_test=False, **k
     assert data['sequence_len'] == 12
     assert data['x_dim'] == 207
     # Data format
-    for category in ['train', 'val', 'test']:
-        data['train_loader'] = DataLoader(data['x_train'], data['y_train'], data["x_times_train"], data["y_times_train"], batch_size, shuffle=True)
-        data['val_loader'] = DataLoader(data['x_val'], data['y_val'], data["x_times_val"], data["y_times_val"], batch_size, shuffle=False)
-        data['test_loader'] = DataLoader(data['x_test'], data['y_test'], data["x_times_test"], data["y_times_test"], batch_size, shuffle=False)
-
+    for category in cats:
+        data['{}_loader'.format(category)] = DataLoader(data['x_{}'.format(category)], data['y_{}'.format(category)], data["x_times_{}".format(category)], data["y_times_{}".format(category)], batch_size, shuffle=True)
     return data
 
 
