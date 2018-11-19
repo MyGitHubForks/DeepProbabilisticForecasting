@@ -111,7 +111,7 @@ def trainF(suggestions=None):
     print("generating model")
     if args.model == "sketch-rnn":
         model=SketchyRNN(args)
-    if args.model == "vrnn":
+    elif args.model == "vrnn":
         print("using vrnn")
         model = VRNN(args)
     elif args.model == "rnn":
