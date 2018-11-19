@@ -147,7 +147,7 @@ def getPredictions(args, data_loader, model, mean, std):
                 kldLossesArr.append([kld])
                 means.append(predMeanOut)
                 stds.append(predStdOut)
-            if args.model == "vrnn":
+            elif args.model == "vrnn":
                 all_enc_mean, all_enc_std, all_dec_mean, all_dec_std, all_prior_mean, all_prior_std, all_samples = modelOutput
                 kldLossArr = []
                 for enc_mean_t, enc_std_t, decoder_mean_t, decoder_std_t, prior_mean_t, prior_std_t, sample in zip(all_enc_mean, all_enc_std, all_dec_mean, all_dec_std, all_prior_mean, all_prior_std, all_samples):
@@ -170,7 +170,7 @@ def getPredictions(args, data_loader, model, mean, std):
                 preds.append(unNormalize(output, mean, std))
             else:
                 assert False, "can't match model"
-        if args.model == "vrnn":
+        if args.model == "vrnn" or args.model=="sketch-rnn":
             kldLossesMat = np.array(kldLossesArr)
             meanKLDLosses = np.mean(kldLossesMat, axis=0)
         return preds, targets, datas, means, stds, meanKLDLosses, dataTimesArr, targetTimesArr, zs
