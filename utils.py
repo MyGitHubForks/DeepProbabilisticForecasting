@@ -211,17 +211,17 @@ def getRNNLoss(output, target, dataDict, args):
     return loss
 
 
-def getSketchRNNLoss(latentMean, latentStd, predOut, predMeanOut, predStdOut, args, target):
+def getSketchRNNLoss(latentMean, latentStd, predOut, predMeanOut, predStdOut, args, target, dataDict):
     # mean and std of shape (batch_size, z_dim)
     kld = sketchRNNKLD(latentMean, latentStd)
     # calculate reconstruction loss
-    unNPred = unNormalize(pred.detach(), dataDict["train_mean"], dataDict["train_std"])
+    unNPred = unNormalize(predOut.detach(), dataDict["train_mean"], dataDict["train_std"])
     unNTarget = unNormalize(target.detach(), dataDict["train_mean"], dataDict["train_std"])
     if args.criterion == "RMSE":
         predLoss = torch.sqrt(torch.mean((predOut - target)**2))    
         unNormalizedLoss = torch.sqrt(torch.mean((unNPred - unNTarget)**2))
     elif args.criterion == "L1Loss":
-        predLoss = torch.mean(torch.abs(pred - target))
+        predLoss = torch.mean(torch.abs(predOut - target))
         unNormalizedLoss = torch.mean(torch.abs(unNPred - unNTarget))
     else:
         assert False, "bad loss function"
@@ -230,7 +230,7 @@ def getSketchRNNLoss(latentMean, latentStd, predOut, predMeanOut, predStdOut, ar
 def getValLoss(output, target, dataDict, args):
     if args.model == "sketch-rnn":
         latentMean, latentStd, z, predOut, predMeanOut, predStdOut = output
-        kldLoss, predLoss, unNormalizedLoss = getSketchRNNLoss(latentMean, latentStd, predOut, predMeanOut, predStdOut)
+        kldLoss, predLoss, unNormalizedLoss = getSketchRNNLoss(latentMean, latentStd, predOut, predMeanOut, predStdOut, args, target, dataDict)
         return kldLoss.item(), unNormalizedLoss.item()
     if args.model == "vrnn":
         totalKLDLoss, predLoss, unNormalizedLoss = getVRNNLoss(output, target, dataDict, args)
@@ -255,7 +255,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer,
         del data
         if args.model == "sketch-rnn":
             latentMean, latentStd, z, predOut, predMeanOut, predStdOut = output
-            kldLoss, predLoss, unNormalizedLoss = getSketchRNNLoss(latentMean, latentStd, predOut, predMeanOut, predStdOut, args, target)
+            kldLoss, predLoss, unNormalizedLoss = getSketchRNNLoss(latentMean, latentStd, predOut, predMeanOut, predStdOut, args, target, dataDict)
             loss = (kldLoss * kldLossWeight) + predLoss
             epochKLDLossTrain += (kldLoss)
             epochReconLossTrain += (unNormalizedLoss)
