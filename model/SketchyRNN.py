@@ -97,19 +97,19 @@ class SketchyRNN(nn.Module):
 		means = []
 		stds = []
 		for t in range(self.args.sequence_len):
-			print("inp size", inp.size())
-			print("decoder_h size ", decoder_h.size())
+			#print("inp size", inp.size())
+			#print("decoder_h size ", decoder_h.size())
 			# input should be (seq_len, batch, h_dim + 2 * z_dim)
 			# decoder_h should be (2, batch, h_dim)
 			decoder_out, decoder_h = self.decoder(inp, decoder_h)
-			print("decoder_out size", decoder_out.size())
-			print("previous target size", target[t-1].size()) 
+			#print("decoder_out size", decoder_out.size())
+			#print("previous target size", target[t-1].size()) 
 			if sample:
-				print("sample")
+				#print("sample")
 				preppedTarget =  self.prepTargetForNextSequence(target[t-1])
 				inp = torch.cat((z_expanded, preppedTarget), 1).unsqueeze(0)
 			else:
-				print("no sample")
+				#print("no sample")
 				inp = torch.cat((z_expanded, decoder_out.squeeze()), 1).unsqueeze(0)
 			outputMean = self.decoder_mean(decoder_out)
 			outputStd = self.decoder_std(decoder_out)
