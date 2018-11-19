@@ -104,6 +104,8 @@ class SketchyRNN(nn.Module):
 			# input should be (seq_len, batch, h_dim + 2 * z_dim)
 			# decoder_h should be (2, batch, h_dim)
 			decoder_out, decoder_h = self.decoder(inp, decoder_h)
+			print("decoder_out size", decoder_out.size())
+			print("previous target size", target[t-1].size()) 
 			if sample:
 				preppedTarget =  self.prepTargetForNextSequence(target[t-1])
 				inp = torch.cat((z_expanded, preppedTarget), 1).unsqueeze(0)
