@@ -51,14 +51,14 @@ class SketchyRNN(nn.Module):
 		self.prepTargetForNextSequence = nn.Linear(self.x_dim, self.h_dim)
 
 		self.use_schedule_sampling = args.use_schedule_sampling
-        self.scheduling_start = args.scheduling_start
-        self.scheduling_end = args.scheduling_end
+		self.scheduling_start = args.scheduling_start
+		self.scheduling_end = args.scheduling_end
 
-    def scheduleSample(self, epoch):
-        eps = max(self.scheduling_start - 
-            (self.scheduling_start - self.scheduling_end)* epoch / self.args.n_epochs,
-            self.scheduling_end)
-        return np.random.binomial(1, eps)
+	def scheduleSample(self, epoch):
+		eps = max(self.scheduling_start - 
+			(self.scheduling_start - self.scheduling_end)* epoch / self.args.n_epochs,
+			self.scheduling_end)
+		return np.random.binomial(1, eps)
 
 	def forward(self, x, target, epoch, training=True):
 		# extract features from x
@@ -69,7 +69,7 @@ class SketchyRNN(nn.Module):
 		encoder_output, encoder_hidden = self.encoder(phiX, h_0)
 		# Reshape encoder_hidden from ()
 		hidden_forward, hidden_backward = torch.split(hidden,1,0)
-        encoder_hidden_cat = torch.cat([hidden_forward.squeeze(0), hidden_backward.squeeze(0)],1)
+		encoder_hidden_cat = torch.cat([hidden_forward.squeeze(0), hidden_backward.squeeze(0)],1)
 		# calculate normal distr parameters
 		latentMean = self.mean(encoder_hidden_cat)
 		latentStd = self.std(encoder_hidden_cat)
@@ -83,31 +83,31 @@ class SketchyRNN(nn.Module):
 
 		# If you are not training or you do not want to use schedule sampling during training
 		if not training or not self.use_schedule_sampling:
-            sample=0
-        else:
-            sample = self.scheduleSample(epoch)
-        # List to collect decoder output
-        ys = []
-        means = []
-        stds = []
+			sample=0
+		else:
+			sample = self.scheduleSample(epoch)
+		# List to collect decoder output
+		ys = []
+		means = []
+		stds = []
 		for t in range(self.args.sequence_len):
 			decoder_out, decoder_h = self.decoder(inp, decoder_h)
 			if sample:
 				preppedTarget =  self.prepTargetForNextSequence(target[t-1])
-                inp = torch.cat((z, preppedTarget), axis=1)
-            else:
-            	preppedDecoderOut = self.prepDecoderOutputForNextSequence(decoder_out)
-                inp = torch.cat((z, preppedDecoderOut), axis=1)
-            outputMean = self.decoder_mean(decoder_out)
-            outputStd = self.decoder_std(decoder_out)
-            pred = self._reparameterized_sample(outputMean, outputStd)
-            ys += [pred]
-            means += [outputMean]
-            stds += [outputStd]
-        predOut = torch.cat([torch.unsqueeze(y, dim=0) for y in ys])
-        predMeanOut = torch.cat([torch.unsqueeze(m, dim=0).cpu().data().numpy() for m in means])
-        predStdOut = torch.cat([torch.unsqueeze(s, dim=0).cpu().data().numpy() for s in stds])
-        return latentMean, latentStd, z, predOut, predMeanOut, predStdOut
+				inp = torch.cat((z, preppedTarget), axis=1)
+			else:
+				preppedDecoderOut = self.prepDecoderOutputForNextSequence(decoder_out)
+				inp = torch.cat((z, preppedDecoderOut), axis=1)
+			outputMean = self.decoder_mean(decoder_out)
+			outputStd = self.decoder_std(decoder_out)
+			pred = self._reparameterized_sample(outputMean, outputStd)
+			ys += [pred]
+			means += [outputMean]
+			stds += [outputStd]
+		predOut = torch.cat([torch.unsqueeze(y, dim=0) for y in ys])
+		predMeanOut = torch.cat([torch.unsqueeze(m, dim=0).cpu().data().numpy() for m in means])
+		predStdOut = torch.cat([torch.unsqueeze(s, dim=0).cpu().data().numpy() for s in stds])
+		return latentMean, latentStd, z, predOut, predMeanOut, predStdOut
 
 	def _reparameterized_sample(self, mean, std):
 		"""using std to sample"""
@@ -119,8 +119,8 @@ class SketchyRNN(nn.Module):
 
 	def initHidden(self):
 		# Encoder is bidirectional, so needs n_layers * 2
-        result = Variable(torch.zeros(self.n_layers * 2, self.args.batch_size, self.hidden_size))
-        if self.args.cuda:
-            return result.cuda()
-        else:
-            return result
+		result = Variable(torch.zeros(self.n_layers * 2, self.args.batch_size, self.hidden_size))
+		if self.args.cuda:
+			return result.cuda()
+		else:
+			return result
