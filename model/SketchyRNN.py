@@ -6,6 +6,7 @@ import torch.utils.data
 from torchvision import datasets, transforms
 from torch.autograd import Variable
 import matplotlib.pyplot as plt 
+import numpy as np
 
 class SketchyRNN(nn.Module):
 	def __init__(self, args):
