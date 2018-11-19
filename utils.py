@@ -109,7 +109,10 @@ def unNormalize(val, mean, std):
     return (val * std) + mean
 
 def sketchRNNKLD(latentMean, latentStd):
-    return torch.sum((-1 / (2*latentMean.size(1))) * (1 + latentStd - latentMean.pow(2) - torch.exp(latentStd)))
+    m2 = torch.zeros_like(latentMean)
+    s2 = torch.ones_like(latentStd)
+    return kld_gauss(latentMean, latentStd, m2, s2)
+    #return torch.sum((-1 / (2*latentMean.size(1))) * (1 + latentStd - latentMean.pow(2) - torch.exp(latentStd)))
 
 def kld_gauss(mean_1, std_1, mean_2, std_2):
     """Using std to compute KLD"""
