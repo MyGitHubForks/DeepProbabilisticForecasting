@@ -121,8 +121,8 @@ class SketchyRNN(nn.Module):
 			means += [outputMean]
 			stds += [outputStd]
 		predOut = torch.cat([torch.unsqueeze(y, dim=0) for y in ys])
-		predMeanOut = torch.cat([torch.unsqueeze(m, dim=0).cpu().data().numpy() for m in means])
-		predStdOut = torch.cat([torch.unsqueeze(s, dim=0).cpu().data().numpy() for s in stds])
+		predMeanOut = torch.cat([torch.unsqueeze(m, dim=0).cpu() for m in means])
+		predStdOut = torch.cat([torch.unsqueeze(s, dim=0).cpu() for s in stds])
 		return latentMean, latentStd, z, predOut, predMeanOut, predStdOut
 
 	def _reparameterized_sample(self, mean, std):
