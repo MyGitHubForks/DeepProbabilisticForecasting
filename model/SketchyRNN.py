@@ -68,7 +68,7 @@ class SketchyRNN(nn.Module):
 		# pass extracted x through encoder GRU
 		encoder_output, encoder_hidden = self.encoder(phiX, h_0)
 		# Reshape encoder_hidden from ()
-		hidden_forward, hidden_backward = torch.split(hidden,1,0)
+		hidden_forward, hidden_backward = torch.split(encoder_hidden,1,0)
 		encoder_hidden_cat = torch.cat([hidden_forward.squeeze(0), hidden_backward.squeeze(0)],1)
 		# calculate normal distr parameters
 		latentMean = self.mean(encoder_hidden_cat)
