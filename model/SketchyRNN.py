@@ -47,8 +47,6 @@ class SketchyRNN(nn.Module):
 
 		self.decoder = nn.GRU(self.h_dim + 2 * self.z_dim, self.h_dim, self.n_layers)
 
-		self.prepDecoderOutputForNextSequence = nn.Linear(self.h_dim + self.z_dim, self.h_dim)
-
 		self.prepTargetForNextSequence = nn.Linear(self.x_dim, self.h_dim)
 
 		self.use_schedule_sampling = args.use_schedule_sampling
@@ -112,8 +110,7 @@ class SketchyRNN(nn.Module):
 				inp = torch.cat((z_expanded, preppedTarget), 1).unsqueeze(0)
 			else:
 				print("no sample")
-				preppedDecoderOut = self.prepDecoderOutputForNextSequence(decoder_out)
-				inp = torch.cat((z_expanded, preppedDecoderOut), 1).unsqueeze(0)
+				inp = torch.cat((z_expanded, decoder_out), 1).unsqueeze(0)
 			outputMean = self.decoder_mean(decoder_out)
 			outputStd = self.decoder_std(decoder_out)
 			pred = self._reparameterized_sample(outputMean, outputStd)
