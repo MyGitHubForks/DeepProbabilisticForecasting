@@ -255,7 +255,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer,
         del data
         if args.model == "sketch-rnn":
             latentMean, latentStd, z, predOut, predMeanOut, predStdOut = output
-            kldLoss, predLoss, unNormalizedLoss = getSketchRNNLoss(latentMean, latentStd, predOut, predMeanOut, predStdOut)
+            kldLoss, predLoss, unNormalizedLoss = getSketchRNNLoss(latentMean, latentStd, predOut, predMeanOut, predStdOut, args, target)
             loss = (kldLoss * kldLossWeight) + predLoss
             epochKLDLossTrain += (kldLoss)
             epochReconLossTrain += (unNormalizedLoss)
