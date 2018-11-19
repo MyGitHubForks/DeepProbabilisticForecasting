@@ -79,6 +79,8 @@ class SketchyRNN(nn.Module):
 		decoder_h = self.getFirstDecoderHidden(z)
 		# get first input to decoder (NULL Values)
 		s_0 = Variable(torch.zeros(self.args.batch_size, self.h_dim))
+		if self.useCuda:
+			s_0 = s_0.cuda()
 		inp = torch.cat((z, s_0), 1)
 
 		# If you are not training or you do not want to use schedule sampling during training
@@ -120,7 +122,7 @@ class SketchyRNN(nn.Module):
 	def initHidden(self):
 		# Encoder is bidirectional, so needs n_layers * 2
 		result = Variable(torch.zeros(self.n_layers * 2, self.args.batch_size, self.h_dim))
-		if self.args.cuda:
+		if self.useCuda:
 			return result.cuda()
 		else:
 			return result
