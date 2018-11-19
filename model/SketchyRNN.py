@@ -24,7 +24,7 @@ class SketchyRNN(nn.Module):
 			nn.Linear(self.h_dim, self.h_dim),
 			nn.ReLU())
 
-		self.encoder = nn.GRU(self.h_dim, self.h_dim, self.n_layers, dropout=args.dropout, bidirectional=True)
+		self.encoder = nn.GRU(self.h_dim, self.h_dim, self.n_layers, bidirectional=True)
 
 		self.mean = nn.Linear(2 * self.h_dim, self.z_dim)
 
