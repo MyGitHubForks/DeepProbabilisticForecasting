@@ -174,7 +174,7 @@ def trainF(suggestions=None):
         data['train_loader'].get_iterator(), model, data["train_mean"], data["train_std"])
 
     savePredData(experimentData)
-    return trainReconLosses[-1], trainKLDLosses[-1], valReconLosses[-1], valKLDLosses[-1], args.save_dir
+    return experimentData["trainReconLosses"][-1], experimentData["trainKLDLosses"][-1], experimentData["valReconLosses"][-1], experimentData["valKLDLosses"][-1], args.save_dir
 
 if __name__ == '__main__':
         cProfile.run("trainF()", "restats")
