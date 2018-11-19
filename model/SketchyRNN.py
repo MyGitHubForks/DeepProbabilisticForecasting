@@ -107,9 +107,11 @@ class SketchyRNN(nn.Module):
 			print("decoder_out size", decoder_out.size())
 			print("previous target size", target[t-1].size()) 
 			if sample:
+				print("sample")
 				preppedTarget =  self.prepTargetForNextSequence(target[t-1])
 				inp = torch.cat((z_expanded, preppedTarget), 1).unsqueeze(0)
 			else:
+				print("no sample")
 				preppedDecoderOut = self.prepDecoderOutputForNextSequence(decoder_out)
 				inp = torch.cat((z_expanded, preppedDecoderOut), 1).unsqueeze(0)
 			outputMean = self.decoder_mean(decoder_out)
