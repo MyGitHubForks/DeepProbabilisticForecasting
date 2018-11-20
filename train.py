@@ -41,10 +41,12 @@ parser.add_argument("--kld_warmup_until", type=int, default=5)
 parser.add_argument("--kld_weight_max", type=float, default=0.10)
 parser.add_argument("--no_shuffle_after_epoch", action="store_true", default=False)
 parser.add_argument("--clip", type=int, default=10)
+parser.add_argument("--dataset", type=str, default="traffic")
+parser.add_argument("--predictOnTest", action="store_true", default=False)
 
 def savePredData(experimentData):
     # Save predictions based on model output
-    for f in ["targetsT", "datasT", "targetsV", "datasV", "learningRates", "dataTimesArrTrain", "targetTimesArrTrain", "dataTimesArrVal", "targetTimesArrVal"]:
+    for f in ["targetsTrain", "datasTrain", "targetsV", "datasV",  "learningRates", "dataTimesArrTrain", "targetTimesArrTrain", "dataTimesArrVal", "targetTimesArrVal"]:
         torch.save(experimentData[f], experimentData["args"].save_dir+f)
     if experimentData["args"].model == "rnn":
         torch.save(experimentData["predsT"], experimentData["args"].save_dir+"train_preds")
@@ -65,6 +67,16 @@ def savePredData(experimentData):
     if experimentData["args"].model == "sketch-rnn":
         torch.save(experimentData["trainingZs"], experimentData["args"].save_dir+"train_Zs")
         torch.save(experimentData["validationZs"], experimentData["args"].save_dir+"validation_Zs")
+    if args.predictOnTest:
+        torch.save(experimentData["predsTest"], experimentData["args"].save_dir+"predsTest")
+        torch.save(experimentData["targetsTest"],experimentData["args"].save_dir+"targetsTest")
+        torch.save(experimentData["datasTest"], experimentData["args"].save_dir+"datasTest")
+        torch.save(experimentData["meansTest"], experimentData["args"].save_dir+"meansTest")
+        torch.save(experimentData["targetTimesArrTest"], experimentData["args"].save_dir+"targetTimesArrTest")
+        torch.save(experimentData["meanKLDLossesTest"], experimentData["args"].save_dir+"meanKLDLossesTest")
+        torch.save(experimentData["dataTimesArrTest"], experimentData["args"].save_dir+"dataTimesArrTest")
+        torch.save(experimentData["targetTimesArrTest"], experimentData["args"].save_dir+"targetTimesArrTest")
+        torch.save(experimentData["testZs"],experimentData["args"].save_dir+"testZs")
 
 def trainF(suggestions=None):
     experimentData = {}
@@ -87,7 +99,10 @@ def trainF(suggestions=None):
         args.save_dir = suggestions["save_dir"]
 
     print("loading data")
-    data = utils.load_dataset(args.data_dir, args.batch_size, down_sample=args.down_sample)
+    if args.dataset == "traffic":
+        data = utils.load_traffic_dataset(args.data_dir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest)
+    elif args.datset == "human":
+        data = utils.load_human_dataset(args.data_dir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest)
     experimentData["data"] = data
     print("setting additional params")
     # Set additional arguments
@@ -168,10 +183,16 @@ def trainF(suggestions=None):
         experimentData["targetTimesArrVal"], experimentData["validationZs"] = utils.getPredictions(args,\
         data['val_loader'].get_iterator(), model, data["val_mean"], data["val_std"])
     
-    experimentData["predsT"], experimentData["targetsT"], experimentData["datasT"], experimentData["meansT"],\
-        experimentData["stdsT"], experimentData["meanKLDLossesT"], experimentData["dataTimesArrTrain"],\
+    experimentData["predsTrain"], experimentData["targetsTrain"], experimentData["datasTrain"], experimentData["meansTrain"],\
+        experimentData["stdsTrain"], experimentData["meanKLDLossesTrain"], experimentData["dataTimesArrTrain"],\
         experimentData["targetTimesArrTrain"], experimentData["trainingZs"] = utils.getPredictions(args, \
         data['train_loader'].get_iterator(), model, data["train_mean"], data["train_std"])
+
+    if args.predictOnTest:
+        experimentData["predsTest"], experimentData["targetsTest"], experimentData["datasTest"], experimentData["meansTest"],\
+        experimentData["targetTimesArrTest"], experimentData["meanKLDLossesTest"], experimentData["dataTimesArrTest"],\
+        experimentData["targetTimesArrTest"], experimentData["testZs"] = utils.getPredictions(args, \
+            data["test_loader"].get_iterator(), model, data["test_mean"], data["test_std"])
 
     savePredData(experimentData)
     return experimentData["trainReconLosses"][-1], experimentData["trainKLDLosses"][-1], experimentData["valReconLosses"][-1], experimentData["valKLDLosses"][-1], args.save_dir

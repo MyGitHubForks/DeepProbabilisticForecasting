@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
 import os
-from model.Data import DataLoader
+from model.Data import DataLoader, DataLoaderWithTime
 from memory_profiler import profile
 
 
@@ -19,7 +19,45 @@ def normalizeData(x, y):
     std = np.std(allData)
     return (x-mean)/std, (y-mean)/std, mean, std
 
-def load_dataset(dataset_dir, batch_size, down_sample=None, load_test=False, **kwargs):
+def load_human_dataset(dataset_dir, batch_size, down_sample=None, load_test=False, **kwargs):
+    data = {}
+    if load_test:
+        cats = ["train", "val", "test"]
+    else:
+        cats = ["train", "val"]
+    for category in cats:
+        print(category)
+        f = h5py.File(os.path.join(dataset_dir, category))
+        f["input2d"] = f["input2d"].reshape((f['input2d'].shape[:2]+[-1]))
+        f["target2d"] = f["target2d"].reshape((f['target2d'].shape[:2]+[-1]))
+        if down_sample:
+            nRows = f["input2d"].shape[0]
+            down_sampled_rows = np.random.choice(range(nRows), size=np.ceil(nRows * down_sample).astype(int),
+                                                 replace=False)
+        else:
+            down_sampled_rows = range(nRows)
+        data["x_"+category] = f["inputs2d"][down_sampled_rows,...]
+        data["y_"+category] = f["target2d"][down_sampled_rows,...]
+        data["action_"+category] = f["action"][down_sampled_rows,...]
+        data["camera_"+category] = f["camera"][down_sampled_rows,...]
+        data["inputId_"+category] = f["inputId"][down_sampled_rows,...]
+        data["subaction_"+category] = f["subaction"][down_sampled_rows,...]
+        data["subject_"+category] = f["subject"][down_sampled_rows,...]
+        data["targetId_"+category] = f["targetId"][down_sampled_rows,...]
+        data["x_"+category], data["y_"+category], data[category+"_mean"], data[category+"_std"] =\
+         normalizeData(data["x_"+category], data["y_"+category])
+
+    data['sequence_len'] = f['input2d'].shape[1]
+    data['x_dim'] = f['input2d'].shape[2]
+
+    assert data['sequence_len'] == 12
+    assert data['x_dim'] == 414
+    # Data format
+    for category in cats:
+        data['{}_loader'.format(category)] = DataLoader(data['x_{}'.format(category)], data['y_{}'.format(category)], batch_size, shuffle=True)
+    return data
+
+def load_traffic_dataset(dataset_dir, batch_size, down_sample=None, load_test=False, **kwargs):
     data = {}
     if load_test:
         cats = ["train", "val", "test"]
