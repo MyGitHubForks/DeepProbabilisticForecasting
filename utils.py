@@ -149,6 +149,10 @@ def getPredictions(args, data_loader, model, mean, std):
                 zs.append(z)
                 kld = sketchRNNKLD(latentMean, latentStd)
                 kldLossesArr.append([kld])
+                pred_means_mat = np.concatenate([torch.unsqueeze(m, dim=0).cpu().data.numpy()\
+                                                    for m in predMeanOut], axis=0)
+                pred_std_mat = np.concatenate([torch.unsqueeze(s, dim=0).cpu().data.numpy()\
+                                                    for s in predStdOut], axis=0)
                 means.append(predMeanOut)
                 stds.append(predStdOut)
             elif args.model == "vrnn":
