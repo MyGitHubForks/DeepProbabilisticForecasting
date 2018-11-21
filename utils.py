@@ -50,7 +50,7 @@ def load_human_dataset(dataset_dir, batch_size, down_sample=None, load_test=Fals
     data['x_dim'] = f['input2d'].shape[2]
 
     assert data['sequence_len'] == 12
-    assert data['x_dim'] == 414
+    assert data['x_dim'] == 32
     # Data format
     for category in cats:
         data['{}_loader'.format(category)] = DataLoader(data['x_{}'.format(category)], data['y_{}'.format(category)], batch_size, shuffle=True)
