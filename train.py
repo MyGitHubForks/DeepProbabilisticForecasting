@@ -79,6 +79,7 @@ def savePredData(experimentData):
         torch.save(experimentData["testZs"],experimentData["args"].save_dir+"testZs")
 
 def memReport():
+    print("~~~ Memory Report")
     for obj in gc.get_objects():
         if torch.is_tensor(obj):
             print(type(obj), obj.size())
