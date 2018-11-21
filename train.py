@@ -172,6 +172,8 @@ def trainF(suggestions=None):
             modelWeights = model.cpu().state_dict()
             torch.save(modelWeights, fn)
             print('Saved model to '+fn)
+            if args.cuda:
+                model = model.cuda()
         if not args.no_shuffle_after_epoch:
             # Shuffle training examples for next epoch
             data['train_loader'].shuffle()
