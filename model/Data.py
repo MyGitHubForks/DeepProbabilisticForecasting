@@ -43,15 +43,20 @@ class DataLoader(object):
         permutation = np.random.permutation(self.size)
         self.xs, self.ys = self.xs[permutation], self.ys[permutation]
 
-class DataLoaderWithTime(DataLoader):
+class DataLoaderWithTime(object):
     def __init__(self, xs, ys, tx, ty, batch_size, pad_with_last_sample=True, shuffle=True):
-        super(DataLoaderWithTime, self).__init__(xs, ys, batch_size, pad_with_last_sample, shuffle)
         if pad_with_last_sample:
             num_padding = (batch_size - (len(xs) % batch_size)) % batch_size
+            x_padding = np.repeat(xs[-1:], num_padding, axis=0)
+            y_padding = np.repeat(ys[-1:], num_padding, axis=0)
             tx_padding = np.repeat(tx[-1:], num_padding, axis=0)
             ty_padding = np.repeat(ty[-1:], num_padding, axis=0)
+            xs = np.concatenate([xs, x_padding], axis=0)
+            ys = np.concatenate([ys, y_padding], axis=0)
             tx = np.concatenate([tx, tx_padding], axis=0)
             ty = np.concatenate([ty, ty_padding], axis=0)
+        self.xs = xs
+        self.ys = ys
         self.tx = tx
         self.ty = ty
         if shuffle:
