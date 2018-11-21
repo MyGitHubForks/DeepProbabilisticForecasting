@@ -153,7 +153,7 @@ def trainF(suggestions=None):
                                 model, lr, args, data, epoch, optimizer, kldLossWeight)
         if (epoch % args.plot_every) == 0:
             experimentData["trainReconLosses"].append(avgTrainReconLoss.cpu())
-            experimentData["valReconLosses"].append(avgValReconLoss.cpu())
+            experimentData["valReconLosses"].append(avgValReconLoss)
             experimentData["trainKLDLosses"].append(avgTrainKLDLoss.cpu())
             experimentData["valKLDLosses"].append(avgValKLDLoss.cpu())
             lrs = []
