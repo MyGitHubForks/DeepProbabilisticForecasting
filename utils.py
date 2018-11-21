@@ -181,8 +181,9 @@ def getPredictions(args, data_loader, model, mean, std):
             target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
             targets.append(unNormalize(target, mean, std))
             datas.append(unNormalize(data, mean, std))
-            dataTimesArr.append(dataTimes)
-            targetTimesArr.append(targetTimes)
+            if args.dataset == "traffic":
+                dataTimesArr.append(dataTimes)
+                targetTimesArr.append(targetTimes)
             modelOutput = model(data, target, 0, training=False)
             #del target
             #del data
