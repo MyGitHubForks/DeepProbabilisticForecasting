@@ -18,10 +18,11 @@ class DataLoader(object):
             # ty = np.concatenate([ty, ty_padding], axis=0)
         self.size = len(xs)
         self.num_batch = int(self.size // self.batch_size)
-        if shuffle:
-            self.shuffle()
         self.xs = xs
         self.ys = ys
+        if shuffle:
+            self.shuffle()
+        
 
     def get_iterator(self):
         self.current_ind = 0
