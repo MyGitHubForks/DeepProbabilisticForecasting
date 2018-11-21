@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
 import os
+import h5py
 from model.Data import DataLoader, DataLoaderWithTime
 from memory_profiler import profile
 
