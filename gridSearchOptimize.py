@@ -6,9 +6,7 @@ import argparse
 
 params = {"h_dim": (4, 9, 2),
 	"z_dim": (4, 9, 2),
-	"batch_size": (1, 10, 5),
-	"n_layers": (1, 3, 1),
-	"initial_lr": (-4, -2, 10)}
+	"initial_lr": (-5, -2, 10)}
 
 def getSaveDir():
     saveDir = './save/models/model0/'
@@ -23,11 +21,6 @@ def getParams(args, saveDir):
 	p = {}
 	p["save_dir"] = saveDir
 	p["model"] = args.model
-	for key in ["batch_size", "n_layers"]:
-		vals = params[key]
-		p[key] = np.random.randint(vals[0], vals[1]) * vals[2]
-		print(key, p[key])
-
 	for key in ["h_dim", "z_dim", "initial_lr"]:
 		vals = params[key]
 		possib = np.logspace(vals[0], vals[1], base=vals[2], num=vals[1]-vals[0]+1)

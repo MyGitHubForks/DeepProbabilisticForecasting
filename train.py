@@ -21,7 +21,7 @@ parser.add_argument("--z_dim", type=int, default=128)
 parser.add_argument('--no_cuda', action='store_true', default=False,
                                         help='disables CUDA training')
 parser.add_argument("--no_attn", action="store_true", default=True, help="Do not use AttnDecoder")
-parser.add_argument("--n_epochs", type=int, default=5)
+parser.add_argument("--n_epochs", type=int, default=200)
 parser.add_argument("--batch_size", type=int, default= 10)
 parser.add_argument("--n_layers", type=int, default=2)
 parser.add_argument("--initial_lr", type=float, default=1e-3)
@@ -29,7 +29,7 @@ parser.add_argument("--print_every", type=int, default = 20)
 parser.add_argument("--plot_every", type=int, default = 1)
 parser.add_argument("--criterion", type=str, default="RMSE")
 parser.add_argument("--save_freq", type=int, default=10)
-parser.add_argument("--down_sample", type=float, default=0.1, help="Keep this fraction of the training data")
+parser.add_argument("--down_sample", type=float, default=0.0, help="Keep this fraction of the training data")
 parser.add_argument("--data_dir", type=str, default="./data/reformattedTraffic/")
 parser.add_argument("--model", type=str, default="sketch-rnn")
 parser.add_argument("--weight_decay", type=float, default=5e-5)
@@ -42,7 +42,7 @@ parser.add_argument("--kld_weight_max", type=float, default=0.10)
 parser.add_argument("--no_shuffle_after_epoch", action="store_true", default=False)
 parser.add_argument("--clip", type=int, default=10)
 parser.add_argument("--dataset", type=str, default="traffic")
-parser.add_argument("--predictOnTest", action="store_true", default=False)
+parser.add_argument("--predictOnTest", action="store_true", default=True)
 
 def savePredData(experimentData):
     # Save predictions based on model output
@@ -93,8 +93,6 @@ def trainF(suggestions=None):
         args.model = suggestions["model"]
         args.h_dim = int(suggestions["h_dim"])
         args.z_dim = int(suggestions["z_dim"])
-        args.batch_size = suggestions["batch_size"]
-        args.n_layers = suggestions["n_layers"]
         args.initial_lr = suggestions["initial_lr"]
         args.save_dir = suggestions["save_dir"]
 
