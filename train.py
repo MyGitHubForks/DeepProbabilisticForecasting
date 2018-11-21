@@ -30,7 +30,7 @@ parser.add_argument("--plot_every", type=int, default = 1)
 parser.add_argument("--criterion", type=str, default="RMSE")
 parser.add_argument("--save_freq", type=int, default=10)
 parser.add_argument("--down_sample", type=float, default=0.0, help="Keep this fraction of the training data")
-parser.add_argument("--data_dir", type=str, default="./data/reformattedTraffic/")
+# parser.add_argument("--data_dir", type=str, default="./data/reformattedTraffic/")
 parser.add_argument("--model", type=str, default="sketch-rnn")
 parser.add_argument("--weight_decay", type=float, default=5e-5)
 parser.add_argument("--no_schedule_sampling", action="store_true", default=False)
@@ -98,9 +98,11 @@ def trainF(suggestions=None):
 
     print("loading data")
     if args.dataset == "traffic":
-        data = utils.load_traffic_dataset(args.data_dir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest)
+        dataDir = "./data/reformattedTraffic/"
+        data = utils.load_traffic_dataset(dataDir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest)
     elif args.dataset == "human":
-        data = utils.load_human_dataset(args.data_dir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest)
+        dataDir = "/home/dan/batchedrnn/data/humanMotion/Processed/"
+        data = utils.load_human_dataset(dataDir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest)
     experimentData["data"] = data
     print("setting additional params")
     # Set additional arguments
