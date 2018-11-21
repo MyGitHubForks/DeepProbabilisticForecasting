@@ -348,8 +348,8 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer,
         target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
         output = model(data, target, epoch)
         validationKldLoss, validationReconLoss = getValLoss(output, target, dataDict, args)
-        epochKLDLossVal += validationKldLoss.item()
-        epochReconLossVal += validationReconLoss.item()
+        epochKLDLossVal += validationKldLoss
+        epochReconLossVal += validationReconLoss
         torch.cuda.empty_cache()
     avgTrainReconLoss = epochReconLossTrain / nTrainBatches
     avgTrainKLDLoss = epochKLDLossTrain / nTrainBatches
