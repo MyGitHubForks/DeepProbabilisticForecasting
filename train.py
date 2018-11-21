@@ -103,7 +103,7 @@ def trainF(suggestions=None):
     elif args.dataset == "human":
         dataDir = "/home/dan/batchedrnn/data/humanMotion/Processed/"
         data = utils.load_human_dataset(dataDir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest)
-    experimentData["data"] = data.cpu()
+    experimentData["data"] = data
     print("setting additional params")
     # Set additional arguments
     assert args.kld_warmup_until <= args.n_epochs, "KLD Warm up stop > n_epochs"
