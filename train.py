@@ -155,7 +155,7 @@ def trainF(suggestions=None):
             experimentData["trainReconLosses"].append(avgTrainReconLoss.cpu())
             experimentData["valReconLosses"].append(avgValReconLoss)
             experimentData["trainKLDLosses"].append(avgTrainKLDLoss.cpu())
-            experimentData["valKLDLosses"].append(avgValKLDLoss.cpu())
+            experimentData["valKLDLosses"].append(avgValKLDLoss)
             lrs = []
             for param_group in optimizer.param_groups:
                 lrs.append(param_group["lr"])
