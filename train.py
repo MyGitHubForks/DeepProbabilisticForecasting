@@ -49,15 +49,15 @@ def savePredData(experimentData):
     for f in ["targetsTrain", "datasTrain", "targetsV", "datasV",  "learningRates", "dataTimesArrTrain", "targetTimesArrTrain", "dataTimesArrVal", "targetTimesArrVal"]:
         torch.save(experimentData[f], experimentData["args"].save_dir+f)
     if experimentData["args"].model == "rnn":
-        torch.save(experimentData["predsT"], experimentData["args"].save_dir+"train_preds")
+        torch.save(experimentData["predsTrain"], experimentData["args"].save_dir+"train_preds")
         torch.save(experimentData["predsV"], experimentData["args"].save_dir+"validation_preds")
     elif experimentData["args"].model == "vrnn" or experimentData["args"].model == "sketch-rnn":
         # Save train prediction data
-        torch.save(experimentData["meansT"], experimentData["args"].save_dir+"train_means")
-        torch.save(experimentData["stdsT"], experimentData["args"].save_dir+"train_stds")
+        torch.save(experimentData["meansTrain"], experimentData["args"].save_dir+"train_means")
+        torch.save(experimentData["stdsTrain"], experimentData["args"].save_dir+"train_stds")
         torch.save(experimentData["data"]["train_mean"], experimentData["args"].save_dir+"train_mean")
         torch.save(experimentData["data"]["train_std"], experimentData["args"].save_dir+"train_std")
-        torch.save(experimentData["meanKLDLossesT"], experimentData["args"].save_dir+"mean_train_kld_losses_per_timestep")
+        torch.save(experimentData["meanKLDLossesTrain"], experimentData["args"].save_dir+"mean_train_kld_losses_per_timestep")
         # Validation prediction data
         torch.save(experimentData["meansV"], experimentData["args"].save_dir+"validation_means")
         torch.save(experimentData["stdsV"], experimentData["args"].save_dir+"validation_stds")
