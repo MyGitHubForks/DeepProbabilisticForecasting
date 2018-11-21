@@ -13,7 +13,6 @@ import h5py
 from model.Data import DataLoader, DataLoaderWithTime
 from memory_profiler import profile
 
-
 def normalizeData(x, y):
     allData = np.stack((x,y), axis=1)
     mean = np.mean(allData)

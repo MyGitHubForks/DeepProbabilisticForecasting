@@ -14,6 +14,7 @@ import os
 import argparse
 import json
 from shutil import copy2, copyfile, copytree
+import gc
 
 parser = argparse.ArgumentParser(description='Batched Sequence to Sequence')
 parser.add_argument('--h_dim', type=int, default=512)
