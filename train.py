@@ -169,7 +169,8 @@ def trainF(suggestions=None):
         #saving model
         if (epoch % args.save_freq) == 0:
             fn = args.save_dir+'{}_state_dict_'.format(args.model)+str(epoch)+'.pth'
-            torch.save(model.cpu().state_dict(), fn)
+            modelWeights = model.cpu().state_dict()
+            torch.save(modelWeights, fn)
             print('Saved model to '+fn)
         if not args.no_shuffle_after_epoch:
             # Shuffle training examples for next epoch
