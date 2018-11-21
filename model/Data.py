@@ -45,6 +45,8 @@ class DataLoader(object):
 
 class DataLoaderWithTime(object):
     def __init__(self, xs, ys, tx, ty, batch_size, pad_with_last_sample=True, shuffle=True):
+        self.batch_size = batch_size
+        self.current_ind = 0
         if pad_with_last_sample:
             num_padding = (batch_size - (len(xs) % batch_size)) % batch_size
             x_padding = np.repeat(xs[-1:], num_padding, axis=0)
