@@ -179,12 +179,12 @@ def getPredictions(args, data_loader, model, mean, std):
                 data, target = vals
             data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
             target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
+            modelOutput = model(data, target, 0, training=False)
             targets.append(unNormalize(target, mean, std).cpu())
             datas.append(unNormalize(data, mean, std).cpu())
             if args.dataset == "traffic":
                 dataTimesArr.append(dataTimes.cpu())
                 targetTimesArr.append(targetTimes.cpu())
-            modelOutput = model(data, target, 0, training=False)
             #del target
             #del data
             if args.model == "sketch-rnn":
