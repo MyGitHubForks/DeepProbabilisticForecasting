@@ -183,8 +183,8 @@ def getPredictions(args, data_loader, model, mean, std):
             targets.append(unNormalize(target, mean, std).cpu())
             datas.append(unNormalize(data, mean, std).cpu())
             if args.dataset == "traffic":
-                dataTimesArr.append(dataTimes.cpu())
-                targetTimesArr.append(targetTimes.cpu())
+                dataTimesArr.append(dataTimes)
+                targetTimesArr.append(targetTimes)
             #del target
             #del data
             if args.model == "sketch-rnn":
