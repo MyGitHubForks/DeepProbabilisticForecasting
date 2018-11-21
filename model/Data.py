@@ -52,11 +52,10 @@ class DataLoaderWithTime(DataLoader):
             ty_padding = np.repeat(ty[-1:], num_padding, axis=0)
             tx = np.concatenate([tx, tx_padding], axis=0)
             ty = np.concatenate([ty, ty_padding], axis=0)
-
-        if shuffle:
-            self.shuffle()
         self.tx = tx
         self.ty = ty
+        if shuffle:
+            self.shuffle()
 
     def get_iterator(self):
         self.current_ind = 0
