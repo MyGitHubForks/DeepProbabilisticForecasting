@@ -235,7 +235,7 @@ def getVRNNLoss(output, target, dataDict, args):
     for enc_mean_t, enc_std_t, decoder_mean_t, decoder_std_t, prior_mean_t, prior_std_t, sample in \
             zip(encoder_means, encoder_stds, decoder_means, decoder_stds, prior_means, prior_stds, all_samples):
         kldLoss = kld_gauss(enc_mean_t, enc_std_t, prior_mean_t, prior_std_t)
-        totalKLDLoss += kldLoss.item()
+        totalKLDLoss += kldLoss
     # Calculate Prediction Loss
     pred = torch.cat([torch.unsqueeze(y, dim=0) for y in all_samples])
     unNPred = unNormalize(pred.detach(), dataDict["train_mean"], dataDict["train_std"])
