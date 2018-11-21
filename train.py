@@ -168,8 +168,6 @@ def trainF(suggestions=None):
         if not args.no_shuffle_after_epoch:
             # Shuffle training examples for next epoch
             data['train_loader'].shuffle()
-    model_fn = args.save_dir + '{}_full_model'.format(args.model) +".pth"
-    torch.save(model.cpu().state_dict(), model_fn)
     if args.model == "vrnn" or args.model == "sketch-rnn":
         utils.plotTrainValCurve(experimentData["trainReconLosses"], experimentData["valReconLosses"],\
             args.model, args.criterion, args, trainKLDLosses=experimentData["trainKLDLosses"],\
@@ -193,7 +191,8 @@ def trainF(suggestions=None):
         experimentData["targetTimesArrTest"], experimentData["meanKLDLossesTest"], experimentData["dataTimesArrTest"],\
         experimentData["targetTimesArrTest"], experimentData["testZs"] = utils.getPredictions(args, \
             data["test_loader"].get_iterator(), model, data["test_mean"], data["test_std"])
-
+    model_fn = args.save_dir + '{}_full_model'.format(args.model) +".pth"
+    torch.save(model.cpu().state_dict(), model_fn)
     savePredData(experimentData)
     return experimentData["trainReconLosses"][-1], experimentData["trainKLDLosses"][-1], experimentData["valReconLosses"][-1], experimentData["valKLDLosses"][-1], args.save_dir
 
