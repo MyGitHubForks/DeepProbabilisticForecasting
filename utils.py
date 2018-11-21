@@ -172,7 +172,11 @@ def getPredictions(args, data_loader, model, mean, std):
     zs = []
     meanKLDLosses = None
     with torch.no_grad():
-        for batch_idx, (data, target, dataTimes, targetTimes) in enumerate(data_loader):
+        for batch_idx, vals in enumerate(data_loader):
+            if args.dataset == "traffic":
+                data, target, dataTimes, targetTimes = vals
+            else:
+                data, target = vals
             data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
             target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
             targets.append(unNormalize(target, mean, std))
@@ -296,7 +300,11 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer,
     epochReconLossVal = 0.0
     nTrainBatches = 0
     nValBatches = 0
-    for batch_idx, (data, target, dataTimes, targetTimes) in enumerate(train_loader):
+    for batch_idx, vals in enumerate(train_loader):
+        if args.dataset == "traffic":
+            data, target, dataTimes, targetTimes = vals
+        else:
+            data, target = vals
         nTrainBatches += 1
         data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1).requires_grad_()
         target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1).requires_grad_()
@@ -323,7 +331,11 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer,
         optimizer.step()
         #grad norm clipping, only in pytorch version >= 1.10
         nn.utils.clip_grad_norm_(model.parameters(), args.clip)
-    for batch_idx, (data, target, dataTimes, targetTimes) in enumerate(val_loader):
+    for batch_idx, vals in enumerate(val_loader):
+        if args.dataset == "traffic":
+            data, target, dataTimes, targetTimes = vals
+        else:
+            data, target = vals
         nValBatches += 1
         data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
         target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
