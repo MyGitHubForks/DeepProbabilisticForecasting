@@ -179,32 +179,32 @@ def getPredictions(args, data_loader, model, mean, std):
                 data, target = vals
             data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
             target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
-            targets.append(unNormalize(target, mean, std))
-            datas.append(unNormalize(data, mean, std))
+            targets.append(unNormalize(target, mean, std).cpu())
+            datas.append(unNormalize(data, mean, std).cpu())
             if args.dataset == "traffic":
-                dataTimesArr.append(dataTimes)
-                targetTimesArr.append(targetTimes)
+                dataTimesArr.append(dataTimes.cpu())
+                targetTimesArr.append(targetTimes.cpu())
             modelOutput = model(data, target, 0, training=False)
             #del target
             #del data
             if args.model == "sketch-rnn":
                 latentMean, latentStd, z, predOut, predMeanOut, predStdOut = modelOutput
-                zs.append(z)
+                zs.append(z.cpu())
                 kld = sketchRNNKLD(latentMean, latentStd)
-                kldLossesArr.append([kld])
+                kldLossesArr.append([kld.cpu()])
                 pred_means_mat = np.concatenate([torch.unsqueeze(m, dim=0).cpu().data.numpy()\
                                                     for m in predMeanOut], axis=0)
                 pred_std_mat = np.concatenate([torch.unsqueeze(s, dim=0).cpu().data.numpy()\
                                                     for s in predStdOut], axis=0)
-                means.append(predMeanOut)
-                stds.append(predStdOut)
+                means.append(predMeanOut.cpu())
+                stds.append(predStdOut.cpu())
             elif args.model == "vrnn":
                 all_enc_mean, all_enc_std, all_dec_mean, all_dec_std, all_prior_mean, all_prior_std, all_samples = modelOutput
                 kldLossArr = []
                 for enc_mean_t, enc_std_t, decoder_mean_t, decoder_std_t, prior_mean_t, prior_std_t, sample in zip(all_enc_mean, all_enc_std, all_dec_mean, all_dec_std, all_prior_mean, all_prior_std, all_samples):
                     kldLoss = kld_gauss(enc_mean_t, enc_std_t, prior_mean_t, prior_std_t)
-                    kldLossArr.append(kldLoss)
-                kldLossesArr.append(kldLossArr)
+                    kldLossArr.append(kldLoss.cpu())
+                kldLossesArr.append(kldLossArr.cpu())
                 del all_enc_mean
                 del all_enc_std
                 del all_prior_mean
@@ -218,7 +218,7 @@ def getPredictions(args, data_loader, model, mean, std):
                 stds.append(decoder_std_mat)
             elif args.model=="rnn":
                 output = modelOutput.cpu().detach()
-                preds.append(unNormalize(output, mean, std))
+                preds.append(unNormalize(output, mean, std).cpu())
             else:
                 assert False, "can't match model"
         if args.model == "vrnn" or args.model=="sketch-rnn":
@@ -318,16 +318,20 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer,
             loss = (kldLoss * kldLossWeight) + predLoss
             epochKLDLossTrain += (kldLoss)
             epochReconLossTrain += (unNormalizedLoss)
-            print("batch index: {}, recon loss: {}, kld loss: {}".format(batch_idx, unNormalizedLoss, kldLoss))
+            if batch_idx % args.print_every == 0:
+                print("batch index: {}, recon loss: {}, kld loss: {}".format(batch_idx, unNormalizedLoss, kldLoss))
         elif args.model == "vrnn":
             kldLoss, predLoss, unNormalizedLoss = getVRNNLoss(output, target, dataDict, args)
             loss = (kldLoss * kldLossWeight) / args.sequence_len + predLoss
             epochKLDLossTrain += (kldLoss / args.sequence_len)
             epochReconLossTrain += (unNormalizedLoss)
-            print("batch index: {}, recon loss: {}, kld loss: {}".format(batch_idx, unNormalizedLoss, kldLoss / args.sequence_len))
+            if batch_idx % args.print_every == 0:
+                print("batch index: {}, recon loss: {}, kld loss: {}".format(batch_idx, unNormalizedLoss, kldLoss / args.sequence_len))
         elif args.model == "rnn":
             loss = getRNNLoss(output, target, dataDict, args) # unNormalized Loss
             epochReconLossTrain += (loss)
+            if batch_idx % args.print_every == 0:
+                print("batch_idx: {}, loss: {}".format(batch_idx, loss))
         loss.backward()
         optimizer.step()
         #grad norm clipping, only in pytorch version >= 1.10

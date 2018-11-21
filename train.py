@@ -25,7 +25,7 @@ parser.add_argument("--n_epochs", type=int, default=200)
 parser.add_argument("--batch_size", type=int, default= 10)
 parser.add_argument("--n_layers", type=int, default=2)
 parser.add_argument("--initial_lr", type=float, default=1e-3)
-parser.add_argument("--print_every", type=int, default = 20)
+parser.add_argument("--print_every", type=int, default = 200)
 parser.add_argument("--plot_every", type=int, default = 1)
 parser.add_argument("--criterion", type=str, default="RMSE")
 parser.add_argument("--save_freq", type=int, default=10)
@@ -103,7 +103,7 @@ def trainF(suggestions=None):
     elif args.dataset == "human":
         dataDir = "/home/dan/batchedrnn/data/humanMotion/Processed/"
         data = utils.load_human_dataset(dataDir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest)
-    experimentData["data"] = data
+    experimentData["data"] = data.cpu()
     print("setting additional params")
     # Set additional arguments
     assert args.kld_warmup_until <= args.n_epochs, "KLD Warm up stop > n_epochs"
@@ -152,10 +152,10 @@ def trainF(suggestions=None):
                     utils.train(data['train_loader'].get_iterator(), data['val_loader'].get_iterator(),\
                                 model, lr, args, data, epoch, optimizer, kldLossWeight)
         if (epoch % args.plot_every) == 0:
-            experimentData["trainReconLosses"].append(avgTrainReconLoss)
-            experimentData["valReconLosses"].append(avgValReconLoss)
-            experimentData["trainKLDLosses"].append(avgTrainKLDLoss)
-            experimentData["valKLDLosses"].append(avgValKLDLoss)
+            experimentData["trainReconLosses"].append(avgTrainReconLoss.cpu())
+            experimentData["valReconLosses"].append(avgValReconLoss.cpu())
+            experimentData["trainKLDLosses"].append(avgTrainKLDLoss.cpu())
+            experimentData["valKLDLosses"].append(avgValKLDLoss.cpu())
             lrs = []
             for param_group in optimizer.param_groups:
                 lrs.append(param_group["lr"])
@@ -163,13 +163,13 @@ def trainF(suggestions=None):
         #saving model
         if (epoch % args.save_freq) == 0:
             fn = args.save_dir+'{}_state_dict_'.format(args.model)+str(epoch)+'.pth'
-            torch.save(model.state_dict(), fn)
+            torch.save(model.cpu().state_dict(), fn)
             print('Saved model to '+fn)
         if not args.no_shuffle_after_epoch:
             # Shuffle training examples for next epoch
             data['train_loader'].shuffle()
     model_fn = args.save_dir + '{}_full_model'.format(args.model) +".pth"
-    torch.save(model, model_fn)
+    torch.save(model.cpu().state_dict(), model_fn)
     if args.model == "vrnn" or args.model == "sketch-rnn":
         utils.plotTrainValCurve(experimentData["trainReconLosses"], experimentData["valReconLosses"],\
             args.model, args.criterion, args, trainKLDLosses=experimentData["trainKLDLosses"],\
