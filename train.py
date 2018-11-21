@@ -101,7 +101,7 @@ def trainF(suggestions=None):
     print("loading data")
     if args.dataset == "traffic":
         data = utils.load_traffic_dataset(args.data_dir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest)
-    elif args.datset == "human":
+    elif args.dataset == "human":
         data = utils.load_human_dataset(args.data_dir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest)
     experimentData["data"] = data
     print("setting additional params")
