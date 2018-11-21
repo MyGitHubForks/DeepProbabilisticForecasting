@@ -35,8 +35,8 @@ def load_human_dataset(dataset_dir, batch_size, down_sample=None, load_test=Fals
                                                  replace=False)
         else:
             down_sampled_rows = range(nRows)
-        data["x_"+category] = f["inputs2d"][down_sampled_rows,...]
-        data["y_"+category] = f["target2d"][down_sampled_rows,...]
+        data["x_"+category] = f["input2d"][down_sampled_rows,...]
+        data["y_"+category] = f["targe2d"][down_sampled_rows,...]
         data["action_"+category] = f["action"][down_sampled_rows,...]
         data["camera_"+category] = f["camera"][down_sampled_rows,...]
         data["inputId_"+category] = f["inputId"][down_sampled_rows,...]
