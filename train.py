@@ -67,7 +67,7 @@ def savePredData(experimentData):
     if experimentData["args"].model == "sketch-rnn":
         torch.save(experimentData["trainingZs"], experimentData["args"].save_dir+"train_Zs")
         torch.save(experimentData["validationZs"], experimentData["args"].save_dir+"validation_Zs")
-    if args.predictOnTest:
+    if experimentData["args"].predictOnTest:
         torch.save(experimentData["predsTest"], experimentData["args"].save_dir+"predsTest")
         torch.save(experimentData["targetsTest"],experimentData["args"].save_dir+"targetsTest")
         torch.save(experimentData["datasTest"], experimentData["args"].save_dir+"datasTest")
