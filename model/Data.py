@@ -55,6 +55,8 @@ class DataLoaderWithTime(object):
             ys = np.concatenate([ys, y_padding], axis=0)
             tx = np.concatenate([tx, tx_padding], axis=0)
             ty = np.concatenate([ty, ty_padding], axis=0)
+        self.size = len(xs)
+        self.num_batch = int(self.size // self.batch_size)
         self.xs = xs
         self.ys = ys
         self.tx = tx
