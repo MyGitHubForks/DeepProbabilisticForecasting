@@ -15,8 +15,11 @@ def main(args):
         supervisor_config = yaml.load(f)
 
         graph_pkl_filename = supervisor_config['data'].get('graph_pkl_filename')
-        sensor_ids, sensor_id_to_ind, adj_mx = load_graph_data(graph_pkl_filename)
-
+        dataset_name = supervisor_config['data'].get('dataset_name')
+        if dataset_name == "traffic":
+            sensor_ids, sensor_id_to_ind, adj_mx = load_graph_data(graph_pkl_filename)
+        elif dataset_name == "human":
+            sensor_ids, sensor_id_to_ind, adj_mx = load_human_dataset(graph_pkl_filename)
         tf_config = tf.ConfigProto()
         if args.use_cpu_only:
             tf_config = tf.ConfigProto(device_count={'GPU': 0})

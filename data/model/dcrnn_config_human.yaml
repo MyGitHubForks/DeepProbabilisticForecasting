@@ -4,6 +4,7 @@ log_level: INFO
 data:
   batch_size: 64
   dataset_dir: data/human
+  dataset_name: human
   test_batch_size: 64
   val_batch_size: 64
   graph_pkl_filename: data/sensor_graph/skeleton_adj_mat.pkl
