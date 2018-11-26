@@ -27,9 +27,9 @@ def load_human_dataset(dataset_dir, batch_size, down_sample=None, load_test=Fals
         cats = ["train", "val"]
     for category in cats:
         print(category)
-        f = h5py.File(os.path.join(dataset_dir, category+".h5"))
+        f = h5py.File(os.path.join(dataset_dir, category+".h5"), "r")
         nRows = f["input2d"].shape[0]
-        if down_sample:
+        if down_sample: 
             down_sampled_rows = np.random.choice(range(nRows), size=np.ceil(nRows * down_sample).astype(int),
                                                  replace=False)
             down_sampled_rows = sorted(down_sampled_rows)
