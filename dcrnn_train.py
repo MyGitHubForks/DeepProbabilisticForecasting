@@ -34,6 +34,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config_filename', default=None, type=str,
                         help='Configuration filename for restoring the model.')
-    parser.add_argument('--use_cpu_only', default=False, type="store_true", help='Only use cpu.')
+    parser.add_argument('--use_cpu_only', default=False, action="store_true", help='Only use cpu.')
     args = parser.parse_args()
     main(args)
