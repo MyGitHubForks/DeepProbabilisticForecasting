@@ -5,7 +5,7 @@ import pickle
 import scipy.sparse as sp
 import sys
 import tensorflow as tf
-
+import h5py
 from scipy.sparse import linalg
 
 
