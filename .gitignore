@@ -1,3 +1,5 @@
+*.ipynb
+ObservePredsVRNN.ipynb
 normalizationThoughtExperiment.ipynb
 data/
 *.pyc
