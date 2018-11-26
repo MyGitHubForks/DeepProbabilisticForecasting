@@ -36,7 +36,12 @@ class DCRNNSupervisor(object):
         self._logger.info(kwargs)
 
         # Data preparation
-        self._data = utils.load_dataset(**self._data_kwargs)
+        dataset_name = self._data_kwargs.get('dataset_name')
+        if dataset_name == "traffic":
+            self._data = utils.load_dataset(**self._data_kwargs)    
+        elif dataset_name == "human":
+            self._data = utils.load_human_dataset(**self._data_kwargs)
+        
         for k, v in self._data.items():
             if hasattr(v, 'shape'):
                 self._logger.info((k, v.shape))
