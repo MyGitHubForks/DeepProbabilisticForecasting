@@ -240,8 +240,6 @@ def load_human_dataset(dataset_dir, batch_size, test_batch_size=None, down_sampl
         data['y_' + category][..., 0] = scaler.transform(data['y_' + category])
     data['sequence_len'] = f['input2d'].shape[1]
     data['x_dim'] = f['input2d'].shape[2]
-    assert data['sequence_len'] == 12
-    assert data['x_dim'] == 32
     # Data format
     for category in cats:
         if category=="test":
