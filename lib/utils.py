@@ -54,15 +54,29 @@ class StandardScaler:
     Standard the input
     """
 
-    def __init__(self, mean, std):
-        self.mean = mean
-        self.std = std
+    def __init__(self, mean0, std0, mean1=0, std1=1):
+        self.mean0 = mean0
+        self.mean1 = mean1
+        self.std0 = std0
+        self.std1 = std1
 
     def transform(self, data):
-        return (data - self.mean) / self.std
+        mean = np.zeros_like(data)
+        mean[...,0] = self.mean0
+        mean[...,1] = self.mean1
+        std = np.ones_like(data)
+        std[...,0] = self.std0
+        std[...,1] = self.std1
+        return (data[...,0] - mean) / std
 
     def inverse_transform(self, data):
-        return (data * self.std) + self.mean
+        mean = np.zeros_like(data)
+        mean[...,0] = self.mean0
+        mean[...,1] = self.mean1
+        std = np.ones_like(data)
+        std[...,0] = self.std0
+        std[...,1] = self.std1
+        return (data * std) + mean
 
 
 def add_simple_summary(writer, names, values, global_step):
@@ -181,7 +195,7 @@ def load_dataset(dataset_dir, batch_size, test_batch_size=None, **kwargs):
         cat_data = np.load(os.path.join(dataset_dir, category + '.npz'))
         data['x_' + category] = cat_data['x']
         data['y_' + category] = cat_data['y']
-    scaler = StandardScaler(mean=data['x_train'][..., 0].mean(), std=data['x_train'][..., 0].std())
+    scaler = StandardScaler(data['x_train'][..., 0].mean(), data['x_train'][..., 0].std())
     # Data format
     for category in ['train', 'val', 'test']:
         data['x_' + category][..., 0] = scaler.transform(data['x_' + category][..., 0])
@@ -193,6 +207,54 @@ def load_dataset(dataset_dir, batch_size, test_batch_size=None, **kwargs):
 
     return data
 
+def load_human_dataset(dataset_dir, batch_size, test_batch_size=None, down_sample=None, load_test=True, **kwargs):
+    data = {}
+    if load_test:
+        cats = ["train", "val", "test"]
+    else:
+        cats = ["train", "val"]
+    for category in cats:
+        print(category)
+        f = h5py.File(os.path.join(dataset_dir, category+"_2D.h5"), "r")
+        nRows = f["input2d"].shape[0]
+        if down_sample: 
+            down_sampled_rows = np.random.choice(range(nRows), size=np.ceil(nRows * down_sample).astype(int),
+                                                 replace=False)
+            down_sampled_rows = sorted(down_sampled_rows)
+        else:
+            down_sampled_rows = range(nRows)
+        data["x_"+category] = f["input2d"][down_sampled_rows,...]
+        data["y_"+category] = f["target2d"][down_sampled_rows,...]
+        data["action_"+category] = f["action"][down_sampled_rows,...]
+        data["camera_"+category] = f["camera"][down_sampled_rows,...]
+        data["inputId_"+category] = f["inputId"][down_sampled_rows,...]
+        data["subaction_"+category] = f["subaction"][down_sampled_rows,...]
+        data["subject_"+category] = f["subject"][down_sampled_rows,...]
+        data["targetId_"+category] = f["targetId"][down_sampled_rows,...]
+    data["scaler"] = StandardScaler(data['x_train'][..., 0].mean(),
+            data['x_train'][..., 0].std(),
+            mean1=data['x_train'][..., 1].mean(),
+            std1=data['x_train'][..., 1].std())
+    for category in ['train', 'val', 'test']:
+        data['x_' + category][..., 0] = scaler.transform(data['x_' + category])
+        data['y_' + category][..., 0] = scaler.transform(data['y_' + category])
+    data['sequence_len'] = f['input2d'].shape[1]
+    data['x_dim'] = f['input2d'].shape[2]
+    assert data['sequence_len'] == 12
+    assert data['x_dim'] == 32
+    # Data format
+    for category in cats:
+        if category=="test":
+            bs = test_batch_size
+            shf = False
+        elif category == "val":
+            bs = batch_size
+            shf = False
+        else: # Train
+            bs = batch_size
+            shf = True
+        data['{}_loader'.format(category)] = DataLoader(data['x_{}'.format(category)], data['y_{}'.format(category)], bs, shuffle=shf)
+    return data
 
 def load_graph_data(pkl_filename):
     sensor_ids, sensor_id_to_ind, adj_mx = load_pickle(pkl_filename)

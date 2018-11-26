@@ -25,7 +25,7 @@ class DCGRUCell(RNNCell):
         """
 
         :param num_units:
-        :param adj_mx:
+        :param adj_mx: 
         :param max_diffusion_step:
         :param num_nodes:
         :param input_size:

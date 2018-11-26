@@ -1,0 +1,20 @@
+joint1, joint2
+
+rightAnkle, rightKnee
+rightKnee, rightHip
+leftAnkle, leftKnee
+leftKnee, leftHip
+rightHip, pelvis
+leftHip, pelvis
+
+rightWrist, rightElbow
+rightElbow, rightShoulder
+leftWrist, leftElbow
+leftElbow, leftShoulder
+
+pelvis, spine
+spine, neck
+neck, head
+rightShoulder, spine
+leftShoulder, spine
+
