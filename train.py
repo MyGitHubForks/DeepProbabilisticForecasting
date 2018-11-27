@@ -204,7 +204,7 @@ def trainF(suggestions=None):
     model_fn = args.save_dir + '{}_full_model'.format(args.model) +".pth"
     torch.save(model.cpu().state_dict(), model_fn)
     savePredData(experimentData)
-    memReport()
+    # memReport()
     del model
     del data
     ret = experimentData["trainReconLosses"][-1], experimentData["trainKLDLosses"][-1], experimentData["valReconLosses"][-1], experimentData["valKLDLosses"][-1], args.save_dir
