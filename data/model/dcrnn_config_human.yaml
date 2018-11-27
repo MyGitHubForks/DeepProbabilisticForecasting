@@ -3,7 +3,7 @@ base_dir: data/model
 log_level: INFO
 data:
   batch_size: 64
-  dataset_dir: data/human/Processed
+  dataset_dir: ~/data/human/Processed
   dataset_name: human
   test_batch_size: 64
   val_batch_size: 64
