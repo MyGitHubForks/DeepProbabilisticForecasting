@@ -9,7 +9,7 @@ import torch
 from torch.utils import data
 from model.RoseSeq2Seq import Seq2Seq
 from model.vrnn.model import VRNN
-from model.SketchyRNN import SketchyRNN
+from model.SketchRNN import SketchyRNN
 import os
 import argparse
 import json
