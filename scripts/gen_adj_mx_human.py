@@ -45,11 +45,11 @@ def get_adjacency_matrix(adjacency_df, sensor_ids, normalized_k=0.1):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--sensor_ids_filename', type=str, default='../data/sensor_graph/skeleton_sensor_ids.txt',
+    parser.add_argument('--sensor_ids_filename', type=str, default='../dcrnn//data/sensor_graph/skeleton_sensor_ids.txt',
                         help='File containing sensor ids separated by comma.')
-    parser.add_argument('--adjacency_filename', type=str, default='../data/sensor_graph/skeleton_joint_pairs.csv',
+    parser.add_argument('--adjacency_filename', type=str, default='../dcrnn/data/sensor_graph/skeleton_joint_pairs.csv',
                         help='CSV file containing joint pairs that are connected: [joint1, joint2].')
-    parser.add_argument('--output_pkl_filename', type=str, default='../data/sensor_graph/skeleton_adj_mat.pkl',
+    parser.add_argument('--output_pkl_filename', type=str, default='../dcrnn/data/sensor_graph/skeleton_adj_mat.pkl',
                         help='Path of the output file.')
     args = parser.parse_args()
 

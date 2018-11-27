@@ -111,12 +111,12 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--output_dir", type=str, default="../data/", help="Output directory."
+        "--output_dir", type=str, default="../dcrnn/data/", help="Output directory."
     )
     parser.add_argument(
         "--traffic_df_filename",
         type=str,
-        default="../data/df_highway_2012_4mon_sample.h5",
+        default="../dcrnn/data/df_highway_2012_4mon_sample.h5",
         help="Raw traffic readings.",
     )
     args = parser.parse_args()
