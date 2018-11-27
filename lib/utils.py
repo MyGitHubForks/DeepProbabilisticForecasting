@@ -67,7 +67,7 @@ class StandardScaler:
         std = np.ones_like(data)
         std[...,0] = self.std0
         std[...,1] = self.std1
-        return (data[...,0] - mean) / std
+        return (data - mean) / std
 
     def inverse_transform(self, data):
         mean = np.zeros_like(data)
