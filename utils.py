@@ -310,7 +310,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer,
         data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
         target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
         optimizer.zero_grad()
-        output = model(data, target, epoch)
+        output = model(data, target, epoch, training=True)
         del data
         if args.model == "sketch-rnn":
             latentMean, latentStd, z, predOut, predMeanOut, predStdOut = output
@@ -345,7 +345,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer,
         nValBatches += 1
         data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
         target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
-        output = model(data, target, epoch)
+        output = model(data, target, epoch, training=False)
         validationKldLoss, validationReconLoss = getValLoss(output, target, dataDict, args)
         epochKLDLossVal += validationKldLoss
         epochReconLossVal += validationReconLoss
