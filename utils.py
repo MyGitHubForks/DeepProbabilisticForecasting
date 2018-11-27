@@ -27,7 +27,7 @@ def load_human_dataset(dataset_dir, batch_size, down_sample=None, load_test=Fals
         cats = ["train", "val"]
     for category in cats:
         print(category)
-        f = h5py.File(os.path.join(dataset_dir, category+".h5"), "r")
+        f = h5py.File(os.path.join(dataset_dir, category+"_flat.h5"), "r")
         nRows = f["input2d"].shape[0]
         if down_sample: 
             down_sampled_rows = np.random.choice(range(nRows), size=np.ceil(nRows * down_sample).astype(int),
@@ -310,7 +310,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer,
         data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
         target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
         optimizer.zero_grad()
-        output = model(data, target, epoch)
+        output = model(data, target, epoch, training=True)
         del data
         if args.model == "sketch-rnn":
             latentMean, latentStd, z, predOut, predMeanOut, predStdOut = output
@@ -345,7 +345,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer,
         nValBatches += 1
         data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
         target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
-        output = model(data, target, epoch)
+        output = model(data, target, epoch, training=False)
         validationKldLoss, validationReconLoss = getValLoss(output, target, dataDict, args)
         epochKLDLossVal += validationKldLoss
         epochReconLossVal += validationReconLoss

@@ -4,7 +4,8 @@ import h5py
 import os
 SEQUENCE_LENGTH = 12
 inds = [3, 2, 1, 4, 5, 6, 0, 7, 8, 10, 16, 15, 14, 11, 12, 13]
-subject_list = [[1, 5, 6, 7, 8], [9, 11]]
+print("inds", sorted(inds))
+subject_list = [[1, 5, 6, 7, 8], [9], [11]]
 action_list = np.arange(2, 17)
 subaction_list = np.arange(1, 3)
 camera_list = np.arange(1, 5)
@@ -18,8 +19,8 @@ if not os.path.exists(SAVE_PATH):
 
 # Split 0: train
 # Split 1: test
-splitNames = ["train", "test"]
-for split in range(2):
+splitNames = ["train", "val", "test"]
+for split in range(len(splitNames)):
   inputId = []
   targetId = []
   input_2d = []
@@ -52,8 +53,12 @@ for split in range(2):
                 continue
             inputId.append(range(i+1, i+1 + 5*(SEQUENCE_LENGTH), 5))
             targetId.append(range(i+1+5*SEQUENCE_LENGTH, i+1+5*SEQUENCE_LENGTH*2, 5))
-            input_2d.append(meta_Y2d[inds, :, i:i+5*SEQUENCE_LENGTH:5].transpose(2,0,1))
-            target_2d.append(meta_Y2d[inds, :, i+5*SEQUENCE_LENGTH:i+5*SEQUENCE_LENGTH*2:5].transpose(2,0,1))
+            inputSub = meta_Y2d[inds, :, i:i+5*SEQUENCE_LENGTH:5].transpose(2,0,1)
+            inputSub = inputSub.reshape((list(inputSub.shape[:1])+[-1]))
+            input_2d.append(inputSub)
+            targetSub = meta_Y2d[inds, :, i+5*SEQUENCE_LENGTH:i+5*SEQUENCE_LENGTH*2:5].transpose(2,0,1)
+            targetSub = targetSub.reshape((list(targetSub.shape[:1])+[-1]))
+            target_2d.append(targetSub)
             subjects.append(subject)
             actions.append(action)
             subactions.append(subaction)
@@ -61,7 +66,7 @@ for split in range(2):
             istrain.append(1 - split)
             num += 1
   print("split:{} - n instances: {}".format(splitNames[split], num))      
-  h5name = SAVE_PATH + 'humanPoseSequences{}.h5'.format(splitNames[split])
+  h5name = SAVE_PATH + '{}_flat.h5'.format(splitNames[split])
   f = h5py.File(h5name, 'w')
   f['inputId'] = inputId
   f['targetId'] = targetId
