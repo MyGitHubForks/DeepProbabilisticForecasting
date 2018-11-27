@@ -159,6 +159,7 @@ class DCGRUCell(RNNCell):
                 pass
             else:
                 for support in self._supports:
+                    print(support.get_shape(), x0.get_shape())
                     x1 = tf.sparse_tensor_dense_matmul(support, x0)
                     x = self._concat(x, x1)
 
