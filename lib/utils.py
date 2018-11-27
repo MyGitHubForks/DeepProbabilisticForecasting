@@ -215,22 +215,10 @@ def load_human_dataset(dataset_dir, batch_size, test_batch_size=None, down_sampl
         cats = ["train", "val"]
     for category in cats:
         print(category)
-        f = h5py.File(os.path.join(dataset_dir, category+"_2D.h5"), "r")
-        nRows = f["input2d"].shape[0]
-        if down_sample: 
-            down_sampled_rows = np.random.choice(range(nRows), size=np.ceil(nRows * down_sample).astype(int),
-                                                 replace=False)
-            down_sampled_rows = sorted(down_sampled_rows)
+        if down_sample and category== "train":
+            f = h5py.File(os.path.join(dataset_dir, category+"_2D_down_sample_{}.h5".format(down_sample)), "r")
         else:
-            down_sampled_rows = range(nRows)
-        data["x_"+category] = f["input2d"][down_sampled_rows,...]
-        data["y_"+category] = f["target2d"][down_sampled_rows,...]
-        data["action_"+category] = f["action"][down_sampled_rows,...]
-        data["camera_"+category] = f["camera"][down_sampled_rows,...]
-        data["inputId_"+category] = f["inputId"][down_sampled_rows,...]
-        data["subaction_"+category] = f["subaction"][down_sampled_rows,...]
-        data["subject_"+category] = f["subject"][down_sampled_rows,...]
-        data["targetId_"+category] = f["targetId"][down_sampled_rows,...]
+            f = h5py.File(os.path.join(dataset_dir, category+"_2D.h5"), "r")
     data["scaler"] = StandardScaler(data['x_train'][..., 0].mean(),
             data['x_train'][..., 0].std(),
             mean1=data['x_train'][..., 1].mean(),
@@ -238,9 +226,6 @@ def load_human_dataset(dataset_dir, batch_size, test_batch_size=None, down_sampl
     for category in ['train', 'val', 'test']:
         data['x_' + category][..., 0] = scaler.transform(data['x_' + category])
         data['y_' + category][..., 0] = scaler.transform(data['y_' + category])
-    data['sequence_len'] = f['input2d'].shape[1]
-    data['x_dim'] = f['input2d'].shape[2]
-    # Data format
     for category in cats:
         if category=="test":
             bs = test_batch_size
