@@ -1,0 +1,13 @@
+.DS_Store
+*.ipynb
+ObservePredsVRNN.ipynb
+normalizationThoughtExperiment.ipynb
+data/
+*.pyc
+restats
+save/
+utils.py~
+*.out
+.idea/
+.ipynb_checkpoints/
+figs/
