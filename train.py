@@ -105,10 +105,10 @@ def trainF(suggestions=None):
 
     print("loading data")
     if args.dataset == "traffic":
-        dataDir = "~/data/reformattedTraffic/"
+        dataDir = "/home/dan/data/reformattedTraffic/"
         data = utils.load_traffic_dataset(dataDir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest)
     elif args.dataset == "human":
-        dataDir = "~/data/humanMotion/Processed/"
+        dataDir = "/home/dan/data/humanMotion/Processed/"
         data = utils.load_human_dataset(dataDir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest)
     experimentData["data"] = data
     print("setting additional params")
