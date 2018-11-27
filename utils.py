@@ -27,18 +27,22 @@ def load_human_dataset(dataset_dir, batch_size, down_sample=None, load_test=Fals
         cats = ["train", "val"]
     for category in cats:
         print(category)
-        if down_sample and category== "train":
-            f = h5py.File(os.path.join(dataset_dir, category+"_2D_down_sample_{}.h5".format(down_sample)), "r")
+        f = h5py.File(os.path.join(dataset_dir, category+"_flat.h5"), "r")
+        nRows = f["input2d"].shape[0]
+        if down_sample: 
+            down_sampled_rows = np.random.choice(range(nRows), size=np.ceil(nRows * down_sample).astype(int),
+                                                 replace=False)
+            down_sampled_rows = sorted(down_sampled_rows)
         else:
-            f = h5py.File(os.path.join(dataset_dir, category+"_2D.h5"), "r")
-        data["x_"+category] = f["input2d"]
-        data["y_"+category] = f["target2d"]
-        data["action_"+category] = f["action"]
-        data["camera_"+category] = f["camera"]
-        data["inputId_"+category] = f["inputId"]
-        data["subaction_"+category] = f["subaction"]
-        data["subject_"+category] = f["subject"]
-        data["targetId_"+category] = f["targetId"]
+            down_sampled_rows = range(nRows)
+        data["x_"+category] = f["input2d"][down_sampled_rows,...]
+        data["y_"+category] = f["target2d"][down_sampled_rows,...]
+        data["action_"+category] = f["action"][down_sampled_rows,...]
+        data["camera_"+category] = f["camera"][down_sampled_rows,...]
+        data["inputId_"+category] = f["inputId"][down_sampled_rows,...]
+        data["subaction_"+category] = f["subaction"][down_sampled_rows,...]
+        data["subject_"+category] = f["subject"][down_sampled_rows,...]
+        data["targetId_"+category] = f["targetId"][down_sampled_rows,...]
         data["x_"+category], data["y_"+category], data[category+"_mean"], data[category+"_std"] =\
          normalizeData(data["x_"+category], data["y_"+category])
 
