@@ -226,8 +226,8 @@ def load_human_dataset(dataset_dir, batch_size, test_batch_size=None, down_sampl
             mean1=data['x_train'][..., 1].mean(),
             std1=data['x_train'][..., 1].std())
     for category in ['train', 'val', 'test']:
-        data['x_' + category][..., 0] = scaler.transform(data['x_' + category])
-        data['y_' + category][..., 0] = scaler.transform(data['y_' + category])
+        data['x_' + category][..., 0] = data["scaler"].transform(data['x_' + category])
+        data['y_' + category][..., 0] = data["scaler"].transform(data['y_' + category])
     for category in cats:
         if category=="test":
             bs = test_batch_size
