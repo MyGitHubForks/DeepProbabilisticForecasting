@@ -221,15 +221,6 @@ def load_human_dataset(dataset_dir, batch_size, test_batch_size=None, down_sampl
             f = h5py.File(os.path.join(dataset_dir, category+"_2D.h5"), "r")
         data['x_' + category] = f['input2d']
         data['y_' + category] = f['target2d']
-        data["meta_"+category] = {
-                                    "action": f["action"],
-                                    "camera": f["camera"],
-                                    "inputId": f["inputId"],
-                                    "isTrain": f["isTrain"],
-                                    "subaction": f["subaction"],
-                                    "subject": f["subject"],
-                                    "targetId": f["targetId"]
-                                }
     data["scaler"] = StandardScaler(data['x_train'][..., 0].mean(),
             data['x_train'][..., 0].std(),
             mean1=data['x_train'][..., 1].mean(),
