@@ -154,7 +154,7 @@ def trainF(suggestions=None):
     print("beginning training")
     for epoch in range(1, args.n_epochs + 1):
         print("epoch {}".format(epoch))
-        kldLossWeight = args.kld_weight_max * (epoch / (args.kld_warmup_until))
+        kldLossWeight = args.kld_weight_max * min((epoch / (args.kld_warmup_until)), 1.0)
         avgTrainReconLoss, avgTrainKLDLoss, avgValReconLoss, avgValKLDLoss = \
                     utils.train(data['train_loader'].get_iterator(), data['val_loader'].get_iterator(),\
                                 model, lr, args, data, epoch, optimizer, kldLossWeight)
