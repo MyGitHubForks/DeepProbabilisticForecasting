@@ -1,0 +1,1 @@
+rightAnkle, rightKnee, rightHip, leftHip, leftKnee, leftAnkle, pelvis, spine, neck, head, rightWrist, rightElbow, rightShoulder, leftShoulder, leftElbow, leftWrist
