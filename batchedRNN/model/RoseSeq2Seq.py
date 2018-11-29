@@ -176,5 +176,4 @@ class Seq2Seq(nn.Module):
                 else:
                     inp = decoder_output
                 ys += [decoder_output]
-        #uncomment to stop after 1 iteration
         return torch.cat([torch.unsqueeze(y, dim=0) for y in ys])
