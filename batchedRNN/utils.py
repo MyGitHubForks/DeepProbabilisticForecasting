@@ -234,7 +234,7 @@ def getRegularizationLosses(model):
             l1_reg = l1_reg + W.norm(1)
     return l1_reg, l2_reg
 
-def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer, kldLossWeight):
+def train(train_loader, val_loader, model, args, dataDict, epoch, optimizer, kldLossWeight):
     epochKLDLossTrain = 0.0
     epochReconLossTrain = 0.0
     epochKLDLossVal = 0.0
