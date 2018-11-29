@@ -53,7 +53,7 @@ def trainF(suggestions=None):
     experimentData = {}
     args = parser.parse_args()
     if not suggestions:
-        saveDir = './save/models/model0/'
+        saveDir = '../save/models/model0/'
         while os.path.isdir(saveDir):
             numStart = saveDir.rfind("model")+5
             numEnd = saveDir.rfind("/")
