@@ -69,7 +69,7 @@ def generate_train_val_test(args):
         x_offsets=x_offsets,
         y_offsets=y_offsets,
         add_time_in_day=True,
-        add_day_in_week=False,
+        add_day_in_week=True,
     )
 
     print("x shape: ", x.shape, ", y shape: ", y.shape)
@@ -111,12 +111,12 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--output_dir", type=str, default="../dcrnn/data/", help="Output directory."
+        "--output_dir", type=str, default="../data/traffic/trafficWithTime", help="Output directory."
     )
     parser.add_argument(
         "--traffic_df_filename",
         type=str,
-        default="../dcrnn/data/df_highway_2012_4mon_sample.h5",
+        default="/users/danielzeiberg/Documents/TrafficData/df_highway_2012_4mon_sample.h5",
         help="Raw traffic readings.",
     )
     args = parser.parse_args()
