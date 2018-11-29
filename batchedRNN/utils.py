@@ -24,8 +24,8 @@ def normalizeData(x, y, layer=None):
     if layer is not None:
         mean = np.mean(allData[:,:,:,layer])
         std = np.std(allData[:,:,:,layer])
-        m = np.zeros_like(allData)
-        s = np.ones_like(allData)
+        m = np.zeros_like(x)
+        s = np.ones_like(x)
         m[:,:,:,layer] = mean
         s[:,:,:,layer] = std
         return (x-m)/s, (y-m)/s, mean, std
