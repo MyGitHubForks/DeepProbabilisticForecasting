@@ -69,7 +69,7 @@ def trainF(suggestions=None):
 
     print("loading data")
     if args.dataset == "traffic":
-        dataDir = "/home/dan/data/fourD"
+        dataDir = "/home/dan/data/traffic/fourD"
         data = utils.load_traffic_dataset(dataDir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest)
     elif args.dataset == "human":
         dataDir = "/home/dan/data/human/Processed/"
