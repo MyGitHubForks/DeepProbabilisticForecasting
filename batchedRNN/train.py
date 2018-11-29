@@ -13,17 +13,21 @@ import argparse
 import json
 from shutil import copy2, copyfile, copytree
 import gc
+from torch.optim.lr_scheduler import MultiStepLR
 
 parser = argparse.ArgumentParser(description='Batched Sequence to Sequence')
-parser.add_argument('--h_dim', type=int, default=512)
-parser.add_argument("--z_dim", type=int, default=128)
+parser.add_argument('--h_dim', type=int, default=256)
+parser.add_argument("--z_dim", type=int, default=0)
 parser.add_argument('--no_cuda', action='store_true', default=False,
                                         help='disables CUDA training')
 parser.add_argument("--no_attn", action="store_true", default=True, help="Do not use AttnDecoder")
 parser.add_argument("--n_epochs", type=int, default=200)
-parser.add_argument("--batch_size", type=int, default= 10)
+parser.add_argument("--batch_size", type=int, default= 64)
 parser.add_argument("--n_layers", type=int, default=2)
-parser.add_argument("--initial_lr", type=float, default=1e-3)
+parser.add_argument("--initial_lr", type=float, default=1e-4)
+parser.add_argument("--lr_decay_every", type=int, default=10)
+parser.add_argument("--lr_decay_factor", type=float, default=.10)
+parser.add_argument("--lr_decay_beginning", type=int, default=20)
 parser.add_argument("--print_every", type=int, default = 200)
 parser.add_argument("--plot_every", type=int, default = 1)
 parser.add_argument("--criterion", type=str, default="MAE")
@@ -106,16 +110,18 @@ def trainF(suggestions=None):
     experimentData["trainKLDLosses"] = []
     experimentData["valKLDLosses"] = []
     experimentData["learningRates"] = []
-    lr = args.initial_lr
     # Define Optimizer
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=args.weight_decay)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.initial_lr, weight_decay=args.weight_decay)
+    lr_decay_milestones = np.arange(args.lr_decay_beginning, args.n_epochs, args.lr_decay_every)
+    scheduler = MultiStepLR(optimizer, milestones=lr_decay_milestones, gamma=args.lr_decay_factor)
     print("beginning training")
     for epoch in range(1, args.n_epochs + 1):
+        scheduler.step()
         print("epoch {}".format(epoch))
         kldLossWeight = args.kld_weight_max * min((epoch / (args.kld_warmup_until)), 1.0)
         avgTrainReconLoss, avgTrainKLDLoss, avgValReconLoss, avgValKLDLoss = \
                     utils.train(data['train_loader'].get_iterator(), data['val_loader'].get_iterator(),\
-                                model, lr, args, data, epoch, optimizer, kldLossWeight)
+                                model, args, data, epoch, optimizer, kldLossWeight)
         if (epoch % args.plot_every) == 0:
             experimentData["trainReconLosses"].append(avgTrainReconLoss)
             experimentData["valReconLosses"].append(avgValReconLoss)
