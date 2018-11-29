@@ -252,14 +252,14 @@ def getVRNNLoss(output, target, dataDict, args):
     return totalKLDLoss, predLoss, unNormalizedLoss
 
 
-def getRNNLoss(output, target, dataDict, args):
+def getRNNLoss(output, target, mean, std, args):
     if args.criterion == "RMSE":
-        o = unNormalize(output, dataDict["train_mean"], dataDict["train_std"])
-        t = unNormalize(target, dataDict["train_mean"], dataDict["train_std"])
+        o = unNormalize(output, mean, std)
+        t = unNormalize(target, mean, std)
         loss = torch.sqrt(torch.mean((o - t) ** 2))
     elif args.criterion == "L1Loss":
-        o = unNormalize(output, dataDict["train_mean"], dataDict["train_std"])
-        t = unNormalize(target, dataDict["train_mean"], dataDict["train_std"])
+        o = unNormalize(output, mean, std)
+        t = unNormalize(target, mean, std)
         loss = torch.mean(torch.abs(o - t))
     else:
         assert False, "bad loss function"
@@ -291,7 +291,7 @@ def getValLoss(output, target, dataDict, args):
         totalKLDLoss, predLoss, unNormalizedLoss = getVRNNLoss(output, target, dataDict, args)
         return totalKLDLoss.item() / args.sequence_len, unNormalizedLoss.item()
     elif args.model == "rnn":
-        unNormalizedLoss = getRNNLoss(output, target, dataDict, args)
+        unNormalizedLoss = getRNNLoss(output, target, dataDict["val_mean"], dataDict["val_std"], args)
         return 0.0, unNormalizedLoss.item()
 
 def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer, kldLossWeight):
@@ -328,7 +328,7 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer,
             if batch_idx % args.print_every == 0:
                 print("batch index: {}, recon loss: {}, kld loss: {}".format(batch_idx, unNormalizedLoss, kldLoss / args.sequence_len))
         elif args.model == "rnn":
-            loss = getRNNLoss(output, target, dataDict, args) # unNormalized Loss
+            loss = getRNNLoss(output, target, dataDict["train_mean"], dataDict["train_std"], args) # unNormalized Loss
             epochReconLossTrain += loss.item()
             if batch_idx % args.print_every == 0:
                 print("batch_idx: {}, loss: {}".format(batch_idx, loss))

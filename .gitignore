@@ -1,2 +1,5 @@
 /dcrnn/data/sensor_graph/*.pkl
 notebooks/
+data/
+savedData/
+dcrnn/figures/
