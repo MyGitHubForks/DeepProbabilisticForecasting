@@ -111,7 +111,7 @@ def trainF(suggestions=None):
     experimentData["valKLDLosses"] = []
     experimentData["learningRates"] = []
     # Define Optimizer
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.initial_lr, weight_decay=args.weight_decay)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.initial_lr)
     lr_decay_milestones = np.arange(args.lr_decay_beginning, args.n_epochs, args.lr_decay_every)
     scheduler = MultiStepLR(optimizer, milestones=lr_decay_milestones, gamma=args.lr_decay_factor)
     print("beginning training")
