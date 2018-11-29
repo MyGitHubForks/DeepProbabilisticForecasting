@@ -1,8 +1,6 @@
 import numpy as np
 import cProfile
 import model.Data as DF
-import model.EncoderRNN as ERF
-import model.AttnDecoder as ADRF
 import utils
 import pstats
 import torch
