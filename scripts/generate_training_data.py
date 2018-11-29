@@ -28,6 +28,7 @@ def generate_graph_seq2seq_io_data(
     num_samples, num_nodes = df.shape
     data = np.expand_dims(df.values, axis=-1)
     data_list = [data]
+    times = df.index.values
     if add_time_in_day:
         time_ind = (df.index.values - df.index.values.astype("datetime64[D]")) / np.timedelta64(1, "D")
         time_in_day = np.tile(time_ind, [1, num_nodes, 1]).transpose((2, 1, 0))
@@ -39,18 +40,25 @@ def generate_graph_seq2seq_io_data(
 
     data = np.concatenate(data_list, axis=-1)
     # epoch_len = num_samples + min(x_offsets) - max(y_offsets)
-    x, y = [], []
+    x, y, xTimes, yTimes = [], [], [],[]
+
     # t is the index of the last observation.
     min_t = abs(min(x_offsets))
     max_t = abs(num_samples - abs(max(y_offsets)))  # Exclusive
     for t in range(min_t, max_t):
         x_t = data[t + x_offsets, ...]
         y_t = data[t + y_offsets, ...]
+        x_time = times[t + x_offsets]
+        y_time = times[t + y_offsets]
         x.append(x_t)
         y.append(y_t)
+        xTimes.append(x_time)
+        yTimes.append(y_time)
     x = np.stack(x, axis=0)
     y = np.stack(y, axis=0)
-    return x, y
+    xTimes = np.stack(xTimes, axis=0)
+    yTimes = np.stack(yTimes, axis=0)
+    return x, y, xTimes, yTimes
 
 
 def generate_train_val_test(args):
@@ -64,7 +72,7 @@ def generate_train_val_test(args):
     y_offsets = np.sort(np.arange(1, 13, 1))
     # x: (num_samples, input_length, num_nodes, input_dim)
     # y: (num_samples, output_length, num_nodes, output_dim)
-    x, y = generate_graph_seq2seq_io_data(
+    x, y, xTimes, yTimes = generate_graph_seq2seq_io_data(
         df,
         x_offsets=x_offsets,
         y_offsets=y_offsets,
@@ -82,24 +90,40 @@ def generate_train_val_test(args):
     num_val = num_samples - num_test - num_train
 
     # train
-    x_train, y_train = x[:num_train], y[:num_train]
+    x_train, y_train, x_times_train, y_times_train = (
+        x[:num_train],
+        y[:num_train],
+        xTimes[:num_train],
+        yTimes[:num_train]
+    )
     # val
-    x_val, y_val = (
+    x_val, y_val, x_times_val, y_times_val = (
         x[num_train: num_train + num_val],
         y[num_train: num_train + num_val],
+        xTimes[num_train:num_train + num_val],
+        yTimes[num_train:num_train + num_val]
     )
     # test
-    x_test, y_test = x[-num_test:], y[-num_test:]
+    x_test, y_test, x_times_test, y_times_test = (
+        x[-num_test:],
+        y[-num_test:],
+        xTimes[-num_test:],
+        yTimes[-num_test:]
+    )
 
     for cat in ["train", "val", "test"]:
-        _x, _y = locals()["x_" + cat], locals()["y_" + cat]
-        print(cat, "x: ", _x.shape, "y:", _y.shape)
+        _x, _y, _x_times, _y_times = (
+            locals()["x_" + cat],
+            locals()["y_" + cat],
+            locals()["x_times_"+cat],
+            locals()["y_times_"+cat])
+        print(cat, "x: ", _x.shape, "y:", _y.shape, "xTimes:", _x_times.shape, "yTimes:", _y_times.shape)
         np.savez_compressed(
             os.path.join(args.output_dir, "%s.npz" % cat),
-            x=_x,
-            y=_y,
-            x_offsets=x_offsets.reshape(list(x_offsets.shape) + [1]),
-            y_offsets=y_offsets.reshape(list(y_offsets.shape) + [1]),
+            inputs=_x,
+            targets=_y,
+            inputTimes=_x_times,
+            targetTimes=_y_times,
         )
 
 
