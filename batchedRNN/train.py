@@ -26,7 +26,7 @@ parser.add_argument("--n_layers", type=int, default=2)
 parser.add_argument("--initial_lr", type=float, default=1e-3)
 parser.add_argument("--print_every", type=int, default = 200)
 parser.add_argument("--plot_every", type=int, default = 1)
-parser.add_argument("--criterion", type=str, default="RMSE")
+parser.add_argument("--criterion", type=str, default="MAE")
 parser.add_argument("--save_freq", type=int, default=10)
 parser.add_argument("--down_sample", type=float, default=0.0, help="Keep this fraction of the training data")
 # parser.add_argument("--data_dir", type=str, default="./data/reformattedTraffic/")
@@ -42,6 +42,8 @@ parser.add_argument("--no_shuffle_after_epoch", action="store_true", default=Fal
 parser.add_argument("--clip", type=int, default=10)
 parser.add_argument("--dataset", type=str, default="traffic")
 parser.add_argument("--predictOnTest", action="store_true", default=True)
+parser.add_argument("--dropout", type=float, default=0.5)
+
 
 def savePredData(experimentData):
     # Save predictions based on model output
