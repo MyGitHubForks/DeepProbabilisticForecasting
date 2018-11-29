@@ -31,8 +31,8 @@ class DataLoader(object):
             while self.current_ind < self.num_batch:
                 start_ind = self.batch_size * self.current_ind
                 end_ind = min(self.size, self.batch_size * (self.current_ind + 1))
-                x_i = self.xs[start_ind: end_ind, ...]
-                y_i = self.ys[start_ind: end_ind, ...]
+                x_i = np.transpose(self.xs[start_ind: end_ind, ...], (1,0,3,2))
+                y_i = np.transpose(self.ys[start_ind: end_ind, :,:,0], (1,0,2))
                 yield (x_i, y_i)
                 self.current_ind += 1
 

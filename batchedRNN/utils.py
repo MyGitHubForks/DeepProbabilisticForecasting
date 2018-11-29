@@ -14,10 +14,14 @@ from model.Data import DataLoader, DataLoaderWithTime
 from memory_profiler import profile
 
 def normalizeData(x, y):
-    allData = np.stack((x,y), axis=1)
-    mean = np.mean(allData)
-    std = np.std(allData)
-    return (x-mean)/std, (y-mean)/std, mean, std
+    allData = np.concatenate((x,y), axis=0)
+    mean = np.mean(allData[:,:,:,0])
+    std = np.std(allData[:,:,:,0])
+    m = np.zeros_like(allData)
+    s = np.ones_like(allData)
+    m[:,:,:,0] = mean
+    s[:,:,:,0] = std
+    return (x-m)/s, (y-m)/s, mean, std
 
 def load_human_dataset(dataset_dir, batch_size, down_sample=None, load_test=False, **kwargs):
     data = {}
@@ -82,7 +86,7 @@ def load_traffic_dataset(dataset_dir, batch_size, down_sample=None, load_test=Fa
          normalizeData(data["x_"+category], data["y_"+category])
     data['sequence_len'] = cat_data['inputs'].shape[1]
     data['x_dim'] = cat_data['inputs'].shape[2]
-
+    data["channels"] = cat_data["inputs"].shape[3]
     assert data['sequence_len'] == 12
     assert data['x_dim'] == 207
     # Data format
@@ -143,6 +147,9 @@ def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription
 
 
 def unNormalize(val, mean, std):
+    m = np.zeros_like(val)
+    s = np.zeros_like(val)
+    m[:,:,:,0] = mean
     return (val * std) + mean
 
 def sketchRNNKLD(latentMean, latentStd):
@@ -294,6 +301,19 @@ def getValLoss(output, target, dataDict, args):
         unNormalizedLoss = getRNNLoss(output, target, dataDict["val_mean"], dataDict["val_std"], args)
         return 0.0, unNormalizedLoss.item()
 
+def getRegularizationLosses(model):
+    l2_reg = None
+    l1_reg = None
+    for W in model.parameters():
+        if l2_reg is None:
+            l2_reg = W.norm(2)
+        else:
+            l2_reg = l2_reg + W.norm(2)
+        if l1_reg is None:
+            l1_reg = W.norm(1)
+        else:
+            l1_reg = l1_reg + W.norm(1)
+    return l1_reg, l2_reg
 def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer, kldLossWeight):
     epochKLDLossTrain = 0.0
     epochReconLossTrain = 0.0
@@ -307,8 +327,8 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer,
         else:
             data, target = vals
         nTrainBatches += 1
-        data = torch.as_tensor(data, dtype=torch.float, device=args._device).transpose(0,1)
-        target = torch.as_tensor(target, dtype=torch.float, device=args._device).transpose(0,1)
+        data = torch.as_tensor(data, dtype=torch.float, device=args._device)
+        target = torch.as_tensor(target, dtype=torch.float, device=args._device)
         optimizer.zero_grad()
         output = model(data, target, epoch, training=True)
         del data
@@ -329,6 +349,8 @@ def train(train_loader, val_loader, model, lr, args, dataDict, epoch, optimizer,
                 print("batch index: {}, recon loss: {}, kld loss: {}".format(batch_idx, unNormalizedLoss, kldLoss / args.sequence_len))
         elif args.model == "rnn":
             loss = getRNNLoss(output, target, dataDict["train_mean"], dataDict["train_std"], args) # unNormalized Loss
+            l1_reg, l2_reg = getRegularizationLosses(model)
+            loss = loss + args.l1_lambda * l1_reg + args.l2_lambda * l2_reg
             epochReconLossTrain += loss.item()
             if batch_idx % args.print_every == 0:
                 print("batch_idx: {}, loss: {}".format(batch_idx, loss))

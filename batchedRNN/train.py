@@ -31,7 +31,8 @@ parser.add_argument("--save_freq", type=int, default=10)
 parser.add_argument("--down_sample", type=float, default=0.0, help="Keep this fraction of the training data")
 # parser.add_argument("--data_dir", type=str, default="./data/reformattedTraffic/")
 parser.add_argument("--model", type=str, default="sketch-rnn")
-parser.add_argument("--weight_decay", type=float, default=5e-5)
+parser.add_argument("--lambda_l1", type=float, default=2e-5)
+parser.add_argument("--lambda_l2", type=float, default=5e-4)
 parser.add_argument("--no_schedule_sampling", action="store_true", default=False)
 parser.add_argument("--scheduling_start", type=float, default=1.0)
 parser.add_argument("--scheduling_end", type=float, default=0.0)
@@ -119,6 +120,7 @@ def trainF(suggestions=None):
     args.use_attn = not args.no_attn
     args.x_dim = data['x_dim']
     args.sequence_len = data['sequence_len']
+    args.channels = data["channels"]
     args.use_schedule_sampling = not args.no_schedule_sampling
     argsFile = args.save_dir + "args.txt"
     with open(argsFile, "w") as f:
