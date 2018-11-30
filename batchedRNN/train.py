@@ -119,6 +119,7 @@ def trainF(suggestions=None):
     lr_decay_milestones = np.arange(args.lr_decay_beginning, args.n_epochs, args.lr_decay_every)
     scheduler = MultiStepLR(optimizer, milestones=lr_decay_milestones, gamma=args.lr_decay_factor)
     print("beginning training")
+    bestLoss = None
     for epoch in range(1, args.n_epochs + 1):
         scheduler.step()
         print("epoch {}".format(epoch))
