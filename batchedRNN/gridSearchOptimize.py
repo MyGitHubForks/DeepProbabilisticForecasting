@@ -21,8 +21,8 @@ lin_params = {
 }
 
 def getSaveDir():
-   	saveDir = '../save/models/model0/'
-   	while os.path.isdir(saveDir):
+	saveDir = '../save/models/model0/'
+	while os.path.isdir(saveDir):
 		numStart = saveDir.rfind("model")+5
 		numEnd = saveDir.rfind("/")
 		saveDir = saveDir[:numStart] + str(int(saveDir[numStart:numEnd])+1) + "/"
@@ -60,12 +60,12 @@ def getSaveFile():
 
 def loadData(args):
 	print("loading data")
-        if args.dataset == "traffic":
-            dataDir = "/home/dan/data/traffic/trafficWithTime/"
-            data = utils.load_traffic_dataset(dataDir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest)
-        elif args.dataset == "human":
-            dataDir = "/home/dan/data/human/Processed/"
-            data = utils.load_human_dataset(dataDir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest)
+	if args.dataset == "traffic":
+		dataDir = "/home/dan/data/traffic/trafficWithTime/"
+		data = utils.load_traffic_dataset(dataDir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest)
+	elif args.dataset == "human":
+		dataDir = "/home/dan/data/human/Processed/"
+		data = utils.load_human_dataset(dataDir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest)
 
 def main():
 	args = parser.parse_args()
