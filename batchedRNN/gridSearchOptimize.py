@@ -61,7 +61,7 @@ def saveExp(params, res, args, gsSaveFile):
 		f.write(row)
 
 def runExperiment(args, saveDir, data, trialNum):
-	gsSaveFile = saveDir+"/trials/trial_{}.txt".format(trailNum)
+	gsSaveFile = saveDir+"/trials/trial_{}.txt".format(trialNum)
 	p = getParams(args, saveDir)
 	res = trainF(data=data, suggestions=p)
 	saveExp(p, res, args, gsSaveFile)
