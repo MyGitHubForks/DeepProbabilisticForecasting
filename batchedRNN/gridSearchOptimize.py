@@ -114,7 +114,7 @@ def main():
 	tries = args.tries
 	saveDirs = [getSaveDir() for i in range(tries)]
 	gsSaveDir = getGSSaveDir()
-	gsSaveFiles = [getSaveFile(saveDir) for i in range(tries)]
+	gsSaveFiles = [getSaveFile(gsSaveDir) for i in range(tries)]
 	# results = []
 	results = Parallel(n_jobs=4)(delayed(runExperiment)(args, saveDirs[i], data, gsSaveFiles[i]) for i in range(tries))
 	# for i in range(tries):
