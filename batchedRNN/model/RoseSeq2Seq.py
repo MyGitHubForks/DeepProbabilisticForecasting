@@ -46,6 +46,7 @@ class DecoderRNN(nn.Module):
         self.hidden_size = hidden_size
 
         self.embedding = nn.Linear(output_size, hidden_size)
+        self.input_dropout = nn.Dropout(p=self.args.dropout)
         if self.args.bidirectionalEncoder:
             directions = 2
         else:
@@ -58,6 +59,7 @@ class DecoderRNN(nn.Module):
 
     def forward(self, input, hidden):
         embedded = self.embedding(input)
+        embedded = self.input_dropout(embedded)
         embedded = F.relu(embedded)
         embedded = torch.unsqueeze(embedded, 0)
         output, hidden = self.gru(embedded, hidden)
