@@ -197,7 +197,7 @@ def trainF(data = None, suggestions=None):
     # np.save(experimentData, experimentData_fn)
     torch.save(experimentData["learningRates"], args.save_dir + "learningRates.pth")
     del model
-    del data
+    # del data
     ret = experimentData["trainReconLosses"][-1], experimentData["trainKLDLosses"][-1], experimentData["valReconLosses"][-1], experimentData["valKLDLosses"][-1], args.save_dir
     del experimentData
     torch.cuda.empty_cache()
