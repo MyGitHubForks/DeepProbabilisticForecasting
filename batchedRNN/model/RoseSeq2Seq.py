@@ -16,8 +16,8 @@ class EncoderRNN(nn.Module):
         self.n_layers = n_layers
         self.hidden_size = hidden_size
         self.embedding = nn.Linear(input_size, hidden_size)
-        self.gru = nn.GRU(hidden_size * self.args.channels, hidden_size, n_layers, dropout=self.args.dropout, bidirectional=bidirectional)
-        self.input_dropout = nn.Dropout(p=self.args.dropout)
+        self.gru = nn.GRU(hidden_size * self.args.channels, hidden_size, n_layers, dropout=self.args.encoder_layer_dropout, bidirectional=bidirectional)
+        self.input_dropout = nn.Dropout(p=self.args.input_dropout_p)
     def forward(self, input, hidden):
         embedded = self.embedding(input)
         embedded = self.input_dropout(embedded)
@@ -46,14 +46,14 @@ class DecoderRNN(nn.Module):
         self.hidden_size = hidden_size
 
         self.embedding = nn.Linear(output_size, hidden_size)
-        self.input_dropout = nn.Dropout(p=self.args.dropout)
+        self.input_dropout = nn.Dropout(p=self.args.decoder_input_dropout)
         if self.args.bidirectionalEncoder:
             directions = 2
         else:
             directions = 1
         # encoder hidden is (layers * directions, batch, hidden_size)
         # converted to (layers, batch, hidden_size * directions)
-        self.gru = nn.GRU(hidden_size, directions * hidden_size, n_layers, dropout=self.args.dropout)
+        self.gru = nn.GRU(hidden_size, directions * hidden_size, n_layers, dropout=self.args.decoder_layer_dropout)
         # GRU output (seq_len, batch, directions * hidden_size)
         self.out = nn.Linear(directions * hidden_size, output_size)
 
