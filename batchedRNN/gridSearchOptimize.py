@@ -73,7 +73,10 @@ def main():
 	data = loadData(args)
 	tries = args.tries
 	saveDirs = [getSaveDir() for i in range(tries)]
-	results = Parallel(n_jobs=4)(delayed(runExperiment)(args, saveDirs[i], data) for i in range(tries))
+	results = []
+	# results = Parallel(n_jobs=4)(delayed(runExperiment)(args, saveDirs[i], data) for i in range(tries))
+	for i in range(tries):
+		results.append(runExperiment(args, saveDirs[i], data))
 	# trainReconLosses, trainKLDLosses, valReconLosses, valKLDLosses, args.save_dir
 	results = sorted(results, key=lambda x: x[1][2])
 	saveFile = getSaveFile()
