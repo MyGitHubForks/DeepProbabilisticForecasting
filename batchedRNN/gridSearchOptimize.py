@@ -60,7 +60,8 @@ def saveExp(params, res, args, gsSaveFile):
 		row += "\n"
 		f.write(row)
 
-def runExperiment(args, saveDir, data, gsSaveFile):
+def runExperiment(args, saveDir, data, trialNum):
+	gsSaveFile = saveDir+"/trials/trial_{}.txt".format(trailNum)
 	p = getParams(args, saveDir)
 	res = trainF(data=data, suggestions=p)
 	saveExp(p, res, args, gsSaveFile)
@@ -79,15 +80,16 @@ def getGSSaveDir():
 	os.mkdir(saveDir)
 	return saveDir
 
-def getSaveFile(saveDir):
-	saveFile = "/trials/trial_1.txt"
-	if not os.path.isdir(saveDir+"/trials/"):
-		os.mkdir(saveDir+"/trials/")
-	while os.path.isfile(saveDir + saveFile):
-		numStart = saveFile.rfind("_")+1
-		numEnd = saveFile.rfind(".")
-		saveFile = saveFile[:numStart] + str(int(saveFile[numStart:numEnd])+1) + ".txt"
-	return saveDir+saveFile
+# def getSaveFile(saveDir):
+# 	saveFile = "/trials/trial_1.txt"
+# 	if not os.path.isdir(saveDir+"/trials/"):
+# 		os.mkdir(saveDir+"/trials/")
+# 	while os.path.isfile(saveDir + saveFile):
+# 		numStart = saveFile.rfind("_")+1
+# 		numEnd = saveFile.rfind(".")
+# 		saveFile = saveFile[:numStart] + str(int(saveFile[numStart:numEnd])+1) + ".txt"
+# 	print(saveDir+saveFile)
+# 	return saveDir+saveFile
 
 def loadData(args):
 	print("loading data")
@@ -115,14 +117,13 @@ def main():
 	tries = args.tries
 	saveDirs = [getSaveDir() for i in range(tries)]
 	gsSaveDir = getGSSaveDir()
-	gsSaveFiles = [getSaveFile(gsSaveDir) for i in range(tries)]
 	# results = []
-	results = Parallel(n_jobs=4)(delayed(runExperiment)(args, saveDirs[i], data, gsSaveFiles[i]) for i in range(tries))
+	results = Parallel(n_jobs=4)(delayed(runExperiment)(args, saveDirs[i], data, i) for i in range(tries))
 	# for i in range(tries):
 	# 	results.append(runExperiment(args, saveDirs[i], data))
 	# trainReconLosses, trainKLDLosses, valReconLosses, valKLDLosses, args.save_dir
 	results = sorted(results, key=lambda x: x[1][2])
-	saveFile = gsSaveDir+"gridsearch.txt"
+	saveFile = gsSaveDir+"/gridsearch.txt"
 	if args.model == "rnn":
 		with open(saveFile, "w+") as f:
 			f.write("Dataset: {}\tModel: {}\n".format(args.dataset, args.model))
