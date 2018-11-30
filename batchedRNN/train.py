@@ -70,10 +70,10 @@ def trainF(data = None, suggestions=None):
         args.model = suggestions["model"]
         args.save_dir = suggestions["save_dir"]
         args.h_dim = int(suggestions["h_dim"])
-        args.initial_lr = suggestions["initial_lr"]
+        args.initial_lr = float(suggestions["initial_lr"])
         args.batch_size = int(suggestions["batch_size"])
-        args.lambda_l1 = suggestions["lambda_l1"]
-        args.lambda_l2 = suggestions["lambda_l2"]
+        args.lambda_l1 = float(suggestions["lambda_l1"])
+        args.lambda_l2 = float(suggestions["lambda_l2"])
         args.n_layers = int(suggestions["n_layers"])
         args.encoder_layer_dropout = suggestions["encoder_layer_dropout"]
         args.encoder_input_dropout = suggestions["encoder_input_dropout"]

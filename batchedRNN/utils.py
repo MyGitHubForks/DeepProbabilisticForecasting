@@ -106,7 +106,13 @@ def load_traffic_dataset(dataset_dir, batch_size, down_sample=None, load_test=Fa
     # Data format
     if genLoaders:
         for category in cats:
-            data['{}_loader'.format(category)] = DataLoaderWithTime(data['x_{}'.format(category)], data['y_{}'.format(category)], data["x_times_{}".format(category)], data["y_times_{}".format(category)], batch_size, shuffle=True)
+            data['{}_loader'.format(category)] = DataLoaderWithTime(
+                data['x_{}'.format(category)],
+                data['y_{}'.format(category)],
+                data["x_times_{}".format(category)],
+                data["y_times_{}".format(category)],
+                batch_size,
+                shuffle=True)
     return data
 
 

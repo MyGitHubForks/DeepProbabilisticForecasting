@@ -62,10 +62,20 @@ def loadData(args):
 	print("loading data")
 	if args.dataset == "traffic":
 		dataDir = "/home/dan/data/traffic/trafficWithTime/"
-		data = utils.load_traffic_dataset(dataDir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest, genLoaders=False)
+		data = utils.load_traffic_dataset(
+			dataDir,
+			args.batch_size,
+			down_sample=args.down_sample,
+			load_test=args.predictOnTest,
+			genLoaders=False)
 	elif args.dataset == "human":
 		dataDir = "/home/dan/data/human/Processed/"
-		data = utils.load_human_dataset(dataDir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest, genLoaders=False)
+		data = utils.load_human_dataset(
+			dataDir,
+			args.batch_size,
+			down_sample=args.down_sample,
+			load_test=args.predictOnTest,
+			genLoaders=False)
 	return data
 
 def main():
