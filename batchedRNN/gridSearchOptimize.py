@@ -78,6 +78,7 @@ def getGSSaveDir():
 		numEnd = saveDir.rfind(".")
 		saveDir = saveDir[:numStart] + str(int(saveDir[numStart])+1)
 	os.mkdir(saveDir)
+	os.mkdir(saveDir+"/trials")
 	return saveDir
 
 # def getSaveFile(saveDir):
