@@ -66,6 +66,7 @@ def loadData(args):
 	elif args.dataset == "human":
 		dataDir = "/home/dan/data/human/Processed/"
 		data = utils.load_human_dataset(dataDir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest)
+	return data
 
 def main():
 	args = parser.parse_args()
