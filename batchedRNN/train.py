@@ -17,7 +17,7 @@ from torch.optim.lr_scheduler import MultiStepLR
 
 parser = argparse.ArgumentParser(description='Batched Sequence to Sequence')
 parser.add_argument('--h_dim', type=int, default=256)
-parser.add_argument("--z_dim", type=int, default=0)
+parser.add_argument("--z_dim", type=int, default=128)
 parser.add_argument('--no_cuda', action='store_true', default=False,
                                         help='disables CUDA training')
 parser.add_argument("--no_attn", action="store_true", default=True, help="Do not use AttnDecoder")
@@ -144,7 +144,7 @@ def trainF(data = None, suggestions=None):
     experimentData["valKLDLosses"] = []
     experimentData["learningRates"] = []
     # Define Optimizer
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.initial_lr)
+    optimizer = torch.optim.SGD(model.parameters(), lr=args.initial_lr)
     lr_decay_milestones = np.arange(args.lr_decay_beginning, args.n_epochs, args.lr_decay_every)
     scheduler = MultiStepLR(optimizer, milestones=lr_decay_milestones, gamma=args.lr_decay_factor)
     print("beginning training")
