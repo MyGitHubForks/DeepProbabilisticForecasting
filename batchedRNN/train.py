@@ -79,7 +79,7 @@ def trainF(data = None, suggestions=None):
         args.encoder_input_dropout = suggestions["encoder_input_dropout"]
         args.decoder_layer_dropout = suggestions["decoder_layer_dropout"]
         args.decoder_input_dropout = suggestions["decoder_input_dropout"]        
-    if not data:
+    if data is None:
         print("loading data")
         if args.dataset == "traffic":
             dataDir = "/home/dan/data/traffic/trafficWithTime/"
