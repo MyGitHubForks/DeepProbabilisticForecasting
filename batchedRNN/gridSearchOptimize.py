@@ -42,21 +42,51 @@ def getParams(args, saveDir):
 		p[key] = np.random.choice(possib)
 	return p
 
-def runExperiment(args, saveDir, data):
-	p = getParams(args, saveDir)
-	return p, trainF(data=data, suggestions=p)
+def saveExp(params, res, args, gsSaveFile):
+	with open(gsSaveFile, "w+") as f:
+		f.write("Dataset: {}\tModel: {}\n".format(args.dataset, args.model))
+		col = "Save Directory\tTrain Loss\tValidation Loss"
+		sortedKeys = sorted(params.keys())
+		for k in sortedKeys:
+			if k not in ["model", "save_dir"]:
+				col += "\t{}".format(k)
+		col += "\n"
+		f.write(col)
+		row = "{}\t{:.3f}\t{:.3f}".format(res[4], res[0], res[2])
+		for k in sortedKeys:
+			if k not in ["model", "save_dir"]:
+				v = p[k]
+				row+="\t{}".format(v)
+		row += "\n"
+		f.write(row)
 
-def getSaveFile():
-	saveFile = '../save/gridSearch/gridSearch_1.tsv'
+def runExperiment(args, saveDir, data, gsSaveFile):
+	p = getParams(args, saveDir)
+	res = trainF(data=data, suggestions=p)
+	saveExp(p, res, args, gsSaveFile)
+	return p, res
+
+def getGSSaveDir():
+	saveDir = '../save/gridSearch/gridSearch_1'
 	if not os.path.isdir("../save/"):
 		os.mkdir("../save/")
 	if not os.path.isdir("../save/gridSearch/"):
 		os.mkdir("../save/gridSearch/")
-	while os.path.isfile(saveFile):
+	while os.path.isdir(saveDir):
+		numStart = saveDir.rfind("_")+1
+		numEnd = saveDir.rfind(".")
+		saveDir = saveDir[:numStart] + str(int(saveDir[numStart])+1)
+	return saveDir
+
+def getSaveFile(saveDir):
+	saveFile = "/trials/trial_1.txt"
+	if not os.path.isdir(saveDir+"/trials/"):
+		os.mkdir(saveDir+"/trials/")
+	while os.path.isfile(saveDir + saveFile):
 		numStart = saveFile.rfind("_")+1
 		numEnd = saveFile.rfind(".")
-		saveFile = saveFile[:numStart] + str(int(saveFile[numStart:numEnd])+1) + ".tsv"
-	return saveFile
+		saveFile = saveFile[:numStart] + str(int(saveFile[numStart:numEnd])+1) + ".txt"
+	return saveDir+saveFile
 
 def loadData(args):
 	print("loading data")
@@ -83,8 +113,10 @@ def main():
 	data = loadData(args)
 	tries = args.tries
 	saveDirs = [getSaveDir() for i in range(tries)]
+	gsSaveDir = getGSSaveDir()
+	gsSaveFiles = [getSaveFile(saveDir) for i in range(tries)]
 	# results = []
-	results = Parallel(n_jobs=4)(delayed(runExperiment)(args, saveDirs[i], data) for i in range(tries))
+	results = Parallel(n_jobs=4)(delayed(runExperiment)(args, saveDirs[i], data, gsSaveFiles[i]) for i in range(tries))
 	# for i in range(tries):
 	# 	results.append(runExperiment(args, saveDirs[i], data))
 	# trainReconLosses, trainKLDLosses, valReconLosses, valKLDLosses, args.save_dir
