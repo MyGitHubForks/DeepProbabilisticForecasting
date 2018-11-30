@@ -21,13 +21,13 @@ lin_params = {
 }
 
 def getSaveDir():
-    saveDir = '../save/models/model0/'
-    while os.path.isdir(saveDir):
-        numStart = saveDir.rfind("model")+5
-        numEnd = saveDir.rfind("/")
-        saveDir = saveDir[:numStart] + str(int(saveDir[numStart:numEnd])+1) + "/"
-    os.mkdir(saveDir)
-    return saveDir
+   	saveDir = '../save/models/model0/'
+   	while os.path.isdir(saveDir):
+		numStart = saveDir.rfind("model")+5
+		numEnd = saveDir.rfind("/")
+		saveDir = saveDir[:numStart] + str(int(saveDir[numStart:numEnd])+1) + "/"
+	os.mkdir(saveDir)
+	return saveDir
 
 def getParams(args, saveDir):
 	p = {}
