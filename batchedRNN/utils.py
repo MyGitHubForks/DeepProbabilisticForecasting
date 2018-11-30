@@ -35,7 +35,7 @@ def normalizeData(x, y, layer=None):
         return (x-mean)/std, (y-mean)/std, mean, std
     
 
-def load_human_dataset(dataset_dir, batch_size, down_sample=None, load_test=False, **kwargs):
+def load_human_dataset(dataset_dir, batch_size, down_sample=None, load_test=False,genLoaders=True, **kwargs):
     data = {}
     if load_test:
         cats = ["train", "val", "test"]
@@ -69,11 +69,12 @@ def load_human_dataset(dataset_dir, batch_size, down_sample=None, load_test=Fals
     assert data['sequence_len'] == 12
     assert data['x_dim'] == 32
     # Data format
-    for category in cats:
-        data['{}_loader'.format(category)] = DataLoader(data['x_{}'.format(category)], data['y_{}'.format(category)], batch_size, shuffle=True)
+    if genLoaders:
+        for category in cats:
+            data['{}_loader'.format(category)] = DataLoader(data['x_{}'.format(category)], data['y_{}'.format(category)], batch_size, shuffle=True)
     return data
 
-def load_traffic_dataset(dataset_dir, batch_size, down_sample=None, load_test=False, **kwargs):
+def load_traffic_dataset(dataset_dir, batch_size, down_sample=None, load_test=False,genLoaders=True, **kwargs):
     data = {}
     if load_test:
         cats = ["train", "val", "test"]
@@ -103,8 +104,9 @@ def load_traffic_dataset(dataset_dir, batch_size, down_sample=None, load_test=Fa
     assert data['sequence_len'] == 12
     assert data['x_dim'] == 207
     # Data format
-    for category in cats:
-        data['{}_loader'.format(category)] = DataLoaderWithTime(data['x_{}'.format(category)], data['y_{}'.format(category)], data["x_times_{}".format(category)], data["y_times_{}".format(category)], batch_size, shuffle=True)
+    if genLoaders:
+        for category in cats:
+            data['{}_loader'.format(category)] = DataLoaderWithTime(data['x_{}'.format(category)], data['y_{}'.format(category)], data["x_times_{}".format(category)], data["y_times_{}".format(category)], batch_size, shuffle=True)
     return data
 
 

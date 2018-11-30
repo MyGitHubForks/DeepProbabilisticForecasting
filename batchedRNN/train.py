@@ -78,7 +78,16 @@ def trainF(data = None, suggestions=None):
         args.encoder_layer_dropout = suggestions["encoder_layer_dropout"]
         args.encoder_input_dropout = suggestions["encoder_input_dropout"]
         args.decoder_layer_dropout = suggestions["decoder_layer_dropout"]
-        args.decoder_input_dropout = suggestions["decoder_input_dropout"]        
+        args.decoder_input_dropout = suggestions["decoder_input_dropout"]
+        if args.predictOnTest:
+            cats = ["train", "val", "test"]
+        else:
+            cats = ["train", "val"]
+        for cat in cats
+        data["{}_loader".format(cat)] = data['{}_loader'.format(cat)] = DataLoader(
+            data['x_{}'.format(cat)],
+            data['y_{}'.format(cat)],
+            args.batch_size, shuffle=True)
     if data is None:
         print("loading data")
         if args.dataset == "traffic":
