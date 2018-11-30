@@ -84,18 +84,21 @@ def trainF(data = None, suggestions=None):
         else:
             cats = ["train", "val"]
         for cat in cats:
+            shuffle=False
+            if cat == "train":
+                shuffle=True
             if args.dataset == "traffic":
                 data["{}_loader".format(cat)] = data['{}_loader'.format(cat)] = utils.DataLoaderWithTime(
                     data['x_{}'.format(cat)],
                     data['y_{}'.format(cat)],
                     data["x_times_{}".format(cat)],
                     data["y_times_{}".format(cat)],
-                    args.batch_size, shuffle=True)
+                    args.batch_size, shuffle=shuffle)
             else:
                 data["{}_loader".format(cat)] = data['{}_loader'.format(cat)] = utils.DataLoader(
                     data['x_{}'.format(cat)],
                     data['y_{}'.format(cat)],
-                    args.batch_size, shuffle=True)
+                    args.batch_size, shuffle=shuffle)
     if data is None:
         print("loading data")
         if args.dataset == "traffic":
