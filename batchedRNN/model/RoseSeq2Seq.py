@@ -46,7 +46,11 @@ class DecoderRNN(nn.Module):
         self.hidden_size = hidden_size
 
         self.embedding = nn.Linear(output_size, hidden_size)
-        self.gru = nn.GRU(hidden_size, 2 * hidden_size, n_layers, dropout=self.args.dropout)
+        if self.args.bidirectionalEncoder:
+            directions = 2
+        else:
+            directions = 1
+        self.gru = nn.GRU(hidden_size, directions * hidden_size, n_layers, dropout=self.args.dropout)
         self.out = nn.Linear(hidden_size, output_size)
 
     def forward(self, input, hidden):
@@ -93,7 +97,7 @@ class Seq2Seq(nn.Module):
         for t in range(self.args.sequence_len):
             encoder_output, encoder_hidden = self.enc(x[t].squeeze(), encoder_hidden)
             hs += [encoder_output]
-        if args.bidirectionalEncoder:
+        if self.args.bidirectionalEncoder:
             decoder_hidden = self._cat_directions(encoder_hidden)
         else:
             decoder_hidden = encoder_hidden
