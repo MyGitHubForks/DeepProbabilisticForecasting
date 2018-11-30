@@ -266,7 +266,7 @@ def train(train_loader, val_loader, model, args, dataDict, epoch, optimizer, kld
         elif args.model == "rnn":
             loss, unNormalizedLoss = getRNNLoss(output, target, dataDict["train_mean"], dataDict["train_std"], args) # unNormalized Loss
             l1_reg, l2_reg = getRegularizationLosses(model)
-            loss = loss + args.l1_lambda * l1_reg + args.l2_lambda * l2_reg
+            loss = loss + args.lambda_l1 * l1_reg + args.lambda_l2 * l2_reg
             epochReconLossTrain += unNormalizedLoss
             if batch_idx % args.print_every == 0:
                 print("batch_idx: {}, loss: {}".format(batch_idx, loss))
