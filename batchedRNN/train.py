@@ -77,7 +77,8 @@ def trainF(suggestions=None):
     experimentData["data"] = data
     print("setting additional params")
     # Set additional arguments
-    assert args.kld_warmup_until <= args.n_epochs, "KLD Warm up stop > n_epochs"
+    if args.model == "sketch-rnn":
+        assert args.kld_warmup_until <= args.n_epochs, "KLD Warm up stop > n_epochs"
     args.cuda = not args.no_cuda and torch.cuda.is_available()
     args._device = "cuda" if args.cuda else "cpu"
     args.use_attn = not args.no_attn
