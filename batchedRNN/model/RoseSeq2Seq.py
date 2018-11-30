@@ -17,7 +17,7 @@ class EncoderRNN(nn.Module):
         self.hidden_size = hidden_size
         self.embedding = nn.Linear(input_size, hidden_size)
         self.gru = nn.GRU(hidden_size * self.args.channels, hidden_size, n_layers, dropout=self.args.encoder_layer_dropout, bidirectional=bidirectional)
-        self.input_dropout = nn.Dropout(p=self.args.input_dropout_p)
+        self.input_dropout = nn.Dropout(p=self.args.encoder_input_dropout)
     def forward(self, input, hidden):
         embedded = self.embedding(input)
         embedded = self.input_dropout(embedded)
