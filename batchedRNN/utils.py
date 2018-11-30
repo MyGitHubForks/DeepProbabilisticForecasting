@@ -177,9 +177,9 @@ def kld_gauss(mean_1, std_1, mean_2, std_2):
     return 0.5 * torch.sum(kld_element)
 
 def getRNNLoss(output, target, mean, std, args):
-    outputCopy = output.clone().detach().numpy()
+    outputCopy = output.clone().cpu().detach().numpy()
     outputCopy = unNormalize(outputCopy, mean, std)
-    targetCopy = target.clone().detach().numpy()
+    targetCopy = target.clone().cpu().detach().numpy()
     targetCopy = unNormalize(targetCopy, mean, std)
     if args.criterion == "RMSE":
         loss = torch.sqrt(torch.mean((output - target) ** 2))
@@ -189,6 +189,7 @@ def getRNNLoss(output, target, mean, std, args):
         unNLoss = np.mean(np.abs(outputCopy - targetCopy))
     else:
         assert False, "bad loss function"
+    del outputCopy, targetCopy
     return loss, unNLoss
 
 
@@ -196,8 +197,8 @@ def getSketchRNNLoss(latentMean, latentStd, predOut, predMeanOut, predStdOut, ar
     # mean and std of shape (batch_size, z_dim)
     kld = sketchRNNKLD(latentMean, latentStd)
     # calculate reconstruction loss
-    predCopy = predOut.clone().detach().numpy()
-    targetCopy = target.clone().detach().numpy()
+    predCopy = predOut.clone().cpu().detach().numpy()
+    targetCopy = target.clone().cpu().detach().numpy()
     unNPred = unNormalize(predCopy, datasetMean, datasetStd)
     unNTarget = unNormalize(targetCopy, datasetMean, datasetStd)
     if args.criterion == "RMSE":
@@ -208,6 +209,7 @@ def getSketchRNNLoss(latentMean, latentStd, predOut, predMeanOut, predStdOut, ar
         unNormalizedLoss = np.mean(np.abs(unNPred - unNTarget))
     else:
         assert False, "bad loss function"
+    del predCopy, targetCopy
     return kld, predLoss, unNormalizedLoss
 
 def getValLoss(output, target, dataDict, args):
