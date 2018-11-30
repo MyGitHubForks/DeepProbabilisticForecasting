@@ -67,7 +67,7 @@ def runExperiment(args, saveDir, data, gsSaveFile):
 	return p, res
 
 def getGSSaveDir():
-	saveDir = '../save/gridSearch/gridSearch_1'
+	saveDir = '../save/gridSearch/gridSearch_1/'
 	if not os.path.isdir("../save/"):
 		os.mkdir("../save/")
 	if not os.path.isdir("../save/gridSearch/"):
@@ -75,7 +75,7 @@ def getGSSaveDir():
 	while os.path.isdir(saveDir):
 		numStart = saveDir.rfind("_")+1
 		numEnd = saveDir.rfind(".")
-		saveDir = saveDir[:numStart] + str(int(saveDir[numStart])+1)
+		saveDir = saveDir[:numStart] + str(int(saveDir[numStart])+1) + "/"
 	return saveDir
 
 def getSaveFile(saveDir):
@@ -121,7 +121,7 @@ def main():
 	# 	results.append(runExperiment(args, saveDirs[i], data))
 	# trainReconLosses, trainKLDLosses, valReconLosses, valKLDLosses, args.save_dir
 	results = sorted(results, key=lambda x: x[1][2])
-	saveFile = getSaveFile()
+	saveFile = gsSaveDir+"gridsearch.txt"
 	if args.model == "rnn":
 		with open(saveFile, "w+") as f:
 			f.write("Dataset: {}\tModel: {}\n".format(args.dataset, args.model))
