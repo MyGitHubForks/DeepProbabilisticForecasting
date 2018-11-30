@@ -50,8 +50,11 @@ class DecoderRNN(nn.Module):
             directions = 2
         else:
             directions = 1
+        # encoder hidden is (layers * directions, batch, hidden_size)
+        # converted to (layers, batch, hidden_size * directions)
         self.gru = nn.GRU(hidden_size, directions * hidden_size, n_layers, dropout=self.args.dropout)
-        self.out = nn.Linear(hidden_size, output_size)
+        # GRU output (seq_len, batch, directions * hidden_size)
+        self.out = nn.Linear(directions * hidden_size, output_size)
 
     def forward(self, input, hidden):
         embedded = self.embedding(input)
