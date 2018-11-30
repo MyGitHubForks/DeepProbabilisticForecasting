@@ -20,7 +20,7 @@ lin_params = {
 }
 
 def getSaveDir():
-    saveDir = './save/models/model0/'
+    saveDir = '../save/models/model0/'
     while os.path.isdir(saveDir):
         numStart = saveDir.rfind("model")+5
         numEnd = saveDir.rfind("/")
@@ -46,11 +46,11 @@ def runExperiment(args, saveDir):
 	return p, trainF(p)
 
 def getSaveFile():
-	saveFile = './save/gridSearch/gridSearch_1.tsv'
-	if not os.path.isdir("./save/"):
-		os.mkdir("./save/")
-	if not os.path.isdir("./save/gridSearch/"):
-		os.mkdir("./save/gridSearch/")
+	saveFile = '../save/gridSearch/gridSearch_1.tsv'
+	if not os.path.isdir("../save/"):
+		os.mkdir("../save/")
+	if not os.path.isdir("../save/gridSearch/"):
+		os.mkdir("../save/gridSearch/")
 	while os.path.isfile(saveFile):
 		numStart = saveFile.rfind("_")+1
 		numEnd = saveFile.rfind(".")
