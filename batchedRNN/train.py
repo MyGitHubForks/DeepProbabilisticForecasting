@@ -48,6 +48,9 @@ parser.add_argument("--clip", type=int, default=10)
 parser.add_argument("--dataset", type=str, default="traffic")
 parser.add_argument("--predictOnTest", action="store_true", default=True)
 parser.add_argument("--dropout", type=float, default=0.5)
+parser.add_argument("--noEarlyStopping", action="store_true", default=False)
+parser.add_argument("--earlyStoppingPatients", type=int, default=3)
+parser.add_argument("--earlyStoppingMinDelta", type=float, default=0.0001)
 
 def trainF(suggestions=None):
     experimentData = {}
@@ -140,6 +143,17 @@ def trainF(suggestions=None):
             print('Saved model to '+fn)
             if args.cuda:
                 model = model.cuda()
+        if not args.noEarlyStopping:
+            mostRecentLoss = experimentData["valReconLosses"][-1] + experimentData["valKLDLosses"][-1]
+            if bestLoss is not None and mostRecentLoss + args.earlyStoppingMinDelta >= bestLoss:
+                earlyStoppingCounter += 1
+                if earlyStoppingCounter >= args.earlyStoppingPatients:
+                    print("early stopping: stopping training")
+                    break
+            else:
+                bestLoss = mostRecentLoss
+                earlyStoppingCounter = 0
+
         if not args.no_shuffle_after_epoch:
             # Shuffle training examples for next epoch
             data['train_loader'].shuffle()
