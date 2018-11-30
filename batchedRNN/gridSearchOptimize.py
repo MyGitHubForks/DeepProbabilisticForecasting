@@ -55,7 +55,7 @@ def saveExp(params, res, args, gsSaveFile):
 		row = "{}\t{:.3f}\t{:.3f}".format(res[4], res[0], res[2])
 		for k in sortedKeys:
 			if k not in ["model", "save_dir"]:
-				v = p[k]
+				v = params[k]
 				row+="\t{}".format(v)
 		row += "\n"
 		f.write(row)
