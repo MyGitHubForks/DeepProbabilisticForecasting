@@ -60,8 +60,8 @@ def saveExp(params, res, args, gsSaveFile):
 		row += "\n"
 		f.write(row)
 
-def runExperiment(args, saveDir, data, trialNum):
-	gsSaveFile = saveDir+"/trials/trial_{}.txt".format(trialNum)
+def runExperiment(args, saveDir, data, gsSaveDir, trialNum):
+	gsSaveFile = gsSaveDir+"/trials/trial_{}.txt".format(trialNum)
 	p = getParams(args, saveDir)
 	res = trainF(data=data, suggestions=p)
 	saveExp(p, res, args, gsSaveFile)
@@ -118,7 +118,7 @@ def main():
 	saveDirs = [getSaveDir() for i in range(tries)]
 	gsSaveDir = getGSSaveDir()
 	# results = []
-	results = Parallel(n_jobs=4)(delayed(runExperiment)(args, saveDirs[i], data, i) for i in range(tries))
+	results = Parallel(n_jobs=4)(delayed(runExperiment)(args, saveDirs[i], data,gsSaveDir, i) for i in range(tries))
 	# for i in range(tries):
 	# 	results.append(runExperiment(args, saveDirs[i], data))
 	# trainReconLosses, trainKLDLosses, valReconLosses, valKLDLosses, args.save_dir
