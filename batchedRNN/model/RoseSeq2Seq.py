@@ -12,7 +12,7 @@ class EncoderRNN(nn.Module):
     def __init__(self, input_size, hidden_size, n_layers=2, args=None):
         super(EncoderRNN, self).__init__()
         self.args = args
-
+        self.input_size = input_size
         self.n_layers = n_layers
         self.hidden_size = hidden_size
         self.embedding = nn.Linear(input_size, hidden_size)
@@ -21,7 +21,7 @@ class EncoderRNN(nn.Module):
     def forward(self, input, hidden):
         embedded = self.embedding(input)
         embedded = torch.unsqueeze(embedded, 0)
-        embedded = embedded.view(1, args.batch_size, -1)
+        embedded = embedded.view(1, self.args.batch_size, -1)
         output, hidden = self.gru(embedded, hidden)
         return output, hidden
 
@@ -86,10 +86,10 @@ class Seq2Seq(nn.Module):
         encoder_hidden = self.enc.initHidden()
         hs = []
         for t in range(self.args.sequence_len):
-            encoder_output, encoder_hidden = self.enc(x[t], encoder_hidden)
+            encoder_output, encoder_hidden = self.enc(x[t].squeeze(), encoder_hidden)
             hs += [encoder_output]
 
-        decoder_hidden = hs[-1]
+        decoder_hidden = encoder_hidden
         # Prepare for Decoder
         inp = Variable(torch.zeros(self.args.batch_size, self.args.x_dim))
         if self.args.cuda:
