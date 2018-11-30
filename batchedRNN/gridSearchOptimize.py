@@ -3,6 +3,7 @@ from joblib import Parallel, delayed
 import os
 import numpy as np
 import argparse
+import utils
 
 log_params = {"h_dim": (4, 9, 2),
 	"initial_lr": (-5, -2, 10),
@@ -41,9 +42,9 @@ def getParams(args, saveDir):
 		p[key] = np.random.choice(possib)
 	return p
 
-def runExperiment(args, saveDir):
+def runExperiment(args, saveDir, data):
 	p = getParams(args, saveDir)
-	return p, trainF(p)
+	return p, trainF(data=data, suggestions=p)
 
 def getSaveFile():
 	saveFile = '../save/gridSearch/gridSearch_1.tsv'
@@ -57,11 +58,21 @@ def getSaveFile():
 		saveFile = saveFile[:numStart] + str(int(saveFile[numStart:numEnd])+1) + ".tsv"
 	return saveFile
 
+def loadData(args):
+	print("loading data")
+        if args.dataset == "traffic":
+            dataDir = "/home/dan/data/traffic/trafficWithTime/"
+            data = utils.load_traffic_dataset(dataDir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest)
+        elif args.dataset == "human":
+            dataDir = "/home/dan/data/human/Processed/"
+            data = utils.load_human_dataset(dataDir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest)
+
 def main():
 	args = parser.parse_args()
+	data = loadData(args)
 	tries = args.tries
 	saveDirs = [getSaveDir() for i in range(tries)]
-	results = Parallel(n_jobs=4)(delayed(runExperiment)(args, saveDirs[i]) for i in range(tries))
+	results = Parallel(n_jobs=4)(delayed(runExperiment)(args, saveDirs[i], data) for i in range(tries))
 	# trainReconLosses, trainKLDLosses, valReconLosses, valKLDLosses, args.save_dir
 	results = sorted(results, key=lambda x: x[1][2])
 	saveFile = getSaveFile()

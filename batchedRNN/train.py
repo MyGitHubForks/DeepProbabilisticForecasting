@@ -55,7 +55,7 @@ parser.add_argument("--noEarlyStopping", action="store_true", default=False)
 parser.add_argument("--earlyStoppingPatients", type=int, default=3)
 parser.add_argument("--earlyStoppingMinDelta", type=float, default=0.0001)
 parser.add_argument("--bidirectionalEncoder", type=bool, default=True)
-def trainF(suggestions=None):
+def trainF(data = None, suggestions=None):
     experimentData = {}
     args = parser.parse_args()
     if not suggestions:
@@ -79,15 +79,14 @@ def trainF(suggestions=None):
         args.encoder_input_dropout = suggestions["encoder_input_dropout"]
         args.decoder_layer_dropout = suggestions["decoder_layer_dropout"]
         args.decoder_input_dropout = suggestions["decoder_input_dropout"]        
-
-    print("loading data")
-    if args.dataset == "traffic":
-        dataDir = "/home/dan/data/traffic/trafficWithTime/"
-        data = utils.load_traffic_dataset(dataDir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest)
-    elif args.dataset == "human":
-        dataDir = "/home/dan/data/human/Processed/"
-        data = utils.load_human_dataset(dataDir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest)
-    experimentData["data"] = data
+    if not data:
+        print("loading data")
+        if args.dataset == "traffic":
+            dataDir = "/home/dan/data/traffic/trafficWithTime/"
+            data = utils.load_traffic_dataset(dataDir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest)
+        elif args.dataset == "human":
+            dataDir = "/home/dan/data/human/Processed/"
+            data = utils.load_human_dataset(dataDir, args.batch_size, down_sample=args.down_sample, load_test=args.predictOnTest)
     print("setting additional params")
     # Set additional arguments
     if args.model == "sketch-rnn":
