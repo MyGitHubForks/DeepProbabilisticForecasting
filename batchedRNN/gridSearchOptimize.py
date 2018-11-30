@@ -4,9 +4,20 @@ import os
 import numpy as np
 import argparse
 
-params = {"h_dim": (4, 9, 2),
-	"z_dim": (4, 9, 2),
-	"initial_lr": (-5, -2, 10)}
+log_params = {"h_dim": (4, 9, 2),
+	"initial_lr": (-5, -2, 10),
+	"batch_size": (4, 7, 2),
+	"lambda_l1" : (-7, -4, 2),
+	"lambda_l2" : (-6, -2, 5)
+}
+
+lin_params = {
+	"n_layers": (2,5,1),
+	"encoder_input_dropout" : (0.1, 0.9, 0.2),
+	"encoder_layer_dropout" : (0.1, 0.9, 0.2),
+	"decoder_input_dropout" : (0.1, 0.9, 0.2),
+	"decoder_layer_dropout" : (0.1, 0.9, 0.2)
+}
 
 def getSaveDir():
     saveDir = './save/models/model0/'
@@ -21,19 +32,21 @@ def getParams(args, saveDir):
 	p = {}
 	p["save_dir"] = saveDir
 	p["model"] = args.model
-	for key in ["h_dim", "z_dim", "initial_lr"]:
-		vals = params[key]
+	for key, vals in log_params.items():
 		possib = np.logspace(vals[0], vals[1], base=vals[2], num=vals[1]-vals[0]+1)
 		p[key] = np.random.choice(possib)
-		print(key, p[key])
+
+	for key, vals in lin_params.items():
+		possib = np.arange(vals[0], vals[1], vals[2])
+		p[key] = np.random.choice(possib)
 	return p
 
 def runExperiment(args, saveDir):
 	p = getParams(args, saveDir)
-	return trainF(p)
+	return p, trainF(p)
 
 def getSaveFile():
-	saveFile = './save/gridSearch/gridSearch_1.txt'
+	saveFile = './save/gridSearch/gridSearch_1.tsv'
 	if not os.path.isdir("./save/"):
 		os.mkdir("./save/")
 	if not os.path.isdir("./save/gridSearch/"):
@@ -41,7 +54,7 @@ def getSaveFile():
 	while os.path.isfile(saveFile):
 		numStart = saveFile.rfind("_")+1
 		numEnd = saveFile.rfind(".")
-		saveFile = saveFile[:numStart] + str(int(saveFile[numStart:numEnd])+1) + ".txt"
+		saveFile = saveFile[:numStart] + str(int(saveFile[numStart:numEnd])+1) + ".tsv"
 	return saveFile
 
 def main():
@@ -50,19 +63,33 @@ def main():
 	saveDirs = [getSaveDir() for i in range(tries)]
 	results = Parallel(n_jobs=4)(delayed(runExperiment)(args, saveDirs[i]) for i in range(tries))
 	# trainReconLosses, trainKLDLosses, valReconLosses, valKLDLosses, args.save_dir
-	results = sorted(results, key=lambda x: x[2])
+	results = sorted(results, key=lambda x: x[1][2])
 	saveFile = getSaveFile()
 	if args.model == "rnn":
 		with open(saveFile, "w+") as f:
-			f.write("Dataset: {}, Model: {}\n".format(args.dataset, args.model))
-			f.write("Save Directory\t\tTrain Loss\t\tValidation Loss\n")
-			for tup in results:
-				f.write("{}\t\t{:.3f}\t\t{:.3f}\n".format(tup[4], tup[0], tup[2]))
+			f.write("Dataset: {}\tModel: {}\n".format(args.dataset, args.model))
+			col = "Save Directory\tTrain Loss\tValidation Loss"
+			sortedKeys = sorted(results[0][0].keys())
+			for k in sortedKeys:
+				if k not in ["model", "save_dir"]:
+					col += "\t{}".format(k)
+			col += "\n"
+			f.write(col)
+			for res in results:
+				tup = res[1]
+				row = "{}\t{:.3f}\t{:.3f}".format(tup[4], tup[0], tup[2])
+				for k in sortedKeys:
+					if k not in ["model", "save_dir"]:
+						v = res[0][k]
+						row+="\t{}".format(v)
+				row += "\n"
+				f.write(row)
 	elif args.model == "vrnn" or args.model=="sketch-rnn":
 		with open(saveFile, "w+") as f:
 			f.write("Dataset: {}, Model: {}".format(args.dataset, args.model))
 			f.write("Save Directory\t\tTrain Recon Loss\tTrain KLD Loss\tValidation Recon Loss\tValidation KLD Loss\n")
-			for tup in results:
+			for res in results:
+				tup = res[1]
 				f.write("{}\t\t{:.3f}\t\t{:.3f}\t\t{:.3f}\t\t\t{:.3f}\n".format(tup[4], tup[0],tup[1],tup[2], tup[3]))
 	else:
 		assert False, "bad model"
