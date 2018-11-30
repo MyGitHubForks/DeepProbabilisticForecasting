@@ -67,7 +67,7 @@ def runExperiment(args, saveDir, data, gsSaveFile):
 	return p, res
 
 def getGSSaveDir():
-	saveDir = '../save/gridSearch/gridSearch_1/'
+	saveDir = '../save/gridSearch/gridSearch_1'
 	if not os.path.isdir("../save/"):
 		os.mkdir("../save/")
 	if not os.path.isdir("../save/gridSearch/"):
@@ -75,7 +75,7 @@ def getGSSaveDir():
 	while os.path.isdir(saveDir):
 		numStart = saveDir.rfind("_")+1
 		numEnd = saveDir.rfind(".")
-		saveDir = saveDir[:numStart] + str(int(saveDir[numStart])+1) + "/"
+		saveDir = saveDir[:numStart] + str(int(saveDir[numStart])+1)
 	return saveDir
 
 def getSaveFile(saveDir):
