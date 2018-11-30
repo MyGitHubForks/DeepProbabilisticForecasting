@@ -159,11 +159,8 @@ def plotTrainValCurve(trainLosses, valLosses, model_description, lossDescription
         plt.savefig(args.save_dir + "total_train_val_loss.png")
 
 
-def unNormalize(val, mean, std):
-    m = np.zeros_like(val)
-    s = np.zeros_like(val)
-    m[:,:,:,0] = mean
-    return (val * std) + mean
+def unNormalize(mat, mean, std):
+    return (mat * std) + mean
 
 def sketchRNNKLD(latentMean, latentStd):
     m2 = torch.zeros_like(latentMean)
@@ -180,31 +177,35 @@ def kld_gauss(mean_1, std_1, mean_2, std_2):
     return 0.5 * torch.sum(kld_element)
 
 def getRNNLoss(output, target, mean, std, args):
+    outputCopy = output.clone().detach().numpy()
+    outputCopy = unNormalize(outputCopy, mean, std)
+    targetCopy = target.clone().detach().numpy()
+    targetCopy = unNormalize(targetCopy, mean, std)
     if args.criterion == "RMSE":
-        o = unNormalize(output, mean, std)
-        t = unNormalize(target, mean, std)
-        loss = torch.sqrt(torch.mean((o - t) ** 2))
+        loss = torch.sqrt(torch.mean((output - target) ** 2))
+        unNLoss = np.sqrt(np.mean((outputCopy - targetCopy) ** 2))
     elif args.criterion == "L1Loss":
-        o = unNormalize(output, mean, std)
-        t = unNormalize(target, mean, std)
-        loss = torch.mean(torch.abs(o - t))
+        loss = torch.mean(torch.abs(output - target))
+        unNLoss = np.mean(np.abs(outputCopy - targetCopy))
     else:
         assert False, "bad loss function"
-    return loss
+    return loss, unNLoss
 
 
 def getSketchRNNLoss(latentMean, latentStd, predOut, predMeanOut, predStdOut, args, target, datasetMean, datasetStd):
     # mean and std of shape (batch_size, z_dim)
     kld = sketchRNNKLD(latentMean, latentStd)
     # calculate reconstruction loss
-    unNPred = unNormalize(predOut.detach(), datasetMean, datasetStd)
-    unNTarget = unNormalize(target.detach(), datasetMean, datasetStd)
+    predCopy = predOut.clone().detach().numpy()
+    targetCopy = target.clone().detach().numpy()
+    unNPred = unNormalize(predCopy, datasetMean, datasetStd)
+    unNTarget = unNormalize(targetCopy, datasetMean, datasetStd)
     if args.criterion == "RMSE":
         predLoss = torch.sqrt(torch.mean((predOut - target)**2))    
-        unNormalizedLoss = torch.sqrt(torch.mean((unNPred - unNTarget)**2))
+        unNormalizedLoss = np.sqrt(np.mean((unNPred - unNTarget)**2))
     elif args.criterion == "L1Loss":
         predLoss = torch.mean(torch.abs(predOut - target))
-        unNormalizedLoss = torch.mean(torch.abs(unNPred - unNTarget))
+        unNormalizedLoss = np.mean(np.abs(unNPred - unNTarget))
     else:
         assert False, "bad loss function"
     return kld, predLoss, unNormalizedLoss
@@ -213,10 +214,10 @@ def getValLoss(output, target, dataDict, args):
     if args.model == "sketch-rnn":
         latentMean, latentStd, z, predOut, predMeanOut, predStdOut = output
         kldLoss, predLoss, unNormalizedLoss = getSketchRNNLoss(latentMean, latentStd, predOut, predMeanOut, predStdOut, args, target, dataDict["val_mean"], dataDict["val_std"])
-        return kldLoss.item(), unNormalizedLoss.item()
+        return kldLoss.item(), unNormalizedLoss
     elif args.model == "rnn":
-        unNormalizedLoss = getRNNLoss(output, target, dataDict["val_mean"], dataDict["val_std"], args)
-        return 0.0, unNormalizedLoss.item()
+        loss, unNormalizedLoss = getRNNLoss(output, target, dataDict["val_mean"], dataDict["val_std"], args)
+        return 0.0, unNormalizedLoss
     else:
         assert False, "bad model"
 
@@ -257,14 +258,14 @@ def train(train_loader, val_loader, model, args, dataDict, epoch, optimizer, kld
             kldLoss, predLoss, unNormalizedLoss = getSketchRNNLoss(latentMean, latentStd, predOut, predMeanOut, predStdOut, args, target, dataDict["train_mean"], dataDict["train_std"])
             loss = (kldLoss * kldLossWeight) + predLoss
             epochKLDLossTrain += kldLoss.item()
-            epochReconLossTrain += unNormalizedLoss.item()
+            epochReconLossTrain += unNormalizedLoss
             if batch_idx % args.print_every == 0:
                 print("batch index: {}, recon loss: {}, kld loss: {}".format(batch_idx, unNormalizedLoss, kldLoss))
         elif args.model == "rnn":
-            loss = getRNNLoss(output, target, dataDict["train_mean"], dataDict["train_std"], args) # unNormalized Loss
+            loss, unNormalizedLoss = getRNNLoss(output, target, dataDict["train_mean"], dataDict["train_std"], args) # unNormalized Loss
             l1_reg, l2_reg = getRegularizationLosses(model)
             loss = loss + args.l1_lambda * l1_reg + args.l2_lambda * l2_reg
-            epochReconLossTrain += loss.item()
+            epochReconLossTrain += unNormalizedLoss
             if batch_idx % args.print_every == 0:
                 print("batch_idx: {}, loss: {}".format(batch_idx, loss))
         else:
