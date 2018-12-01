@@ -89,8 +89,7 @@ def getGSSaveDir():
 		os.mkdir("../save/gridSearch/")
 	while os.path.isdir(saveDir):
 		numStart = saveDir.rfind("_")+1
-		numEnd = saveDir.rfind(".")
-		saveDir = saveDir[:numStart] + str(int(saveDir[numStart])+1)
+		saveDir = saveDir[:numStart] + str(int(saveDir[numStart:])+1)
 	os.mkdir(saveDir)
 	os.mkdir(saveDir+"/trials")
 	return saveDir
