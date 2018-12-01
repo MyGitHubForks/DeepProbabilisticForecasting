@@ -19,19 +19,19 @@ import utils
 # 	"decoder_input_dropout" : (0.3, 0.9, 0.2),
 # 	"decoder_layer_dropout" : (0.3, 0.9, 0.2)
 # }
-log_params = {"h_dim": (7, 9, 2),
-	"initial_lr": (-5, -3, 10),
-	"batch_size": (4, 7, 2),
-	"lambda_l1" : (-6, -4, 2),
-	"lambda_l2" : (-6, -2, 5)
+log_params = {"h_dim": (8, 8, 2),
+	"initial_lr": (-4, -4, 10),
+	"batch_size": (5, 5, 2),
+	"lambda_l1" : (-5, -5, 2),
+	"lambda_l2" : (-4, -4, 5)
 }
 
 lin_params = {
-	"n_layers": (1,3,1),
-	"encoder_input_dropout" : (0.3, 0.7, 0.2),
-	"encoder_layer_dropout" : (0.3, 0.7, 0.2),
-	"decoder_input_dropout" : (0.3, 0.7, 0.2),
-	"decoder_layer_dropout" : (0.3, 0.7, 0.2)
+	"n_layers": (2,2,1),
+	"encoder_input_dropout" : (0.5, 0.5, 0.2),
+	"encoder_layer_dropout" : (0.5, 0.5, 0.2),
+	"decoder_input_dropout" : (0.5, 0.5, 0.2),
+	"decoder_layer_dropout" : (0.5, 0.5, 0.2)
 }
 
 def getSaveDir():
