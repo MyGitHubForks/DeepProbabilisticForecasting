@@ -79,26 +79,26 @@ def trainF(data = None, suggestions=None):
         args.encoder_input_dropout = suggestions["encoder_input_dropout"]
         args.decoder_layer_dropout = suggestions["decoder_layer_dropout"]
         args.decoder_input_dropout = suggestions["decoder_input_dropout"]
-        if args.predictOnTest:
-            cats = ["train", "val", "test"]
-        else:
-            cats = ["train", "val"]
-        for cat in cats:
-            shuffle=False
-            if cat == "train":
-                shuffle=True
-            if args.dataset == "traffic":
-                data["{}_loader".format(cat)] = data['{}_loader'.format(cat)] = utils.DataLoaderWithTime(
-                    data['x_{}'.format(cat)],
-                    data['y_{}'.format(cat)],
-                    data["x_times_{}".format(cat)],
-                    data["y_times_{}".format(cat)],
-                    args.batch_size, shuffle=shuffle)
-            else:
-                data["{}_loader".format(cat)] = data['{}_loader'.format(cat)] = utils.DataLoader(
-                    data['x_{}'.format(cat)],
-                    data['y_{}'.format(cat)],
-                    args.batch_size, shuffle=shuffle)
+        # if args.predictOnTest:
+        #     cats = ["train", "val", "test"]
+        # else:
+        #     cats = ["train", "val"]
+        # for cat in cats:
+        #     shuffle=False
+        #     if cat == "train":
+        #         shuffle=True
+        #     if args.dataset == "traffic":
+        #         data["{}_loader".format(cat)] = data['{}_loader'.format(cat)] = utils.DataLoaderWithTime(
+        #             data['x_{}'.format(cat)],
+        #             data['y_{}'.format(cat)],
+        #             data["x_times_{}".format(cat)],
+        #             data["y_times_{}".format(cat)],
+        #             args.batch_size, shuffle=shuffle)
+        #     else:
+        #         data["{}_loader".format(cat)] = data['{}_loader'.format(cat)] = utils.DataLoader(
+        #             data['x_{}'.format(cat)],
+        #             data['y_{}'.format(cat)],
+        #             args.batch_size, shuffle=shuffle)
     if data is None:
         print("loading data")
         if args.dataset == "traffic":

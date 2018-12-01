@@ -74,10 +74,10 @@ def saveExp(params, res, args, gsSaveFile):
 		row += "\n"
 		f.write(row)
 
-def runExperiment(args, saveDir, data, gsSaveDir, trialNum):
+def runExperiment(args, saveDir, gsSaveDir, trialNum):
 	gsSaveFile = gsSaveDir+"/trials/trial_{}.txt".format(trialNum)
 	p = getParams(args, saveDir)
-	res = trainF(data=data, suggestions=p)
+	res = trainF(suggestions=p)
 	saveExp(p, res, args, gsSaveFile)
 	return p, res
 
@@ -94,17 +94,6 @@ def getGSSaveDir():
 	os.mkdir(saveDir)
 	os.mkdir(saveDir+"/trials")
 	return saveDir
-
-# def getSaveFile(saveDir):
-# 	saveFile = "/trials/trial_1.txt"
-# 	if not os.path.isdir(saveDir+"/trials/"):
-# 		os.mkdir(saveDir+"/trials/")
-# 	while os.path.isfile(saveDir + saveFile):
-# 		numStart = saveFile.rfind("_")+1
-# 		numEnd = saveFile.rfind(".")
-# 		saveFile = saveFile[:numStart] + str(int(saveFile[numStart:numEnd])+1) + ".txt"
-# 	print(saveDir+saveFile)
-# 	return saveDir+saveFile
 
 def loadData(args):
 	print("loading data")
@@ -128,12 +117,12 @@ def loadData(args):
 
 def main():
 	args = parser.parse_args()
-	data = loadData(args)
+	# data = loadData(args)
 	tries = args.tries
 	saveDirs = [getSaveDir() for i in range(tries)]
 	gsSaveDir = getGSSaveDir()
 	# results = []
-	results = Parallel(n_jobs=4)(delayed(runExperiment)(args, saveDirs[i], data,gsSaveDir, i) for i in range(tries))
+	results = Parallel(n_jobs=4)(delayed(runExperiment)(args, saveDirs[i], gsSaveDir, i) for i in range(tries))
 	# for i in range(tries):
 	# 	results.append(runExperiment(args, saveDirs[i], data))
 	# trainReconLosses, trainKLDLosses, valReconLosses, valKLDLosses, args.save_dir
