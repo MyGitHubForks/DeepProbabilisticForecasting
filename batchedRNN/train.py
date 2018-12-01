@@ -79,6 +79,16 @@ def trainF(data = None, suggestions=None):
         args.encoder_input_dropout = suggestions["encoder_input_dropout"]
         args.decoder_layer_dropout = suggestions["decoder_layer_dropout"]
         args.decoder_input_dropout = suggestions["decoder_input_dropout"]
+        print("args.h_dim", args.h_dim)
+        print("args.initial_lr", args.initial_lr)
+        print("args.batch_size", args.batch_size)
+        print("args.lambda_l1", args.lambda_l1)
+        print("args.lambda_l2", args.lambda_l2)
+        print("args.n_layers", args.n_layers)
+        print("args.encoder_layer_dropout", args.encoder_layer_dropout)
+        print("args.encoder_input_dropout", args.encoder_input_dropout)
+        print("args.decoder_layer_dropout", args.decoder_layer_dropout)
+        print("args.decoder_input_dropout", args.decoder_input_dropout)
         # if args.predictOnTest:
         #     cats = ["train", "val", "test"]
         # else:
