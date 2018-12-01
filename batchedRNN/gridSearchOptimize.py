@@ -5,19 +5,33 @@ import numpy as np
 import argparse
 import utils
 
-log_params = {"h_dim": (4, 9, 2),
-	"initial_lr": (-5, -2, 10),
+# log_params = {"h_dim": (7, 9, 2),
+# 	"initial_lr": (-5, -3, 10),
+# 	"batch_size": (4, 7, 2),
+# 	"lambda_l1" : (-6, -4, 2),
+# 	"lambda_l2" : (-6, -2, 5)
+# }
+
+# lin_params = {
+# 	"n_layers": (1,4,1),
+# 	"encoder_input_dropout" : (0.3, 0.9, 0.2),
+# 	"encoder_layer_dropout" : (0.3, 0.9, 0.2),
+# 	"decoder_input_dropout" : (0.3, 0.9, 0.2),
+# 	"decoder_layer_dropout" : (0.3, 0.9, 0.2)
+# }
+log_params = {"h_dim": (7, 9, 2),
+	"initial_lr": (-5, -3, 10),
 	"batch_size": (4, 7, 2),
-	"lambda_l1" : (-7, -4, 2),
+	"lambda_l1" : (-6, -4, 2),
 	"lambda_l2" : (-6, -2, 5)
 }
 
 lin_params = {
-	"n_layers": (2,5,1),
-	"encoder_input_dropout" : (0.1, 0.9, 0.2),
-	"encoder_layer_dropout" : (0.1, 0.9, 0.2),
-	"decoder_input_dropout" : (0.1, 0.9, 0.2),
-	"decoder_layer_dropout" : (0.1, 0.9, 0.2)
+	"n_layers": (1,3,1),
+	"encoder_input_dropout" : (0.3, 0.7, 0.2),
+	"encoder_layer_dropout" : (0.3, 0.7, 0.2),
+	"decoder_input_dropout" : (0.3, 0.7, 0.2),
+	"decoder_layer_dropout" : (0.3, 0.7, 0.2)
 }
 
 def getSaveDir():
