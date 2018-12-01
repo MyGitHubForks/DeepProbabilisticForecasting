@@ -52,7 +52,7 @@ def getParams(args, saveDir):
 		p[key] = np.random.choice(possib)
 
 	for key, vals in lin_params.items():
-		possib = np.arange(vals[0], vals[1], vals[2])
+		possib = np.arange(vals[0], vals[1]+vals[2], vals[2])
 		p[key] = np.random.choice(possib)
 	return p
 
