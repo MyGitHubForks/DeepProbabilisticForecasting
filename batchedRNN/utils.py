@@ -220,5 +220,6 @@ def getRegularizationLoss(model):
 def getLoss(model, output, target, scaler):
     reconLoss = getReconLoss(output, target, scaler)
     regularizationLoss = getRegularizationLoss(model)
-    
+    loss = reconLoss + regularizationLoss
+    return loss
 
