@@ -34,6 +34,8 @@ def normalizeData(x, y, layer=None):
         std = np.std(allData)
         return (x-mean)/std, (y-mean)/std, mean, std
     
+def getStats(x,y):
+    pass
 
 def load_human_dataset(dataset_dir, batch_size, down_sample=None, load_test=False,genLoaders=True, **kwargs):
     data = {}
@@ -59,7 +61,7 @@ def load_human_dataset(dataset_dir, batch_size, down_sample=None, load_test=Fals
         data["subaction_"+category] = f["subaction"][down_sampled_rows,...]
         data["subject_"+category] = f["subject"][down_sampled_rows,...]
         data["targetId_"+category] = f["targetId"][down_sampled_rows,...]
-        data["x_"+category], data["y_"+category], data[category+"_mean"], data[category+"_std"] =\
+        data["x_"+category], data["y_"+category], data["train_mean"], data["train_std"] =\
          normalizeData(data["x_"+category], data["y_"+category])
 
     data['sequence_len'] = f['input2d'].shape[1]
@@ -226,7 +228,7 @@ def getValLoss(output, target, dataDict, args):
         kldLoss, predLoss, unNormalizedLoss = getSketchRNNLoss(latentMean, latentStd, predOut, predMeanOut, predStdOut, args, target, dataDict["val_mean"], dataDict["val_std"])
         return kldLoss.item(), unNormalizedLoss
     elif args.model == "rnn":
-        loss, unNormalizedLoss = getRNNLoss(output, target, dataDict["val_mean"], dataDict["val_std"], args)
+        loss, unNormalizedLoss = getRNNLoss(output, target, dataDict["train_mean"], dataDict["train_std"], args)
         return 0.0, unNormalizedLoss
     else:
         assert False, "bad model"
@@ -252,6 +254,7 @@ def train(train_loader, val_loader, model, args, dataDict, epoch, optimizer, kld
     epochReconLossVal = 0.0
     nTrainBatches = 0
     nValBatches = 0
+    model.train()
     for batch_idx, vals in enumerate(train_loader):
         if args.dataset == "traffic":
             data, target, dataTimes, targetTimes = vals
@@ -277,7 +280,7 @@ def train(train_loader, val_loader, model, args, dataDict, epoch, optimizer, kld
             loss = loss + args.lambda_l1 * l1_reg + args.lambda_l2 * l2_reg
             epochReconLossTrain += unNormalizedLoss
             if batch_idx % args.print_every == 0:
-                print("batch_idx: {}, loss: {}".format(batch_idx, unNormalizedLoss))
+                print("batch_idx: {}, loss: {}".format(batch_idx, loss))
         else:
             assert False, "bad model"
         loss.backward()
@@ -285,6 +288,7 @@ def train(train_loader, val_loader, model, args, dataDict, epoch, optimizer, kld
         #grad norm clipping, only in pytorch version >= 1.10
         nn.utils.clip_grad_norm_(model.parameters(), args.clip)
         torch.cuda.empty_cache()
+    model.eval()
     for batch_idx, vals in enumerate(val_loader):
         if args.dataset == "traffic":
             data, target, dataTimes, targetTimes = vals

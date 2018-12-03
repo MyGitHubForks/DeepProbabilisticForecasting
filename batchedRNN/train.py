@@ -55,6 +55,7 @@ parser.add_argument("--noEarlyStopping", action="store_true", default=False)
 parser.add_argument("--earlyStoppingPatients", type=int, default=3)
 parser.add_argument("--earlyStoppingMinDelta", type=float, default=0.0001)
 parser.add_argument("--bidirectionalEncoder", type=bool, default=True)
+
 def trainF(data = None, suggestions=None):
     experimentData = {}
     args = parser.parse_args()
