@@ -80,11 +80,13 @@ def main():
         # Save Model if necessary
         if (epoch % args.save_freq) == 0:
             fn = args.save_dir+'{}_state_dict_'.format(args.model)+str(epoch)+'.pth'
-            modelWeights = model.cpu().state_dict()
+            modelWeights = model.state_dict()
             torch.save(modelWeights, fn)
             logging.info('Saved model to '+fn)
+            if args.cuda:
+                assert next(iter(model.parameters())).is_cuda, "model is no longer on CUDA"
     model_fn = args.save_dir + '{}_full_model'.format(args.model) +".pth"
-    modelWeights = model.cpu().state_dict()
+    modelWeights = model.state_dict()
     torch.save(modelWeights, model_fn)
     logging.info('Saved model to '+model_fn)
     plotLosses(experimentResults["train_recon_losses"], experimentResults["val_recon_losses"])

@@ -167,7 +167,11 @@ class StandardScaler:
         """
         mean = torch.ones(data.size()) * self.mean0
         std = torch.ones(data.size()) * self.std0
+        if args.cuda:
+            mean = mean.cuda()
+            std = std.cuda()
         transformed = torch.add(torch.mul(data, std), mean)
+        del mean, std
         return transformed.permute(1,0,2)
 
     def inverse_transform_both_layers(self, data):
