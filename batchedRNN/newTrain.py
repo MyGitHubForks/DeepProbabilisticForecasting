@@ -83,11 +83,11 @@ def main():
             modelWeights = model.cpu().state_dict()
             torch.save(modelWeights, fn)
             logging.info('Saved model to '+fn)
-    plotLosses(experimentResults["train_recon_losses"], experimentResults["val_recon_losses"])
     model_fn = args.save_dir + '{}_full_model'.format(args.model) +".pth"
     modelWeights = model.cpu().state_dict()
     torch.save(modelWeights, model_fn)
     logging.info('Saved model to '+model_fn)
+    plotLosses(experimentResults["train_recon_losses"], experimentResults["val_recon_losses"])
     return experimentResults["train_recon_losses"][-1], experimentResults["val_recon_losses"][-1]
 
 if __name__ == '__main__':

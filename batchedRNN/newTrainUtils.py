@@ -10,6 +10,8 @@ import torch.nn as nn
 import json
 from shutil import copy2, copyfile, copytree
 import argparse
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser(description='Batched Sequence to Sequence')
