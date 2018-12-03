@@ -45,7 +45,7 @@ def main():
             nTrainBatches += 1
             optimizer.zero_grad()
             output = model(inputData, target, epoch)
-            loss = getLoss(output, target, data["scaler"])
+            loss = getLoss(model, output, target, data["scaler"])
             loss.backward()
             optimizer.step()
             # print statistics
@@ -66,7 +66,7 @@ def main():
             for batchIDX, (inputData, target) in enumerate(map(callableTransform, data["val"])):
                 nValBatches += 1
                 output = model(inputData, target, epoch)
-                loss = getLoss(output, target, data["scaler"])
+                loss = getLoss(model, output, target, data["scaler"])
                 epoch_val_loss += loss.item()
         # Print Epoch Results
         logging.info("epoch:{} avg training loss: {:.4f} avg val loss: {:.4f}".format(

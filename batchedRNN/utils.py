@@ -189,7 +189,7 @@ def getScaler(trainX):
     std = np.std(trainX[...,0])
     return StandardScaler(mean, std)
 
-def getLoss(output, target, scaler):
+def getReconLoss(output, target, scaler):
     output = scaler.inverse_transform(output)
     target = scaler.inverse_transform(target)
     assert output.size() == target.size(), "output size: {}, target size: {}".format(output.size(), target.size())
@@ -201,4 +201,24 @@ def getLoss(output, target, scaler):
         return criterion(output, target)
     else:
         assert False, "bad loss function"
+
+def getRegularizationLoss(model):
+    l2_reg = None
+    l1_reg = None
+    for W in model.parameters():
+        if l2_reg is None:
+            l2_reg = W.norm(2)
+        else:
+            l2_reg = l2_reg + W.norm(2)
+        if l1_reg is None:
+            l1_reg = W.norm(1)
+        else:
+            l1_reg = l1_reg + W.norm(1)
+    regularizationLoss = args.lambda_l1 * l1_reg + args.lambda_l2 * l2_reg
+    return regularizationLoss
+
+def getLoss(model, output, target, scaler):
+    reconLoss = getReconLoss(output, target, scaler)
+    regularizationLoss = getRegularizationLoss(model)
+    
 
