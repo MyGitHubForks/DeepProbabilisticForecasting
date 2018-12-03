@@ -1,4 +1,4 @@
-from newTrainUtils import *
+from utils import *
 from model.RoseSeq2Seq import Seq2Seq
 from torch.optim.lr_scheduler import MultiStepLR
 
