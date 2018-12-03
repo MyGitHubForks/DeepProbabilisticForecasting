@@ -33,7 +33,7 @@ parser.add_argument("--save_freq", type=int, default=10)
 parser.add_argument("--down_sample", type=float, default=0.0, help="Keep this fraction of the training data")
 # parser.add_argument("--data_dir", type=str, default="./data/reformattedTraffic/")
 parser.add_argument("--model", type=str, default="sketch-rnn")
-parser.add_argument("--lambda_l1", type=float, default=2e-5)
+parser.add_argument("--lambda_l1", type=float, default=0)
 parser.add_argument("--lambda_l2", type=float, default=5e-4)
 parser.add_argument("--no_schedule_sampling", action="store_true", default=False)
 parser.add_argument("--scheduling_start", type=float, default=1.0)
@@ -202,24 +202,22 @@ def getReconLoss(output, target, scaler):
     else:
         assert False, "bad loss function"
 
-def getRegularizationLoss(model):
-    l2_reg = None
-    l1_reg = None
-    for W in model.parameters():
-        if l2_reg is None:
-            l2_reg = W.norm(2)
-        else:
-            l2_reg = l2_reg + W.norm(2)
-        if l1_reg is None:
-            l1_reg = W.norm(1)
-        else:
-            l1_reg = l1_reg + W.norm(1)
-    regularizationLoss = args.lambda_l1 * l1_reg + args.lambda_l2 * l2_reg
-    return regularizationLoss
+# def getRegularizationLoss(model):
+#     l2_reg = None
+#     l1_reg = None
+#     for W in model.parameters():
+#         if l2_reg is None:
+#             l2_reg = 0.5 * W.norm(2).pow(2)
+#         else:
+#             l2_reg = l2_reg + 0.5 * W.norm(2).pow(2)
+#         if l1_reg is None:
+#             l1_reg = W.norm(1)
+#         else:
+#             l1_reg = l1_reg + W.norm(1)
+#     regularizationLoss = args.lambda_l1 * l1_reg + args.lambda_l2 * l2_reg
+#     return regularizationLoss
 
 def getLoss(model, output, target, scaler):
     reconLoss = getReconLoss(output, target, scaler)
-    regularizationLoss = getRegularizationLoss(model)
-    loss = reconLoss + regularizationLoss
-    return loss
+    return reconLoss
 

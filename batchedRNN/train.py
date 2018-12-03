@@ -27,7 +27,7 @@ def main():
     if args.cuda:
         model = model.cuda()
     # Get Training Stuff
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.initial_lr)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.initial_lr, weight_decay=args.lambda_l2)
     #lr_decay_milestones = np.arange(args.lr_decay_beginning, args.n_epochs, args.lr_decay_every)
     #scheduler = MultiStepLR(optimizer, milestones=lr_decay_milestones, gamma=args.lr_decay_factor)
     # Callable that transforms the data to be ready to use
