@@ -51,6 +51,7 @@ parser.add_argument("--noEarlyStopping", action="store_true", default=False)
 parser.add_argument("--earlyStoppingPatients", type=int, default=3)
 parser.add_argument("--earlyStoppingMinDelta", type=float, default=0.0001)
 parser.add_argument("--bidirectionalEncoder", type=bool, default=True)
+parser.add_argument("--local", action="store_true", default=False)
 args = parser.parse_args()
 logging.basicConfig(stream=sys.stderr,level=logging.DEBUG)
 

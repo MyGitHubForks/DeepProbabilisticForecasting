@@ -9,7 +9,10 @@ def main():
     args.use_attn = not args.no_attn
     args.use_schedule_sampling = not args.no_schedule_sampling
     # Get Data
-    dataDir = "/Users/danielzeiberg/OneDrive/RoseResearch/DeepProbabilisticForecasting/data/traffic/trafficWithTime/"
+    if args.local:
+        dataDir = "/Users/danielzeiberg/OneDrive/RoseResearch/DeepProbabilisticForecasting/data/traffic/trafficWithTime/"
+    else:
+        dataDir= "/home/dan/data/traffic/trafficWithTime"
     data = getDataLoaders(dataDir)
     # Set data dependent Args
     args.x_dim = data['x_dim']
