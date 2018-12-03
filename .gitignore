@@ -4,4 +4,6 @@ data/
 save/
 dcrnn/figures/
 *.pyc
-*/**/*.pyc
+*/*/*/__pycache__/
+*/*/__pycache__/
+*/__pycache__/
