@@ -256,16 +256,3 @@ class EarlyStoppingObject(object):
 
         else:
             return False
-        
-def IShouldStopEarly(experimentData):
-    if not args.noEarlyStopping:
-        mostRecentLoss = experimentData["valReconLosses"][-1] + experimentData["valKLDLosses"][-1]
-        if bestLoss is not None and mostRecentLoss + args.earlyStoppingMinDelta >= bestLoss:
-            earlyStoppingCounter += 1
-            if earlyStoppingCounter >= args.earlyStoppingPatients:
-                print("early stopping: stopping training")
-                break
-        else:
-            bestLoss = mostRecentLoss
-            earlyStoppingCounter = 0
-    return False
