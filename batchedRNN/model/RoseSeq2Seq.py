@@ -106,7 +106,7 @@ class Seq2Seq(nn.Module):
         else:
             decoder_hidden = encoder_hidden
         # Prepare for Decoder
-        inp = Variable(torch.zeros(self.args.batch_size, self.args.x_dim))
+        inp = Variable(torch.zeros(self.args.batch_size, self.args.output_dim))
         if self.args.cuda:
             inp = inp.cuda()
         ys = []
