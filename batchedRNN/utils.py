@@ -203,7 +203,7 @@ class StandardScalerTraffic(StandardScaler):
             return x.cuda(), y.cuda()
         return x, y
 
-class StandardScalerHuman(object):
+class StandardScalerHuman(StandardScaler):
     """docstring for StandardScalerHuman"""
     def __init__(self, mean0, std0, mean1, std1):
         StandardScaler.__init__(self, mean0, std0, mean1, std1)
