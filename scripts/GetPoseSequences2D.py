@@ -20,8 +20,8 @@ if args.only_train:
 action_list = np.arange(2, 17)
 subaction_list = np.arange(1, 3)
 camera_list = np.arange(1, 5)
-IMG_PATH = '/Users/danielzeiberg/Documents/Human3.6/images/'
-SAVE_PATH = '/Users/danielzeiberg/Documents/Human3.6/Processed/INPUT_HORIZON_{}_PREDICTION_HORIZON_{}/'.format(INPUT_HORIZON, PREDICTION_HORIZON)
+IMG_PATH = '/Users/danielzeiberg/Documents/Data/Human3.6/images/'
+SAVE_PATH = '/Users/danielzeiberg/Documents/Data/Human3.6/Processed/INPUT_HORIZON_{}_PREDICTION_HORIZON_{}/'.format(INPUT_HORIZON, PREDICTION_HORIZON)
 annot_name = 'matlab_meta.mat'
 
 if not os.path.exists(SAVE_PATH):
@@ -56,7 +56,7 @@ for split in range(len(splitNames)):
             continue
           n = data['num_images'][0][0]
           meta_Y2d = data['Y2d'].reshape(17, 2, n)
-          for i in range(0, data['num_images'] - 5 * (INPUT_HORIZON + PREDICTION_HORIZON), 5):
+          for i in range(0, data['num_images'] - 5 * (INPUT_HORIZON + PREDICTION_HORIZON), 5 * int(INPUT_HORIZON / 2)):
             # if test and image number is not a multiple of 200
             if split == 1 and i % 200 != 0:
                 continue
