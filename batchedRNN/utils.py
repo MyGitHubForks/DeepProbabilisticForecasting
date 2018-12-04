@@ -221,3 +221,51 @@ def getLoss(model, output, target, scaler):
     reconLoss = getReconLoss(output, target, scaler)
     return reconLoss
 
+def saveModel(modelWeights, epoch):
+    fn = args.save_dir+'{}_state_dict_'.format(args.model)+str(epoch)+'.pth'
+    torch.save(modelWeights, fn)
+    logging.info('Saved model to '+fn)
+    if args.cuda:
+        assert next(iter(model.parameters())).is_cuda, "model is no longer on CUDA"
+
+class EarlyStoppingObject(object):
+    """docstring for EarlyStopping"""
+    def __init__(self):
+        super(EarlyStopping, self).__init__()
+        self.bestLoss = None
+        self.bestEpoch = None
+        self.counter = 0
+        self.epochCounter = 0
+
+    def checkStop(previousLoss):
+        self.epochCounter += 1
+        if not args.noEarlyStopping:
+            if self.bestLoss is not None and mostRecentLoss + args.earlyStoppingMinDelta >= self.bestLoss:
+                self.counter += 1
+                if self.counter >= args.earlyStoppingPatients:
+                    logging.info("Stopping Early, haven't beaten best loss {:.4f} @ Epoch {} in {} epochs".format(
+                        self.bestLoss,
+                        self.bestEpoch,
+                        args.earlyStoppingPatients))
+                    return True
+            else:
+                self.bestLoss = previousLoss
+                self.bestEpoch = self.epochCounter
+                self.counter = 0
+                return False
+
+        else:
+            return False
+        
+def IShouldStopEarly(experimentData):
+    if not args.noEarlyStopping:
+        mostRecentLoss = experimentData["valReconLosses"][-1] + experimentData["valKLDLosses"][-1]
+        if bestLoss is not None and mostRecentLoss + args.earlyStoppingMinDelta >= bestLoss:
+            earlyStoppingCounter += 1
+            if earlyStoppingCounter >= args.earlyStoppingPatients:
+                print("early stopping: stopping training")
+                break
+        else:
+            bestLoss = mostRecentLoss
+            earlyStoppingCounter = 0
+    return False

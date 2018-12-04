@@ -36,6 +36,7 @@ def main():
     "train_recon_losses": [],
     "val_recon_losses": []
     }
+    EarlyStopper = EarlyStopping()
     for epoch in range(args.n_epochs):
         model.train()
         running_loss = 0.0
@@ -77,14 +78,13 @@ def main():
         # Store Epoch Results
         experimentResults["train_recon_losses"].append(epoch_train_loss / nTrainBatches)
         experimentResults["val_recon_losses"].append(epoch_val_loss / nValBatches)
+        # Check if I should stop early
+        if EarlyStopper.checkStop(experimentResults["val_recon_losses"][-1]):
+            saveModel(model.state_dict(), epoch)
+            break
         # Save Model if necessary
         if (epoch % args.save_freq) == 0:
-            fn = args.save_dir+'{}_state_dict_'.format(args.model)+str(epoch)+'.pth'
-            modelWeights = model.state_dict()
-            torch.save(modelWeights, fn)
-            logging.info('Saved model to '+fn)
-            if args.cuda:
-                assert next(iter(model.parameters())).is_cuda, "model is no longer on CUDA"
+            saveModel(model.state_dict(), epoch)
     model_fn = args.save_dir + '{}_full_model'.format(args.model) +".pth"
     modelWeights = model.state_dict()
     torch.save(modelWeights, model_fn)
