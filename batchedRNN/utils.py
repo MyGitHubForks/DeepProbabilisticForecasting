@@ -229,9 +229,9 @@ def saveModel(modelWeights, epoch):
         assert next(iter(model.parameters())).is_cuda, "model is no longer on CUDA"
 
 class EarlyStoppingObject(object):
-    """docstring for EarlyStopping"""
+    """docstring for EarlyStoppingObject"""
     def __init__(self):
-        super(EarlyStopping, self).__init__()
+        super(EarlyStoppingObject, self).__init__()
         self.bestLoss = None
         self.bestEpoch = None
         self.counter = 0
