@@ -142,7 +142,7 @@ def getDataLoaders(dataDir, debug=False):
         categories = ["train", "val", "test"]
         scalerSet = "train"
     for category in categories:
-        loader, scaler, input_sequence_len, target_sequence_len, x_dim, channels = getLoaderAndScalerTraffic(dataDir, category)
+        loader, scaler, input_sequence_len, target_sequence_len, x_dim, channels = getLoaderAndScaler(dataDir, category)
         if category == scalerSet:
             loaders["scaler"] = scaler
             loaders["input_sequence_len"] = input_sequence_len
