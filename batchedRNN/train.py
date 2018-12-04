@@ -36,7 +36,7 @@ def main():
     "train_recon_losses": [],
     "val_recon_losses": []
     }
-    EarlyStopper = EarlyStopping()
+    EarlyStopper = EarlyStoppingObject()
     for epoch in range(args.n_epochs):
         model.train()
         running_loss = 0.0

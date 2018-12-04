@@ -225,22 +225,20 @@ def saveModel(modelWeights, epoch):
     fn = args.save_dir+'{}_state_dict_'.format(args.model)+str(epoch)+'.pth'
     torch.save(modelWeights, fn)
     logging.info('Saved model to '+fn)
-    if args.cuda:
-        assert next(iter(model.parameters())).is_cuda, "model is no longer on CUDA"
 
 class EarlyStoppingObject(object):
-    """docstring for EarlyStopping"""
+    """docstring for EarlyStoppingObject"""
     def __init__(self):
-        super(EarlyStopping, self).__init__()
+        super(EarlyStoppingObject, self).__init__()
         self.bestLoss = None
         self.bestEpoch = None
         self.counter = 0
         self.epochCounter = 0
 
-    def checkStop(previousLoss):
+    def checkStop(self, previousLoss):
         self.epochCounter += 1
         if not args.noEarlyStopping:
-            if self.bestLoss is not None and mostRecentLoss + args.earlyStoppingMinDelta >= self.bestLoss:
+            if self.bestLoss is not None and previousLoss + args.earlyStoppingMinDelta >= self.bestLoss:
                 self.counter += 1
                 if self.counter >= args.earlyStoppingPatients:
                     logging.info("Stopping Early, haven't beaten best loss {:.4f} @ Epoch {} in {} epochs".format(
@@ -256,16 +254,3 @@ class EarlyStoppingObject(object):
 
         else:
             return False
-        
-def IShouldStopEarly(experimentData):
-    if not args.noEarlyStopping:
-        mostRecentLoss = experimentData["valReconLosses"][-1] + experimentData["valKLDLosses"][-1]
-        if bestLoss is not None and mostRecentLoss + args.earlyStoppingMinDelta >= bestLoss:
-            earlyStoppingCounter += 1
-            if earlyStoppingCounter >= args.earlyStoppingPatients:
-                print("early stopping: stopping training")
-                break
-        else:
-            bestLoss = mostRecentLoss
-            earlyStoppingCounter = 0
-    return False
