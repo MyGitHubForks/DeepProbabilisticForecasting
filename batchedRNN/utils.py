@@ -151,12 +151,12 @@ def getDataLoaders(dataDir, debug=False):
         loaders[category] = loader
     return loaders
 
-def transformBatch(batch, scaler=None):
-    x = scaler.transform(batch[0]).permute(1,0,3,2)
-    y = scaler.transform(batch[1])[...,0].permute(1,0,2)
-    if args.cuda:
-        return x.cuda(), y.cuda()
-    return x, y
+# def transformBatch(batch, scaler=None):
+#     x = scaler.transform(batch[0]).permute(1,0,3,2)
+#     y = scaler.transform(batch[1])[...,0].permute(1,0,2)
+#     if args.cuda:
+#         return x.cuda(), y.cuda()
+#     return x, y
 
 class StandardScaler:
     """
@@ -207,18 +207,12 @@ class StandardScalerHuman(StandardScaler):
     """docstring for StandardScalerHuman"""
     def __init__(self, mean0, std0, mean1, std1):
         super(StandardScalerHuman, self).__init__(mean0, std0, mean1, std1)
-    
-    def transform(self, data):
-        transormed = super(StandardScalerHuman, self).transform(data)
-        layer0, layer1 = torch.split(transormed, 1, dim=3)
-        return torch.cat((layer0.squeeze(3), layer1.squeeze(3)), dim=2)
 
     def inverse_transform(self, data):
         """
         applied to output and target
         """
-        l1, l2 = torch.split(data, data.size(2) / 2, 2)
-        transed = torch.cat((l1.unsqueeze(3), l2.unsqueeze(3)), dim=3)
+        transed = restoreDim(data)
         mean = torch.zeros(transed.size())
         mean[...,0] = self.mean0
         mean[...,1] = self.mean1
@@ -228,12 +222,22 @@ class StandardScalerHuman(StandardScaler):
         transformed =  torch.add(torch.mul(transed, std), mean)
         return transformed.permute(1,0,3,2)
 
+    def restoreDim(self, data):
+        l1, l2 = torch.split(data, data.size(2) / 2, 2)
+        return torch.cat((l1.unsqueeze(3), l2.unsqueeze(3)), dim=3)
+
+    def removeDim(self, data):
+        layer0, layer1 = torch.split(data, 1, dim=3)
+        return torch.cat((layer0.squeeze(3), layer1.squeeze(3)), dim=2)
+
     def transformBatchForEpoch(self, batch):
         x = self.transform(batch[0]).permute(1,0,3,2)
         y = self.transform(batch[1]).permute(1,0,3,2)
+        wideX = self.removeDim(x)
+        wideY = self.removeDim(y)
         if args.cuda:
-            return x.cuda(), y.cuda()
-        return x, y
+            return wideX.cuda(), wideY.cuda()
+        return wideX, wideY
 
 def getScaler(trainX):
     mean0 = np.mean(trainX[...,0])
