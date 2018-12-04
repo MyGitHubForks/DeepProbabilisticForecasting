@@ -225,8 +225,6 @@ def saveModel(modelWeights, epoch):
     fn = args.save_dir+'{}_state_dict_'.format(args.model)+str(epoch)+'.pth'
     torch.save(modelWeights, fn)
     logging.info('Saved model to '+fn)
-    if args.cuda:
-        assert next(iter(model.parameters())).is_cuda, "model is no longer on CUDA"
 
 class EarlyStoppingObject(object):
     """docstring for EarlyStoppingObject"""
