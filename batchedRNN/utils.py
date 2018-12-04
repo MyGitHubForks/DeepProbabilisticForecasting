@@ -206,19 +206,26 @@ class StandardScalerTraffic(StandardScaler):
 class StandardScalerHuman(StandardScaler):
     """docstring for StandardScalerHuman"""
     def __init__(self, mean0, std0, mean1, std1):
-        StandardScaler.__init__(self, mean0, std0, mean1, std1)
-        
+        super().__init__(self, mean0, std0, mean1, std1)
+    
+    def transform(self, data):
+        transormed = super().transorm(data)
+        layer0, layer1 = torch.split(transormed, 1, dim=3)
+        return torch.cat((layer0.squeeze(3), layer1.squeeze(3)), dim=2)
+
     def inverse_transform(self, data):
         """
         applied to output and target
         """
-        mean = torch.zeros(data.size())
+        l1, l2 = torch.split(data, data.size(2) / 2, 2)
+        transed = torch.cat((l1.unsqueeze(3), l2.unsqueeze(3)), dim=3)
+        mean = torch.zeros(transed.size())
         mean[...,0] = self.mean0
         mean[...,1] = self.mean1
-        std = torch.ones(data.size())
+        std = torch.ones(transed.size())
         std[...,0] = self.std0
         std[...,1] = self.std1
-        transformed =  torch.add(torch.mul(data, std), mean)
+        transformed =  torch.add(torch.mul(transed, std), mean)
         return transformed.permute(1,0,3,2)
 
     def transformBatchForEpoch(self, batch):

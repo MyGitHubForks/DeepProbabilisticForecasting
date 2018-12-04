@@ -25,6 +25,10 @@ def main():
     args.input_sequence_len = data['input_sequence_len']
     args.target_sequence_len = data["target_sequence_len"]
     args.channels = data["channels"]
+    if args.dataset == "traffic":
+        args.output_dim = args.x_dim
+    else: #args.dataset == "human":
+        args.output_dim = args.x_dim * 2
     # Get Save Dir
     args.save_dir = getSaveDir()
     # Save Args

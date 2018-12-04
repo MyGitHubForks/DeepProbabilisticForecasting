@@ -73,7 +73,7 @@ class Seq2Seq(nn.Module):
 
         self.enc = EncoderRNN(self.args.x_dim, self.args.h_dim, n_layers=self.args.n_layers, bidirectional=args.bidirectionalEncoder, args=args)
 
-        self.dec = DecoderRNN(self.args.h_dim, self.args.x_dim, n_layers=self.args.n_layers, args=args)
+        self.dec = DecoderRNN(self.args.h_dim, self.args.output_dim, n_layers=self.args.n_layers, args=args)
 
         self.use_schedule_sampling = args.use_schedule_sampling
         self.scheduling_start = args.scheduling_start
