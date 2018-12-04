@@ -9,7 +9,8 @@ parser.add_argument('--down_sample', type=float, default=0.0)
 parser.add_argument("--only_train", action="store_true", default=False)
 args = parser.parse_args()
 
-SEQUENCE_LENGTH = 12
+PREDICTION_HORIZON = 50 # 5 seconds ahead
+INPUT_HORIZON = 25 # 2.5 seconds of input data
 inds = [3, 2, 1, 4, 5, 6, 0, 7, 8, 10, 16, 15, 14, 11, 12, 13]
 subject_list = [[1, 5, 6, 7, 8], [9], [11]]
 splitNames = ["train", "val", "test"]
@@ -20,7 +21,7 @@ action_list = np.arange(2, 17)
 subaction_list = np.arange(1, 3)
 camera_list = np.arange(1, 5)
 IMG_PATH = '/Users/danielzeiberg/Documents/Human3.6/images/'
-SAVE_PATH = '/Users/danielzeiberg/Documents/Human3.6/Processed/'
+SAVE_PATH = '/Users/danielzeiberg/Documents/Human3.6/Processed/INPUT_HORIZON_{}_PREDICTION_HORIZON_{}/'.format(INPUT_HORIZON, PREDICTION_HORIZON)
 annot_name = 'matlab_meta.mat'
 
 if not os.path.exists(SAVE_PATH):
@@ -55,23 +56,23 @@ for split in range(len(splitNames)):
             continue
           n = data['num_images'][0][0]
           meta_Y2d = data['Y2d'].reshape(17, 2, n)
-          for i in range(0, data['num_images'] - 5 * SEQUENCE_LENGTH * 2, 5):
+          for i in range(0, data['num_images'] - 5 * (INPUT_HORIZON + PREDICTION_HORIZON), 5):
             # if test and image number is not a multiple of 200
             if split == 1 and i % 200 != 0:
                 continue
-            inputId.append(range(i+1, i+1 + 5*(SEQUENCE_LENGTH), 5))
-            targetId.append(range(i+1+5*SEQUENCE_LENGTH, i+1+5*SEQUENCE_LENGTH*2, 5))
-            input_2d.append(meta_Y2d[inds, :, i:i+5*SEQUENCE_LENGTH:5].transpose(2,0,1))
-            target_2d.append(meta_Y2d[inds, :, i+5*SEQUENCE_LENGTH:i+5*SEQUENCE_LENGTH*2:5].transpose(2,0,1))
+            inputId.append(range(i+1, i+1 + 5 * (INPUT_HORIZON), 5))
+            targetId.append(range(i+1 + 5*INPUT_HORIZON, i+1 + 5 * (INPUT_HORIZON + PREDICTION_HORIZON), 5))
+            input_2d.append(meta_Y2d[inds, :, i:i+5*INPUT_HORIZON:5].transpose(2,0,1))
+            target_2d.append(meta_Y2d[inds, :, i+5*INPUT_HORIZON:i+5*(INPUT_HORIZON + PREDICTION_HORIZON):5].transpose(2,0,1))
             subjects.append(subject)
             actions.append(action)
             subactions.append(subaction)
             cameras.append(camera)
             istrain.append(1 - split)
             num += 1
-  h5name = SAVE_PATH + '{}_2D.h5'.format(splitNames[split])
+  h5name = SAVE_PATH + '{}.h5'.format(splitNames[split])
   if args.down_sample and splitNames[split] == "train":
-    h5name = SAVE_PATH + '{}_2D_down_sample_{}.h5'.format(splitNames[split], args.down_sample)
+    h5name = SAVE_PATH + '{}_down_sample_{}.h5'.format(splitNames[split], args.down_sample)
     nRows = len(inputId)
     selection = list(np.random.choice(range(nRows), size=np.ceil(nRows * args.down_sample).astype(int),
       replace=False).astype(int))
