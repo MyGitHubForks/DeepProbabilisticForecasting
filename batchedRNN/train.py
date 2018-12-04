@@ -75,7 +75,7 @@ def main():
         epoch_val_loss = 0.0
         nValBatches = 0
         with torch.no_grad():
-            for batchIDX, (inputData, target) in enumerate(map(callableTransform, data["val"])):
+            for batchIDX, (inputData, target) in enumerate(map(data["scaler"].transformBatchForEpoch, data["val"])):
                 nValBatches += 1
                 output = model(inputData, target, epoch)
                 loss = getLoss(model, output, target, data["scaler"])

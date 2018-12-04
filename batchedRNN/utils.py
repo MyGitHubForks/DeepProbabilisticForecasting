@@ -212,7 +212,7 @@ class StandardScalerHuman(StandardScaler):
         """
         applied to output and target
         """
-        transed = restoreDim(data)
+        transed = self.restoreDim(data)
         mean = torch.zeros(transed.size())
         mean[...,0] = self.mean0
         mean[...,1] = self.mean1
