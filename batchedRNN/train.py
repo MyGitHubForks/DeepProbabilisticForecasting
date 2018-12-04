@@ -10,9 +10,15 @@ def main():
     args.use_schedule_sampling = not args.no_schedule_sampling
     # Get Data
     if args.local:
-        dataDir = "/Users/danielzeiberg/OneDrive/RoseResearch/DeepProbabilisticForecasting/data/traffic/trafficWithTime/"
+        baseDataDir = "/Users/danielzeiberg/Documents/Data/"
     else:
-        dataDir= "/home/dan/data/traffic/trafficWithTime"
+        baseDataDir = "/home/dan/data/"
+    if args.dataset == "traffic":
+        dataDir = baseDataDir + "/Traffic/Processed/trafficWithTime/"
+    elif args.dataset == "human":
+        dataDir = baseDataDir + "/Human/Processed/INPUT_HORIZON_25_PREDICTION_HORIZON_50/"
+    else:
+        assert False, "bad dataset specified"
     data = getDataLoaders(dataDir)
     # Set data dependent Args
     args.x_dim = data['x_dim']

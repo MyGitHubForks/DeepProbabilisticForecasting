@@ -20,8 +20,8 @@ if args.only_train:
 action_list = np.arange(2, 17)
 subaction_list = np.arange(1, 3)
 camera_list = np.arange(1, 5)
-IMG_PATH = '/Users/danielzeiberg/Documents/Data/Human3.6/images/'
-SAVE_PATH = '/Users/danielzeiberg/Documents/Data/Human3.6/Processed/INPUT_HORIZON_{}_PREDICTION_HORIZON_{}/'.format(INPUT_HORIZON, PREDICTION_HORIZON)
+IMG_PATH = '/Users/danielzeiberg/Documents/Data/Human/images/'
+SAVE_PATH = '/Users/danielzeiberg/Documents/Data/Human/Processed/INPUT_HORIZON_{}_PREDICTION_HORIZON_{}/'.format(INPUT_HORIZON, PREDICTION_HORIZON)
 annot_name = 'matlab_meta.mat'
 
 if not os.path.exists(SAVE_PATH):
