@@ -53,7 +53,7 @@ def main():
         running_loss = 0.0
         epoch_train_loss = 0.0
         nTrainBatches = 0
-        for batchIDX, (inputData, target) in enumerate(map(data["scaler"].transformBatchForEpoch, data["train"])):
+        for batchIDX, (inputData, target) in enumerate(map(data["scaler"].transformBatchForEpoch, data["train"]), 1):
             nTrainBatches += 1
             optimizer.zero_grad()
             output = model(inputData, target, epoch)
@@ -66,7 +66,7 @@ def main():
             if batchIDX % args.print_every == 0:
                 logging.info("epoch:{} batch:{} running avg loss: {:.4f}".format(
                     epoch+1,
-                    batchIDX+1,
+                    batchIDX,
                     running_loss / args.print_every
                 ))
                 running_loss = 0.0
