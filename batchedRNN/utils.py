@@ -223,7 +223,7 @@ class StandardScalerHuman(StandardScaler):
         return transformed.permute(1,0,3,2)
 
     def restoreDim(self, data):
-        l1, l2 = torch.split(data, data.size(2) / 2, 2)
+        l1, l2 = torch.split(data, int(data.size(2) / 2), 2)
         return torch.cat((l1.unsqueeze(3), l2.unsqueeze(3)), dim=3)
 
     def removeDim(self, data):
