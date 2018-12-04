@@ -10,13 +10,13 @@ def main():
     args.use_schedule_sampling = not args.no_schedule_sampling
     # Get Data
     if args.local:
-        baseDataDir = "/Users/danielzeiberg/Documents/Data/"
+        baseDataDir = "/Users/danielzeiberg/Documents/Data"
     else:
-        baseDataDir = "/home/dan/data/"
+        baseDataDir = "/home/dan/data"
     if args.dataset == "traffic":
-        dataDir = baseDataDir + "/Traffic/Processed/trafficWithTime/"
+        dataDir = os.path.join(baseDataDir,"/Traffic/Processed/trafficWithTime/")
     elif args.dataset == "human":
-        dataDir = baseDataDir + "/Human/Processed/INPUT_HORIZON_25_PREDICTION_HORIZON_50/"
+        dataDir = os.path.join(baseDataDir,"/Human/Processed/INPUT_HORIZON_25_PREDICTION_HORIZON_50/")
     else:
         assert False, "bad dataset specified"
     data = getDataLoaders(dataDir)
