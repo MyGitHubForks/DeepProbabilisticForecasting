@@ -238,7 +238,7 @@ class EarlyStoppingObject(object):
     def checkStop(self, previousLoss):
         self.epochCounter += 1
         if not args.noEarlyStopping:
-            if self.bestLoss is not None and mostRecentLoss + args.earlyStoppingMinDelta >= self.bestLoss:
+            if self.bestLoss is not None and previousLoss + args.earlyStoppingMinDelta >= self.bestLoss:
                 self.counter += 1
                 if self.counter >= args.earlyStoppingPatients:
                     logging.info("Stopping Early, haven't beaten best loss {:.4f} @ Epoch {} in {} epochs".format(
