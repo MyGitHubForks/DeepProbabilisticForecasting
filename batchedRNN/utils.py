@@ -134,7 +134,7 @@ def getLoaderAndScaler(dataDir, category):
 
 def getDataLoaders(dataDir, debug=False):
     loaders = {}
-    logging.info("Getting loaders")
+    logging.info("Getting data from {}".format(dataDir))
     if debug:
         categories = ["test"]
         scalerSet = "test"
