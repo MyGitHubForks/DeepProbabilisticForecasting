@@ -1,6 +1,4 @@
 /dcrnn/data/sensor_graph/*.pkl
-notebooks/
-data/
 save/
 dcrnn/figures/
 *.pyc
