@@ -103,7 +103,7 @@ def getTrafficDataset(dataDir, category):
     return my_dataset, scaler, sequence_len, sequence_len, x_dim, channels
 
 def getHumanDataset(dataDir, category):
-    f = h5py.File(os.path.join(dataDir, category+".h5"))
+    f = h5py.File(os.path.join(dataDir, category+".h5"), "r")
     my_dataset = torchUtils.TensorDataset(torch.Tensor(f["input2d"]), torch.Tensor(f["target2d"]))
     scaler = getScaler(f["input2d"])
     input_sequence_len = f["input2d"].shape[1]
