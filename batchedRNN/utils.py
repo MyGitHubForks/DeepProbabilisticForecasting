@@ -214,12 +214,16 @@ class StandardScalerHuman(StandardScaler):
         """
         transed = self.restoreDim(data)
         mean = torch.zeros(transed.size())
+        std = torch.ones(transed.size())
+        if args.cuda:
+            mean = mean.cuda()
+            std = std.cuda()
         mean[...,0] = self.mean0
         mean[...,1] = self.mean1
-        std = torch.ones(transed.size())
         std[...,0] = self.std0
         std[...,1] = self.std1
         transformed =  torch.add(torch.mul(transed, std), mean)
+        del mean, std
         return transformed.permute(1,0,3,2)
 
     def restoreDim(self, data):
