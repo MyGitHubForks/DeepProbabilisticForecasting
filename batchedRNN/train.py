@@ -14,9 +14,9 @@ def main():
     else:
         baseDataDir = "/home/dan/data"
     if args.dataset == "traffic":
-        dataDir = os.path.join(baseDataDir,"/Traffic/Processed/trafficWithTime/")
+        dataDir = baseDataDir + "/Traffic/Processed/trafficWithTime/"
     elif args.dataset == "human":
-        dataDir = os.path.join(baseDataDir,"/Human/Processed/INPUT_HORIZON_25_PREDICTION_HORIZON_50/")
+        dataDir = baseDataDir + "/Human/Processed/INPUT_HORIZON_25_PREDICTION_HORIZON_50/"
     else:
         assert False, "bad dataset specified"
     data = getDataLoaders(dataDir)
