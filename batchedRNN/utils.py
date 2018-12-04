@@ -237,7 +237,7 @@ class EarlyStoppingObject(object):
         self.counter = 0
         self.epochCounter = 0
 
-    def checkStop(previousLoss):
+    def checkStop(self, previousLoss):
         self.epochCounter += 1
         if not args.noEarlyStopping:
             if self.bestLoss is not None and mostRecentLoss + args.earlyStoppingMinDelta >= self.bestLoss:
