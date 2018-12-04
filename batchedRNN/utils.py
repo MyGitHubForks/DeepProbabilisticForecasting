@@ -232,12 +232,11 @@ class StandardScalerHuman(StandardScaler):
 
     def transformBatchForEpoch(self, batch):
         x = self.transform(batch[0]).permute(1,0,3,2)
-        y = self.transform(batch[1]).permute(1,0,3,2)
-        wideX = self.removeDim(x)
-        wideY = self.removeDim(y)
+        y = self.transform(batch[1])
+        wideY = self.removeDim(y).permute(1,0,2)
         if args.cuda:
-            return wideX.cuda(), wideY.cuda()
-        return wideX, wideY
+            return x.cuda(), wideY.cuda()
+        return x, wideY
 
 def getScaler(trainX):
     mean0 = np.mean(trainX[...,0])
