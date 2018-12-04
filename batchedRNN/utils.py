@@ -93,14 +93,32 @@ def saveUsefulData():
     copy2("./gridSearchOptimize.py", args.save_dir+"gridsearchOptimize.py")
     copytree("./model", args.save_dir+"model/")
 
-def getLoaderAndScaler(dataDir, category):
-    logging.info("Getting {} loader".format(category))
+def getTrafficDataset(dataDir, category):
     f = np.load(os.path.join(dataDir, category + '.npz'))
     my_dataset = torchUtils.TensorDataset(torch.Tensor(f["inputs"]),torch.Tensor(f["targets"])) # create your datset
     scaler = getScaler(f["inputs"])
     sequence_len = f['inputs'].shape[1]
     x_dim = f['inputs'].shape[2]
     channels = f["inputs"].shape[3]
+    return my_dataset, scaler, sequence_len, sequence_len, x_dim, channels
+
+def getHumanDataset(dataDir, category):
+    logging.info("Getting {} loader".format(category))
+    f = h5py.File(os.path.join(dataDir, category+".h5"))
+    my_dataset = torchUtils.TensorDataset(torch.Tensor(f["input2d"]), f["target2d"])
+    scaler = getScaler(f["input2d"])
+    input_sequence_len = f["input2d"].shape[1]
+    target_sequence_len = f["target2d"].shape[1]
+    x_dim = f["input2d"].shape[2]
+    channels = f["input2d"].shape[3]
+    return my_dataset, scaler, input_sequence_len, target_sequence_len, x_dim, channels
+
+def getLoaderAndScaler(dataDir, category):
+    logging.info("Getting {} loader".format(category))
+    if args.dataset == "traffic":
+        my_dataset, scaler, input_sequence_len, target_sequence_len, x_dim, channels = getTrafficDataset(dataDir, category)
+    else:
+        my_dataset, scaler, input_sequence_len, target_sequence_len, x_dim, channels = getHumanDataset(dataDir, category)
     shf = False
     if category == "train":
         shf = True
@@ -112,7 +130,7 @@ def getLoaderAndScaler(dataDir, category):
         pin_memory=False,
         drop_last=True
         )
-    return loader, scaler, sequence_len, x_dim, channels # create your dataloader
+    return loader, scaler, input_sequence_len, target_sequence_len, x_dim, channels # create your dataloader
 
 def getDataLoaders(dataDir, debug=False):
     loaders = {}
@@ -124,10 +142,11 @@ def getDataLoaders(dataDir, debug=False):
         categories = ["train", "val", "test"]
         scalerSet = "train"
     for category in categories:
-        loader, scaler, sequence_len, x_dim, channels = getLoaderAndScaler(dataDir, category)
+        loader, scaler, input_sequence_len, target_sequence_len, x_dim, channels = getLoaderAndScalerTraffic(dataDir, category)
         if category == scalerSet:
             loaders["scaler"] = scaler
-            loaders["sequence_len"] = sequence_len
+            loaders["input_sequence_len"] = input_sequence_len
+            loaders["target_sequence_len"] = target_sequence_len
             loaders["x_dim"] = x_dim
             loaders["channels"] = channels
         loaders[category] = loader
@@ -145,10 +164,10 @@ class StandardScaler:
     Standard the input
     """
 
-    def __init__(self, mean0, std0, mean1=0, std1=1):
+    def __init__(self, mean0, std0, mean1, std1):
         self.mean0 = mean0
-        self.mean1 = mean1
         self.std0 = std0
+        self.mean1 = mean1
         self.std1 = std1
 
     def transform(self, data):
@@ -159,6 +178,10 @@ class StandardScaler:
         std[...,0] = self.std0
         std[...,1] = self.std1
         return torch.div(torch.sub(data,mean),std)
+
+class StandardScalerTraffic(StandardScaler):
+    def __init__(self, mean0, std0):
+        StandardScaler.__init__(self, mean0, std0, 0.0, 1.0)
 
     def inverse_transform(self, data):
         """
@@ -174,7 +197,22 @@ class StandardScaler:
         del mean, std
         return transformed.permute(1,0,2)
 
-    def inverse_transform_both_layers(self, data):
+    def transformBatchForEpoch(self, batch):
+        x = self.transform(batch[0]).permute(1,0,3,2)
+        y = self.transform(batch[1])[...,0].permute(1,0,2)
+        if args.cuda:
+            return x.cuda(), y.cuda()
+        return x, y
+
+class StandardScalerHuman(object):
+    """docstring for StandardScalerHuman"""
+    def __init__(self, mean0, std0, mean1, std1):
+        StandardScaler.__init__(self, mean0, std0, mean1, std1)
+        
+    def inverse_transform(self, data):
+        """
+        applied to output and target
+        """
         mean = torch.zeros(data.size())
         mean[...,0] = self.mean0
         mean[...,1] = self.mean1
@@ -184,10 +222,24 @@ class StandardScaler:
         transformed =  torch.add(torch.mul(data, std), mean)
         return transformed.permute(1,0,3,2)
 
+    def transformBatchForEpoch(self, batch):
+        x = self.transform(batch[0]).permute(1,0,3,2)
+        y = self.transform(batch[1]).permute(1,0,3,2)
+        if args.cuda:
+            return x.cuda(), y.cuda()
+        return x, y
+
 def getScaler(trainX):
-    mean = np.mean(trainX[...,0])
-    std = np.std(trainX[...,0])
-    return StandardScaler(mean, std)
+    mean0 = np.mean(trainX[...,0])
+    std0 = np.std(trainX[...,0])
+    mean1 = np.mean(trainX[...,1])
+    std1 = np.std(trainX[...,1])
+    if args.dataset == "traffic":
+        return StandardScalerTraffic(mean0, std0)
+    elif args.dataset == "human":
+        return StandardScalerHuman(mean0, std0, mean1, std1)
+    else:
+        assert False, "bad dataset"
 
 def getReconLoss(output, target, scaler):
     output = scaler.inverse_transform(output)
@@ -201,21 +253,6 @@ def getReconLoss(output, target, scaler):
         return criterion(output, target)
     else:
         assert False, "bad loss function"
-
-# def getRegularizationLoss(model):
-#     l2_reg = None
-#     l1_reg = None
-#     for W in model.parameters():
-#         if l2_reg is None:
-#             l2_reg = 0.5 * W.norm(2).pow(2)
-#         else:
-#             l2_reg = l2_reg + 0.5 * W.norm(2).pow(2)
-#         if l1_reg is None:
-#             l1_reg = W.norm(1)
-#         else:
-#             l1_reg = l1_reg + W.norm(1)
-#     regularizationLoss = args.lambda_l1 * l1_reg + args.lambda_l2 * l2_reg
-#     return regularizationLoss
 
 def getLoss(model, output, target, scaler):
     reconLoss = getReconLoss(output, target, scaler)

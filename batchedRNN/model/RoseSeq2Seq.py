@@ -98,7 +98,7 @@ class Seq2Seq(nn.Module):
     def forward(self, x, target, epoch):
         encoder_hidden = self.enc.initHidden()
         hs = []
-        for t in range(self.args.sequence_len):
+        for t in range(self.args.input_sequence_len):
             encoder_output, encoder_hidden = self.enc(x[t].squeeze(), encoder_hidden)
             hs += [encoder_output]
         if self.args.bidirectionalEncoder:
@@ -115,7 +115,7 @@ class Seq2Seq(nn.Module):
         else:
             sample = self.scheduleSample(epoch)
         # Decode
-        for t in range(self.args.sequence_len):
+        for t in range(self.args.target_sequence_len):
             decoder_output, decoder_hidden = self.dec(inp, decoder_hidden)
             if sample:
                 inp = target[t-1]

@@ -96,7 +96,7 @@ class SketchyRNN(nn.Module):
 		ys = []
 		means = []
 		stds = []
-		for t in range(self.args.sequence_len):
+		for t in range(self.args.target_sequence_len):
 			#print("inp size", inp.size())
 			#print("decoder_h size ", decoder_h.size())
 			# input should be (seq_len, batch, h_dim + 2 * z_dim)

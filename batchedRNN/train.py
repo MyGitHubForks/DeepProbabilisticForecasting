@@ -16,7 +16,8 @@ def main():
     data = getDataLoaders(dataDir)
     # Set data dependent Args
     args.x_dim = data['x_dim']
-    args.sequence_len = data['sequence_len']
+    args.input_sequence_len = data['input_sequence_len']
+    args.target_sequence_len = data["target_sequence_len"]
     args.channels = data["channels"]
     # Get Save Dir
     args.save_dir = getSaveDir()
@@ -31,7 +32,7 @@ def main():
     #lr_decay_milestones = np.arange(args.lr_decay_beginning, args.n_epochs, args.lr_decay_every)
     #scheduler = MultiStepLR(optimizer, milestones=lr_decay_milestones, gamma=args.lr_decay_factor)
     # Callable that transforms the data to be ready to use
-    callableTransform = partial(transformBatch, scaler=data["scaler"])
+    # callableTransform = partial(transformBatch, scaler=data["scaler"])
     experimentResults = {
     "train_recon_losses": [],
     "val_recon_losses": []
@@ -42,7 +43,7 @@ def main():
         running_loss = 0.0
         epoch_train_loss = 0.0
         nTrainBatches = 0
-        for batchIDX, (inputData, target) in enumerate(map(callableTransform, data["train"])):
+        for batchIDX, (inputData, target) in enumerate(map(data["scaler"].transformBatchForEpoch, data["train"])):
             nTrainBatches += 1
             optimizer.zero_grad()
             output = model(inputData, target, epoch)
