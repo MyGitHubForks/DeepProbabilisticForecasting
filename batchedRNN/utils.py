@@ -209,7 +209,7 @@ class StandardScalerHuman(StandardScaler):
         super(StandardScalerHuman, self).__init__(mean0, std0, mean1, std1)
     
     def transform(self, data):
-        transormed = super(StandardScalerHuman, self).transorm(data)
+        transormed = super(StandardScalerHuman, self).transform(data)
         layer0, layer1 = torch.split(transormed, 1, dim=3)
         return torch.cat((layer0.squeeze(3), layer1.squeeze(3)), dim=2)
 
