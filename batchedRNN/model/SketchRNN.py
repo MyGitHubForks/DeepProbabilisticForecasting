@@ -1,139 +1,86 @@
-import math
 import torch
 import torch.nn as nn
-import torch.utils
-import torch.utils.data
-from torchvision import datasets, transforms
 from torch.autograd import Variable
-import matplotlib.pyplot as plt 
-import numpy as np
+from torch import optim
+import torch.nn.functional as F
 
-class SketchyRNN(nn.Module):
-	def __init__(self, args):
-		super(SketchyRNN, self).__init__()
+class SketchRNNEncoder(nn.Module):
+    def __init__(self):
+        super(SketchRNNEncoder, self).__init__()
+        if args.bidirectionalEncoder:
+	    	self.directions = 2
+	    else:
+	    	self.directions = 1
+        # bidirectional lstm:
+        self.lstm = nn.LSTM(args.x_dim * args.channels, args.encoder_h_dim, \
+            args.n_layers, dropout=args.dropout, bidirectional=args.bidirectionalEncoder)
+        # create mu and sigma from lstm's last output:
+        self.fc_mu = nn.Linear(args.n_layers * self.directions * args.encoder_h_dim, args.z_dim)
+        self.fc_sigma = nn.Linear(args.n_layers * self.directions * args.encoder_h_dim, args.z_dim)
+        
 
-		self.x_dim = args.x_dim
-		self.h_dim = args.h_dim
-		self.z_dim = args.z_dim
-		self.n_layers = 1
-		self.useCuda = args.cuda
-		self.args = args
+    def forward(self, input, hidden_cell=None):
+    	if hidden_cell is None:
+    		hidden_cell = self.init_hidden_cell()
+    	# convert input from [sequence_len, batch_size, channels, x_dim]
+    	# 				  to [sequence_len, batch_size, channels * x_dim]
+    	embedded = input.view(args.sequence_len, args.batch_size, args.x_dim * args.channels)
+    	_, (hidden, cell) = self.LSTM(embedded, hidden_cell)
+    	# convert hidden size from (n_layers * directions, batch_size, h_dim)
+    	#						to (batch_size, n_layers * directions * h_dim)
+    	hiddenLayers = torch.split(hidden, 1, 0)
+    	if self.directions == 2 and args.n_layers == 2:
+    		assert len(hiddenLayers) == 4
+    	hidden_cat = torch.cat([h.squeeze(0) for h in hiddenLayers], 1)
+    	mu = self.fc_mu(hidden_cat)
+    	sigma_hat = self.fc_sigma(hidden_cat)
+    	sigma = torch.exp(sigma_hat / 2)
+    	z_size = mu.size()
+    	if args.cuda:
+            N = Variable(torch.normal(torch.zeros(z_size),torch.ones(z_size)).cuda())
+        else:
+            N = Variable(torch.normal(torch.zeros(z_size),torch.ones(z_size)))
+        z = mu + sigma*N
+        return z, mu, sigma_hat
 
-		self.phi_x = nn.Sequential(
-			nn.Linear(self.x_dim, self.h_dim),
-			nn.ReLU(),
-			nn.Linear(self.h_dim, self.h_dim),
-			nn.ReLU())
 
-		self.encoder = nn.GRU(self.h_dim, self.h_dim, self.n_layers, bidirectional=True)
 
-		self.mean = nn.Linear(self.h_dim, self.z_dim)
+    def init_hidden_cell(self):
+    	hidden = Variable(torch.zeros(self.directions * args.n_layers, args.batch_size, args.encoder_h_dim))
+    	cell = Variable(torch.zeros(self.directions * args.n_layers, args.batch_size, args.encoder_h_dim))
+    	if args.cuda:
+	    	return (hidden.cuda(), cell.cuda())
+	    else:
+	    	return (hidden, cell)
 
-		self.std = nn.Sequential(
-			nn.Linear(self.h_dim, self.z_dim),
-			nn.Softplus())
+class DecoderRNN(nn.Module):
+    def __init__(self):
+        super(DecoderRNN, self).__init__()
+        # to init hidden and cell from z:
+        self.fc_hc = nn.Linear(args.z_dim, 2 * args.decoder_h_dim)
+        # unidirectional lstm:
+        self.numGMMParams = args.x_dim * 2 # mu, sigma
+        self.lstm = nn.LSTM(args.z_dim + self.numGMMParams, args.decoder_h_dim, dropout=args.dropout)
+        self.fc_params = nn.Linear(args.decoder_h_dim, (self.numGMMParams + 1) * args.num_mixtures) #6*M: mu_x, mu_y, rho, sigma_x, sigma_y for GMM and pi for weight of mixture in GMM
 
-		self.decoder_mean = nn.Sequential(
-			nn.Linear(self.h_dim, self.x_dim),
-			nn.Softplus())
+    def forward(self, inputs, z, hidden_cell=None):
+    	if hidden_cell is None:
+    		hidden, cell = torch.split(F.tanh(self.fc_hc(z)),args.decoder_h_dim,1)
+    		hidden_cell = (hidden.unsqueeze(0).contiguous(), cell.unsqueeze(0).contiguous())
+    	outputs,(hidden,cell) = self.lstm(inputs, hidden_cell)
+    	# outputs size: (seq_len, batch, num_directions * hidden_size)
+    	# hidden size: (num_layers * num_directions, batch, hidden_size)
+    	# cell size: (num_layers * num_directions, batch, hidden_size)
+    	if self.training:
+    		y = self.fc_params(outputs.view(-1, args.decoder_h_dim))
+    	else:
+    		y = self.fc_params(hidden.view(-1, args.decoder_h_dim))
+    	params = torch.split(y, self.numGMMParams + 1, 1)
+    	params_mixture = torch.stack(params)
+    	mixture_mu, mixture_sigma, pi = torch.split(params_mixture, args.x_dim, 2)
+    	
 
-		self.decoder_std = nn.Sequential(
-			nn.Linear(self.h_dim, self.x_dim),
-			nn.Softplus())
 
-		self.getFirstDecoderHidden = nn.Sequential(
-			nn.Linear(2 * self.z_dim, self.h_dim),
-			nn.Tanh())
 
-		self.decoder = nn.GRU(self.h_dim + 2 * self.z_dim, self.h_dim, self.n_layers)
 
-		self.prepTargetForNextSequence = nn.Linear(self.x_dim, self.h_dim)
 
-		self.use_schedule_sampling = args.use_schedule_sampling
-		self.scheduling_start = args.scheduling_start
-		self.scheduling_end = args.scheduling_end
-
-	def scheduleSample(self, epoch):
-		eps = max(self.scheduling_start - 
-			(self.scheduling_start - self.scheduling_end)* epoch / self.args.n_epochs,
-			self.scheduling_end)
-		return np.random.binomial(1, eps)
-
-	def forward(self, x, target, epoch, training=True):
-		# extract features from x
-		phiX = self.phi_x(x)
-		# Get encoder hidden state
-		h_0 = self.initHidden()
-		# pass extracted x through encoder GRU
-		encoder_output, encoder_hidden = self.encoder(phiX, h_0)
-		# Reshape encoder_hidden from (2, batch, h_dim) to (batch, 2*h_dim)
-		#hidden_forward, hidden_backward = torch.split(encoder_hidden,1,0)
-		#encoder_hidden_cat = torch.cat([hidden_forward.squeeze(0), hidden_backward.squeeze(0)],1)
-		# calculate normal distr parameters
-		latentMean = self.mean(encoder_hidden)
-		latentStd = self.std(encoder_hidden)
-		# sample z from normal distribution with parameters calculated above
-		# z Shape (2, batch, z_dim)
-		z = self._reparameterized_sample(latentMean, latentStd)
-		z_forward, z_backward = torch.split(z,1,0)
-		# shape z_expanded (batch size, 2 * z_dim)
-		z_expanded = torch.cat([z_forward.squeeze(0), z_backward.squeeze(0)],1)
-		# get h_0 for decoder
-		decoder_h = self.getFirstDecoderHidden(z_expanded).unsqueeze(0)
-		# get first input to decoder (NULL Values)
-		
-		s_0 = Variable(torch.zeros(self.args.batch_size, self.h_dim))
-		if self.useCuda:
-			s_0 = s_0.cuda()
-		inp = torch.cat((z_expanded, s_0), 1).unsqueeze(0)
-
-		# If you are not training or you do not want to use schedule sampling during training
-		if not training or not self.use_schedule_sampling:
-			sample=0
-		else:
-			sample = self.scheduleSample(epoch)
-		# List to collect decoder output
-		ys = []
-		means = []
-		stds = []
-		for t in range(self.args.target_sequence_len):
-			#print("inp size", inp.size())
-			#print("decoder_h size ", decoder_h.size())
-			# input should be (seq_len, batch, h_dim + 2 * z_dim)
-			# decoder_h should be (2, batch, h_dim)
-			decoder_out, decoder_h = self.decoder(inp, decoder_h)
-			#print("decoder_out size", decoder_out.size())
-			#print("previous target size", target[t-1].size()) 
-			if sample:
-				#print("sample")
-				preppedTarget =  self.prepTargetForNextSequence(target[t-1])
-				inp = torch.cat((z_expanded, preppedTarget), 1).unsqueeze(0)
-			else:
-				#print("no sample")
-				inp = torch.cat((z_expanded, decoder_out.squeeze()), 1).unsqueeze(0)
-			outputMean = self.decoder_mean(decoder_out)
-			outputStd = self.decoder_std(decoder_out)
-			pred = self._reparameterized_sample(outputMean, outputStd)
-			ys += [pred]
-			means += [outputMean]
-			stds += [outputStd]
-		predOut = torch.cat([torch.unsqueeze(y, dim=0) for y in ys])
-		predMeanOut = torch.cat([torch.unsqueeze(m, dim=0).cpu() for m in means])
-		predStdOut = torch.cat([torch.unsqueeze(s, dim=0).cpu() for s in stds])
-		return latentMean, latentStd, z, predOut, predMeanOut, predStdOut
-
-	def _reparameterized_sample(self, mean, std):
-		"""using std to sample"""
-		eps = torch.FloatTensor(std.size(), device=self.args._device).normal_()
-		if self.useCuda:
-			eps = eps.cuda()
-		eps = Variable(eps)
-		return eps.mul(std).add_(mean)
-
-	def initHidden(self):
-		# Encoder is bidirectional, so needs n_layers * 2
-		result = Variable(torch.zeros(self.n_layers * 2, self.args.batch_size, self.h_dim))
-		if self.useCuda:
-			return result.cuda()
-		else:
-			return result

@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser(description='Batched Sequence to Sequence')
 parser.add_argument('--h_dim', type=int, default=256)
-parser.add_argument("--z_dim", type=int, default=0)
+parser.add_argument("--z_dim", type=int, default=128)
 parser.add_argument('--no_cuda', action='store_true', default=False,
                                         help='disables CUDA training')
 parser.add_argument("--no_attn", action="store_true", default=True, help="Do not use AttnDecoder")
@@ -54,6 +54,10 @@ parser.add_argument("--earlyStoppingPatients", type=int, default=3)
 parser.add_argument("--earlyStoppingMinDelta", type=float, default=0.0001)
 parser.add_argument("--bidirectionalEncoder", type=bool, default=True)
 parser.add_argument("--local", action="store_true", default=False)
+parser.add_argument("--debugDataset", action="store_true", default=False)
+parser.add_argument("--encoder_h_dim", type=int, default=256)
+parser.add_argument("--decoder_h_dim", type=int, default=512)
+parser.add_argument("--num_mixtures", type=int, default=20)
 args = parser.parse_args()
 logging.basicConfig(stream=sys.stderr,level=logging.DEBUG)
 
@@ -76,7 +80,10 @@ def plotLosses(trainLosses, valLosses, trainKLDLosses=None, valKLDLosses=None):
     plt.savefig(args.save_dir + "train_val_loss_plot.png")
 
 def getSaveDir():
-    saveDir = '../save/models/model0/'
+    if args.local:
+        saveDir = '../save/local/models/model0/'
+    else:
+        saveDir = '../save/models/model0/'
     while os.path.isdir(saveDir):
         numStart = saveDir.rfind("model")+5
         numEnd = saveDir.rfind("/")
@@ -150,13 +157,6 @@ def getDataLoaders(dataDir, debug=False):
             loaders["channels"] = channels
         loaders[category] = loader
     return loaders
-
-# def transformBatch(batch, scaler=None):
-#     x = scaler.transform(batch[0]).permute(1,0,3,2)
-#     y = scaler.transform(batch[1])[...,0].permute(1,0,2)
-#     if args.cuda:
-#         return x.cuda(), y.cuda()
-#     return x, y
 
 class StandardScaler:
     """
@@ -267,9 +267,33 @@ def getReconLoss(output, target, scaler):
     else:
         assert False, "bad loss function"
 
-def getLoss(model, output, target, scaler):
-    reconLoss = getReconLoss(output, target, scaler)
-    return reconLoss
+def getKLDWeight(epoch):
+    # kldLossWeight = args.kld_weight_max * min((epoch / (args.kld_warmup_until)), 1.0)
+    kldLossWeight = args.kld_weight_max
+    return kldLossWeight
+
+def kld_gauss(mean_1, std_1, mean_2, std_2):
+    """Using std to compute KLD"""
+
+    kld_element = (2 * torch.log(std_2) - 2 * torch.log(std_1) +
+                   (std_1.pow(2) + (mean_1 - mean_2).pow(2)) /
+                   std_2.pow(2) - 1)
+    return 0.5 * torch.sum(kld_element)
+
+def sketchRNNKLD(latentMean, latentStd):
+    m2 = torch.zeros_like(latentMean)
+    s2 = torch.ones_like(latentStd)
+    return kld_gauss(latentMean, latentStd, m2, s2)
+
+def getLoss(model, output, target, scaler, epoch):
+    if args.model == "rnn":
+        reconLoss = getReconLoss(output, target, scaler)
+        return reconLoss, 0
+    else:
+        latentMean, latentStd, z, predOut, predMeanOut, predStdOut = output
+        reconLoss = getReconLoss(predOut, target, scaler)
+        kldLoss = sketchRNNKLD(latentMean, latentStd)
+        return reconLoss, kldLoss
 
 def saveModel(modelWeights, epoch):
     fn = args.save_dir+'{}_state_dict_'.format(args.model)+str(epoch)+'.pth'
