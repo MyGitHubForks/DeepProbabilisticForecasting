@@ -110,7 +110,7 @@ class Seq2Seq(nn.Module):
         if self.args.cuda:
             inp = inp.cuda()
         ys = []
-        if args.no_schedule_sampling or not self.training:
+        if self.args.no_schedule_sampling or not self.training:
             sample=0
         else:
             sample = self.scheduleSample(epoch)
