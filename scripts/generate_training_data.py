@@ -66,7 +66,7 @@ def generate_train_val_test(args):
     # 0 is the latest observed sample.
     x_offsets = np.sort(
         # np.concatenate(([-week_size + 1, -day_size + 1], np.arange(-11, 1, 1)))
-        np.concatenate((np.arange(-25, 1, 1),))
+        np.concatenate((np.arange(-11, 1, 1),))
     )
     # Predict the next one hour
     y_offsets = np.sort(np.arange(1, 13, 1))
@@ -96,6 +96,7 @@ def generate_train_val_test(args):
         xTimes[:num_train],
         yTimes[:num_train]
     )
+
     # val
     x_val, y_val, x_times_val, y_times_val = (
         x[num_train: num_train + num_val],
@@ -110,7 +111,25 @@ def generate_train_val_test(args):
         xTimes[-num_test:],
         yTimes[-num_test:]
     )
-
+    if args.down_sample:
+        selection_train = list(np.random.choice(range(num_train), size=np.ceil(num_train * args.down_sample).astype(int),
+            replace=False).astype(int))
+        selection_val = list(np.random.choice(range(num_val), size=np.ceil(num_val * args.down_sample).astype(int),
+            replace=False).astype(int))
+        selection_test = list(np.random.choice(range(num_test), size=np.ceil(num_test * args.down_sample).astype(int),
+            replace=False).astype(int))
+        x_train = x_train[selection_train]
+        y_train = y_train[selection_train]
+        x_times_train = x_times_train[selection_train]
+        y_times_train = y_times_train[selection_train]
+        x_val = x_val[selection_val]
+        y_val = y_val[selection_val]
+        x_times_val = x_times_val[selection_val]
+        y_times_val = y_times_val[selection_val]
+        x_test = x_test[selection_test]
+        y_test = y_test[selection_test]
+        x_times_test = x_times_test[selection_test]
+        y_times_test = y_times_test[selection_test]
     for cat in ["train", "val", "test"]:
         _x, _y, _x_times, _y_times = (
             locals()["x_" + cat],
@@ -118,8 +137,14 @@ def generate_train_val_test(args):
             locals()["x_times_"+cat],
             locals()["y_times_"+cat])
         print(cat, "x: ", _x.shape, "y:", _y.shape, "xTimes:", _x_times.shape, "yTimes:", _y_times.shape)
+        if args.down_sample:
+            output_dir = args.output_dir + "/down_sample_{}".format(args.down_sample)
+        else:
+            output_dir = args.output_dir
+        if not os.path.isdir(output_dir):
+                os.mkdir(output_dir)
         np.savez_compressed(
-            os.path.join(args.output_dir, "%s.npz" % cat),
+            os.path.join(output_dir, "%s.npz" % cat),
             inputs=_x,
             targets=_y,
             inputTimes=_x_times,
@@ -135,13 +160,18 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--output_dir", type=str, default="../data/traffic/trafficWithTime", help="Output directory."
+        "--output_dir", type=str, default="/users/danielzeiberg/Documents/Data/Traffic/Processed/trafficWithTime", help="Output directory."
     )
     parser.add_argument(
         "--traffic_df_filename",
         type=str,
-        default="/users/danielzeiberg/Documents/TrafficData/df_highway_2012_4mon_sample.h5",
+        default="/users/danielzeiberg/Documents/Data/Traffic/df_highway_2012_4mon_sample.h5",
         help="Raw traffic readings.",
     )
+    parser.add_argument(
+        "--down_sample",
+        type=float,
+        default=0.0,
+        help="fraction of each dataset to keep")
     args = parser.parse_args()
     main(args)
