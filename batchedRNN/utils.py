@@ -39,8 +39,10 @@ parser.add_argument("--no_schedule_sampling", action="store_true", default=False
 parser.add_argument("--scheduling_start", type=float, default=1.0)
 parser.add_argument("--scheduling_end", type=float, default=0.0)
 parser.add_argument("--tries", type=int, default=12)
-parser.add_argument("--kld_warmup_until", type=int, default=5)
-parser.add_argument("--kld_weight_max", type=float, default=0.10)
+parser.add_argument("--eta_min", type=float, default=0.01)
+parser.add_argument("--R", type=float, default=0.95)
+parser.add_argument("--kld_weight_max", type=float, default=1.00)
+parser.add_argument("--KL_min", type=float, default=0.20)
 parser.add_argument("--no_shuffle_after_epoch", action="store_true", default=False)
 parser.add_argument("--clip", type=int, default=10)
 parser.add_argument("--dataset", type=str, default="traffic")
@@ -57,7 +59,7 @@ parser.add_argument("--local", action="store_true", default=False)
 parser.add_argument("--debugDataset", action="store_true", default=False)
 parser.add_argument("--encoder_h_dim", type=int, default=256)
 parser.add_argument("--decoder_h_dim", type=int, default=512)
-parser.add_argument("--num_mixtures", type=int, default=20)
+parser.add_argument("--n_gaussians", type=int, default=20)
 args = parser.parse_args()
 logging.basicConfig(stream=sys.stderr,level=logging.DEBUG)
 
@@ -280,19 +282,37 @@ def kld_gauss(mean_1, std_1, mean_2, std_2):
                    std_2.pow(2) - 1)
     return 0.5 * torch.sum(kld_element)
 
-def sketchRNNKLD(latentMean, latentStd):
-    m2 = torch.zeros_like(latentMean)
-    s2 = torch.ones_like(latentStd)
-    return kld_gauss(latentMean, latentStd, m2, s2)
+def sketchRNNKLD(latentMean, latentStd, trainingMode, epoch):
+    LKL = -0.5*torch.sum(1+latentStd-latentMean**2-torch.exp(latentStd))\
+            /float(args.z_dim*args.batch_size)
+    if trainingMode:
+        # update eta for LKL:
+        eta_step = 1-(1-args.eta_min)*args.R**epoch
+        if args.cuda:
+            KL_min = torch.Tensor([args.KL_min]).cuda()
+        else:
+            KL_min = torch.Tensor([args.KL_min])
+        return eta_step * torch.max(LKL, KL_min)
+    else:
+        return LKL
+
+
+def sketchRNNReconLoss(target, Pi, Mu, Sigma):
+    stackedTarget = torch.stack([target] * Mu.size(3), dim=3)
+    m = torch.distributions.Normal(loc=Mu, scale=Sigma)
+    loss = torch.exp(m.log_prob(stackedTarget))
+    loss = torch.sum(loss * Pi, dim=3)
+    loss= -torch.log(loss)
+    return loss.mean()
 
 def getLoss(model, output, target, scaler, epoch):
     if args.model == "rnn":
         reconLoss = getReconLoss(output, target, scaler)
         return reconLoss, 0
     else:
-        latentMean, latentStd, z, predOut, predMeanOut, predStdOut = output
-        reconLoss = getReconLoss(predOut, target, scaler)
-        kldLoss = sketchRNNKLD(latentMean, latentStd)
+        Pi, Mu, Sigma, latentMean, latentStd = output
+        reconLoss = sketchRNNReconLoss(target, Pi, Mu, Sigma)
+        kldLoss = sketchRNNKLD(latentMean, latentStd, model.training, epoch)
         return reconLoss, kldLoss
 
 def saveModel(modelWeights, epoch):
