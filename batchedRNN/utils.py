@@ -314,7 +314,8 @@ def sketchRNNReconLoss(target, Pi, Mu, Sigma):
     m = torch.distributions.Normal(loc=Mu, scale=Sigma)
     # Calculate likelihood of target for each component in the mixture
     loss = torch.exp(m.log_prob(stackedTarget))
-    assert np.all(np.logical_not(np.isnan(loss.cpu().detach().numpy())))
+    assert np.all(np.logical_not(np.isnan(loss.cpu().detach().numpy()))), "got nan,\n Mu: {}\nSigma: {}\nstackedTarget: {}\nm.log_prob(stackedTarget)".format(
+        Mu, Sigma, stackedTarget, m.log_prob(stackedTarget))
     # Get weighted average likelihood over all components
     loss = torch.sum(loss * Pi, dim=3)
     assert np.all(loss.cpu().detach().numpy() > 0)
