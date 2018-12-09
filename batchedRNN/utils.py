@@ -309,12 +309,15 @@ def sketchRNNKLD(latentMean, latentStd, trainingMode, epoch):
 
 
 def sketchRNNReconLoss(target, Pi, Mu, Sigma):
+    assert np.all(np.logical_not(np.isnan(target.cpu().detach().numpy()))) 
     stackedTarget = torch.stack([target] * Mu.size(3), dim=3)
     m = torch.distributions.Normal(loc=Mu, scale=Sigma)
     # Calculate likelihood of target for each component in the mixture
     loss = torch.exp(m.log_prob(stackedTarget))
+    assert np.all(np.logical_not(np.isnan(loss)))
     # Get weighted average likelihood over all components
     loss = torch.sum(loss * Pi, dim=3)
+    assert np.all(loss > 0)
     # Get loss per timestep per batch
     loss= -torch.sum(torch.log(loss)) / (float(args.target_sequence_len) * float(args.batch_size))
     assert not np.isnan(loss.cpu().detach().numpy())
