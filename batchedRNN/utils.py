@@ -69,15 +69,25 @@ def plotLosses(trainLosses, valLosses, trainKLDLosses=None, valKLDLosses=None):
     if trainKLDLosses and valKLDLosses:
         torch.save(trainKLDLosses, args.save_dir+"plot_train_KLD_losses")
         torch.save(valKLDLosses, args.save_dir+"plot_val_KLD_losses")
+    plot_every = 1
     plt.rcParams.update({'font.size': 8})
+    plt.figure()
     fig, ax1 = plt.subplots()
     ax1.set_xlabel("Epoch")
     ax1.set_ylabel(args.criterion, color="r")
     ax1.tick_params('y', colors='r')
-    ax1.plot(np.arange(1, len(trainLosses)+1), trainLosses, "r--", label="train reconstruction loss")
-    ax1.plot(np.arange(1, len(valLosses)+1), valLosses, color="red", label="validation reconstruction loss")
+    ax1.plot(np.arange(1, len(trainLosses)+1)*plot_every, trainLosses, "r--", label="train reconstruction loss")
+    ax1.plot(np.arange(1, len(valLosses)+1)*plot_every, valLosses, color="red", label="validation reconstruction loss")
     ax1.legend(loc="upper left")
     ax1.grid()
+    if trainKLDLosses:
+        ax2 = ax1.twinx()
+        ax2.set_ylabel("KLD Loss", color="b")
+        ax2.tick_params('y', colors='b')
+        ax2.plot(np.arange(1, len(trainKLDLosses)+1)*plot_every, trainKLDLosses, "b--", label="train KLD loss")
+        ax2.plot(np.arange(1, len(valKLDLosses)+1)*plot_every, valKLDLosses, color="blue", label="val KLD loss")
+        ax2.legend(loc="upper right")
+        ax2.grid()
     plt.title("Losses for {}".format(args.model))
     plt.savefig(args.save_dir + "train_val_loss_plot.png")
 

@@ -132,8 +132,8 @@ def main():
     modelWeights = model.state_dict()
     torch.save(modelWeights, model_fn)
     logging.info('Saved model to '+model_fn)
-    plotLosses(experimentResults["train_recon_losses"], experimentResults["val_recon_losses"])
-    return experimentResults["train_recon_losses"][-1], experimentResults["val_recon_losses"][-1]
+    plotLosses(experimentResults["train_recon_losses"], experimentResults["val_recon_losses"], experimentResults["train_kld_losses"], experimentResults["val_kld_losses"])
+    return experimentResults["train_recon_losses"][-1], experimentResults["val_recon_losses"][-1], experimentResults["train_kld_losses"][-1], experimentResults["val_kld_losses"][-1]
 
 if __name__ == '__main__':
     logging.info('Starting training script')
