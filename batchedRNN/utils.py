@@ -302,9 +302,9 @@ def sketchRNNKLD(latentMean, latentStd, trainingMode, epoch):
             KL_min = torch.Tensor([args.KL_min]).cuda()
         else:
             KL_min = torch.Tensor([args.KL_min])
-        assert not np.isnan(eta_step)
-        assert not np.isnan(LKL)
-        assert not np.isnan(KL_min)
+        assert not np.isnan(eta_step.detach().numpy())
+        assert not np.isnan(LKL.detach().numpy())
+        assert not np.isnan(KL_min.detach().numpy())
         return eta_step * torch.max(LKL, KL_min)
     else:
         return LKL
@@ -319,7 +319,7 @@ def sketchRNNReconLoss(target, Pi, Mu, Sigma):
     loss = torch.sum(loss * Pi, dim=3)
     # Get loss per timestep per batch
     loss= -torch.sum(torch.log(loss)) / (float(args.target_sequence_len) * float(args.batch_size))
-    assert not np.isnan(loss)
+    assert not np.isnan(loss.detach().numpy())
     return loss
 
 def getLoss(model, output, target, scaler, epoch):
