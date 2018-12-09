@@ -75,6 +75,7 @@ def main():
             loss = reconLoss + kldLoss * currentKLDWeight
             loss.backward()
             optimizer.step()
+            nn.utils.clip_grad_norm(model.parameters(), args.clip)
             # print statistics
             running_recon_loss += reconLoss.item()
             epoch_train_recon_loss += reconLoss.item()
