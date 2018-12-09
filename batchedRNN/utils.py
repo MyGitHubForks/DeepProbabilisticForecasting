@@ -302,6 +302,9 @@ def sketchRNNKLD(latentMean, latentStd, trainingMode, epoch):
             KL_min = torch.Tensor([args.KL_min]).cuda()
         else:
             KL_min = torch.Tensor([args.KL_min])
+        assert not np.isnan(eta_step)
+        assert not np.isnan(LKL)
+        assert not np.isnan(KL_min)
         return eta_step * torch.max(LKL, KL_min)
     else:
         return LKL
@@ -310,10 +313,14 @@ def sketchRNNKLD(latentMean, latentStd, trainingMode, epoch):
 def sketchRNNReconLoss(target, Pi, Mu, Sigma):
     stackedTarget = torch.stack([target] * Mu.size(3), dim=3)
     m = torch.distributions.Normal(loc=Mu, scale=Sigma)
+    # Calculate likelihood of target for each component in the mixture
     loss = torch.exp(m.log_prob(stackedTarget))
+    # Get weighted average likelihood over all components
     loss = torch.sum(loss * Pi, dim=3)
-    loss= -torch.sum(torch.log(loss)) / (args.target_sequence_len * args.batch_size)
-    return loss.mean()
+    # Get loss per timestep per batch
+    loss= -torch.sum(torch.log(loss)) / (float(args.target_sequence_len) * float(args.batch_size))
+    assert not np.isnan(loss)
+    return loss
 
 def getLoss(model, output, target, scaler, epoch):
     if args.model == "rnn":
