@@ -302,9 +302,7 @@ def sketchRNNKLD(latentMean, latentStd, trainingMode, epoch):
             KL_min = torch.Tensor([args.KL_min]).cuda()
         else:
             KL_min = torch.Tensor([args.KL_min])
-        assert not np.isnan(eta_step.cpu().detach().numpy())
         assert not np.isnan(LKL.cpu().detach().numpy())
-        assert not np.isnan(KL_min.cpu().detach().numpy())
         return eta_step * torch.max(LKL, KL_min)
     else:
         return LKL
