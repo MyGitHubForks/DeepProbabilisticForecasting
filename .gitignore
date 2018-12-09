@@ -1,3 +1,4 @@
+data/
 notebooks/.ipynb_checkpoints/
 /dcrnn/data/sensor_graph/*.pkl
 save/
