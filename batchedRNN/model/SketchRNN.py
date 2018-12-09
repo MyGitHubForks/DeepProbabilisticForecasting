@@ -99,9 +99,9 @@ class SketchRNN(nn.Module):
 
     def generatePred(self, pi, mu, sigma):
         if self.args.cuda:
-            N = Variable(torch.normal(torch.zeros(pi.size()),torch.ones(pi.size())).cuda())
+            N = Variable(torch.randn(pi.size()).cuda())
         else:
-            N = Variable(torch.normal(torch.zeros(pi.size()),torch.ones(pi.size())))
+            N = Variable(torch.randn(pi.size()))
         clusterPredictions = mu + sigma * N
         weightedClusterPredictions = clusterPredictions * pi
         pred = torch.sum(weightedClusterPredictions, dim=3)
