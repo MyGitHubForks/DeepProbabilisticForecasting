@@ -74,8 +74,8 @@ def main():
             reconLoss, kldLoss = getLoss(model, output, target, data["scaler"], epoch)
             loss = reconLoss + kldLoss * currentKLDWeight
             loss.backward()
-            optimizer.step()
             nn.utils.clip_grad_norm_(model.parameters(), args.clip)
+            optimizer.step()
             # print statistics
             running_recon_loss += reconLoss.item()
             epoch_train_recon_loss += reconLoss.item()
