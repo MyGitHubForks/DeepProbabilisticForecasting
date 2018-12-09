@@ -312,7 +312,7 @@ def sketchRNNReconLoss(target, Pi, Mu, Sigma):
     m = torch.distributions.Normal(loc=Mu, scale=Sigma)
     loss = torch.exp(m.log_prob(stackedTarget))
     loss = torch.sum(loss * Pi, dim=3)
-    loss= -torch.sum(torch.log(loss)) / (args.sequence_len * args.batch_size)
+    loss= -torch.sum(torch.log(loss)) / (args.target_sequence_len * args.batch_size)
     return loss.mean()
 
 def getLoss(model, output, target, scaler, epoch):
