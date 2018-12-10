@@ -79,7 +79,7 @@ class SketchRNNDecoder(nn.Module):
         pi = self.piLayer(outputs).view(-1, self.args.batch_size, self.args.output_dim, self.args.n_gaussians)
         pi = F.softmax(pi, 3)
         sigma = torch.exp(sigma)
-        if not np.all(np.logical_not(np.is_null(mu.cpu().detach().numpy()))) or not np.all(np.logical_not(np.is_null(sigma.cpu().detach().numpy()))):
+        if not np.all(np.logical_not(np.isnan(mu.cpu().detach().numpy()))) or not np.all(np.logical_not(np.isnan(sigma.cpu().detach().numpy()))):
             print("hidden_cell", hidden_cell)
             torch.save(inputs, args.save_dir + "badInput")
             torch.save(z, args.save_dir + "badZ")
