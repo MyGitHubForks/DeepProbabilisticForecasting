@@ -3,6 +3,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 from torch import optim
 import torch.nn.functional as F
+import numpy as np
 
 class SketchRNNEncoder(nn.Module):
     def __init__(self, args):
