@@ -257,11 +257,11 @@ class StandardScalerHuman(StandardScaler):
 def getScaler(trainX):
     mean0 = np.mean(trainX[...,0])
     std0 = np.std(trainX[...,0])
-    mean1 = np.mean(trainX[...,1])
-    std1 = np.std(trainX[...,1])
     if args.dataset == "traffic":
         return StandardScalerTraffic(mean0, std0)
     elif args.dataset == "human":
+        mean1 = np.mean(trainX[...,1])
+        std1 = np.std(trainX[...,1])
         return StandardScalerHuman(mean0, std0, mean1, std1)
     else:
         assert False, "bad dataset"
