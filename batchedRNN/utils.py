@@ -293,8 +293,7 @@ def kld_gauss(mean_1, std_1, mean_2, std_2):
     return 0.5 * torch.sum(kld_element)
 
 def sketchRNNKLD(latentMean, latentStd, trainingMode, epoch):
-    LKL = -0.5*torch.sum(1+latentStd-latentMean**2-torch.exp(latentStd))\
-            /float(args.z_dim * args.batch_size)
+    LKL = -0.5*torch.mean(1+latentStd-latentMean**2-torch.exp(latentStd))
     if trainingMode:
         # update eta for LKL:
         eta_step = 1-(1-args.eta_min)*args.R**epoch
@@ -330,6 +329,7 @@ def sketchRNNReconLoss(target, Pi, Mu, Sigma):
         torch.save(Sigma, args.save_dir+"badSigma")
         torch.save(stackedTarget, args.save_dir+"badStackedTarget")
         torch.save(loss, args.save_dir+"badLossBeforeLog")
+        torch.save(Pi, args.save_dir+"badPi")
         assert np.all(loss.cpu().detach().numpy() > 0)
     # Get loss per timestep per batch
     loss= -torch.sum(torch.log(loss)) / (float(args.target_sequence_len) * float(args.batch_size))
