@@ -81,11 +81,11 @@ class SketchRNNDecoder(nn.Module):
         sigma = torch.exp(sigma)
         if not np.all(np.logical_not(np.isnan(mu.cpu().detach().numpy()))) or not np.all(np.logical_not(np.isnan(sigma.cpu().detach().numpy()))):
             print("hidden_cell", hidden_cell)
-            torch.save(inputs, args.save_dir + "badInput")
-            torch.save(z, args.save_dir + "badZ")
-            torch.save(self.state_dict(), args.save_dir+"stateDictAtFailure")
-            torch.save(mu, args.save_dir+"badMu")
-            torch.save_dir(sigma, args.save_dir+"badSigma")
+            torch.save(inputs, self.args.save_dir + "badInput")
+            torch.save(z, self.args.save_dir + "badZ")
+            torch.save(self.state_dict(), self.args.save_dir+"stateDictAtFailure")
+            torch.save(mu, self.args.save_dir+"badMu")
+            torch.save_dir(sigma, self.args.save_dir+"badSigma")
             assert False, "Found nan mu or sigma"
         return (pi, mu, sigma), (hidden, cell)
 
