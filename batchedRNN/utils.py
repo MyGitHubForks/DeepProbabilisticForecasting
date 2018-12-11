@@ -332,7 +332,7 @@ def sketchRNNReconLoss(target, Pi, Mu, Sigma):
         torch.save(Pi, args.save_dir+"badPi")
         assert np.all(loss.cpu().detach().numpy() > 0)
     # Get loss per timestep per batch
-    loss= -torch.sum(torch.log(loss)) / (float(args.target_sequence_len) * float(args.batch_size))
+    loss= -torch.sum(torch.log(loss + .00000001)) / (float(args.target_sequence_len) * float(args.batch_size))
     assert not np.isnan(loss.cpu().detach().numpy())
     return loss
 
