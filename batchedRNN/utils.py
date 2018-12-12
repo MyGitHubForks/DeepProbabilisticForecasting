@@ -322,15 +322,15 @@ def sketchRNNReconLoss(target, Pi, Mu, Sigma):
         assert False
     # Get weighted average likelihood over all components
     loss = torch.sum(loss * Pi, dim=3)
-    if not np.all(loss.cpu().detach().numpy() > 0):
-        print("about to take log of negative loss,\n Mu: {}\nSigma: {}\nstackedTarget: {}\nm.log_prob(stackedTarget)".format(
-        Mu, Sigma, stackedTarget, m.log_prob(stackedTarget)))
-        torch.save(Mu, args.save_dir+"badMu")
-        torch.save(Sigma, args.save_dir+"badSigma")
-        torch.save(stackedTarget, args.save_dir+"badStackedTarget")
-        torch.save(loss, args.save_dir+"badLossBeforeLog")
-        torch.save(Pi, args.save_dir+"badPi")
-        assert np.all(loss.cpu().detach().numpy() > 0)
+    # if not np.all(loss.cpu().detach().numpy() > 0):
+    #     print("about to take log of negative loss,\n Mu: {}\nSigma: {}\nstackedTarget: {}\nm.log_prob(stackedTarget)".format(
+    #     Mu, Sigma, stackedTarget, m.log_prob(stackedTarget)))
+    #     torch.save(Mu, args.save_dir+"badMu")
+    #     torch.save(Sigma, args.save_dir+"badSigma")
+    #     torch.save(stackedTarget, args.save_dir+"badStackedTarget")
+    #     torch.save(loss, args.save_dir+"badLossBeforeLog")
+    #     torch.save(Pi, args.save_dir+"badPi")
+    #     assert np.all(loss.cpu().detach().numpy() > 0)
     # Get loss per timestep per batch
     loss= -torch.sum(torch.log(loss + .00000001)) / (float(args.target_sequence_len) * float(args.batch_size))
     assert not np.isnan(loss.cpu().detach().numpy())
