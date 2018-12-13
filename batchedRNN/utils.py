@@ -21,7 +21,7 @@ parser.add_argument('--no_cuda', action='store_true', default=False,
                                         help='disables CUDA training')
 parser.add_argument("--no_attn", action="store_true", default=True, help="Do not use AttnDecoder")
 parser.add_argument("--n_epochs", type=int, default=200)
-parser.add_argument("--batch_size", type=int, default= 100)
+parser.add_argument("--batch_size", type=int, default= 10)
 parser.add_argument("--n_layers", type=int, default=1)
 parser.add_argument("--initial_lr", type=float, default=1e-4)
 parser.add_argument("--lr_decay_every", type=int, default=10)
@@ -113,12 +113,24 @@ def saveUsefulData():
     copytree("./model", args.save_dir+"model/")
 
 def getTrafficDataset(dataDir, category):
+    if not hasattr(args, 'dataIndices'):
+        args.dataIndices = {}
     f = np.load(os.path.join(dataDir, category + '.npz'))
-    my_dataset = torchUtils.TensorDataset(torch.Tensor(f["inputs"]),torch.Tensor(f["targets"])) # create your datset
-    scaler = getScaler(f["inputs"])
-    sequence_len = f['inputs'].shape[1]
-    x_dim = f['inputs'].shape[2]
-    channels = f["inputs"].shape[3]
+    print("the full traffic dataset has {} instances".format(f["inputs"].shape[0]))
+    inputs = f["inputs"]
+    targets = f["targets"]
+    if args.down_sample:
+        indices = np.random.choice(range(f["inputs"].shape[0]), size=int(f["inputs"].shape[0] * args.down_sample))
+        # save down-sampled indices
+        args.dataIndices[category] = indices.tolist()
+        inputs = inputs[indices]
+        targets = targets[indices]
+        print("now using down sampled data with {} instances, batch size: {}".format(inputs.shape[0], args.batch_size))
+    my_dataset = torchUtils.TensorDataset(torch.Tensor(inputs),torch.Tensor(targets)) # create your datset
+    scaler = getScaler(inputs)
+    sequence_len = inputs.shape[1]
+    x_dim = inputs.shape[2]
+    channels = inputs.shape[3]
     return my_dataset, scaler, sequence_len, sequence_len, x_dim, channels
 
 def getHumanDataset(dataDir, category):
@@ -308,30 +320,12 @@ def sketchRNNKLD(latentMean, latentStd, trainingMode, epoch):
 
 
 def sketchRNNReconLoss(target, Pi, Mu, Sigma):
-    assert np.all(np.logical_not(np.isnan(target.cpu().detach().numpy()))) 
     stackedTarget = torch.stack([target] * Mu.size(3), dim=3)
     m = torch.distributions.Normal(loc=Mu, scale=Sigma)
     # Calculate likelihood of target for each component in the mixture
     loss = torch.exp(m.log_prob(stackedTarget))
-    if not np.all(np.logical_not(np.isnan(loss.cpu().detach().numpy()))):
-        print("got nan,\n Mu: {}\nSigma: {}\nstackedTarget: {}\nm.log_prob(stackedTarget)".format(
-        Mu, Sigma, stackedTarget, m.log_prob(stackedTarget)))
-        torch.save(Mu, args.save_dir+"badMu")
-        torch.save(Sigma, args.save_dir+"badSigma")
-        torch.save(stackedTarget, args.save_dir+"badStackedTarget")
-        assert False
     # Get weighted average likelihood over all components
     loss = torch.sum(loss * Pi, dim=3)
-    # if not np.all(loss.cpu().detach().numpy() > 0):
-    #     print("about to take log of negative loss,\n Mu: {}\nSigma: {}\nstackedTarget: {}\nm.log_prob(stackedTarget)".format(
-    #     Mu, Sigma, stackedTarget, m.log_prob(stackedTarget)))
-    #     torch.save(Mu, args.save_dir+"badMu")
-    #     torch.save(Sigma, args.save_dir+"badSigma")
-    #     torch.save(stackedTarget, args.save_dir+"badStackedTarget")
-    #     torch.save(loss, args.save_dir+"badLossBeforeLog")
-    #     torch.save(Pi, args.save_dir+"badPi")
-    #     assert np.all(loss.cpu().detach().numpy() > 0)
-    # Get loss per timestep per batch
     loss= -torch.sum(torch.log(loss + .00000001)) / (float(args.target_sequence_len) * float(args.batch_size))
     assert not np.isnan(loss.cpu().detach().numpy())
     return loss

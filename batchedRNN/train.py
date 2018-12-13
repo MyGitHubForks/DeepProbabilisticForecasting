@@ -11,7 +11,7 @@ def main():
     args.use_schedule_sampling = not args.no_schedule_sampling
     # Get Data
     if args.local:
-        baseDataDir = "/Users/danielzeiberg/Documents/Data"
+        baseDataDir = "/Users/danielzeiberg/Data"
     else:
         baseDataDir = "/home/dan/data"
     if args.dataset == "traffic":
