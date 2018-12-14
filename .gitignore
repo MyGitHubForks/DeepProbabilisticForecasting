@@ -2,6 +2,7 @@ data/
 notebooks/.ipynb_checkpoints/
 /dcrnn/data/sensor_graph/*.pkl
 save/
+save.nosync/
 dcrnn/figures/
 *.pyc
 */*/*/__pycache__/
