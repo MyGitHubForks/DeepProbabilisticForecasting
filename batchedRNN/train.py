@@ -2,6 +2,7 @@ from utils import *
 from model.RoseSeq2Seq import Seq2Seq
 from model.SketchRNN import SketchRNN
 from torch.optim.lr_scheduler import MultiStepLR
+from model.seq2seq.models.seq2seq import RecurrentSeq2Seq
 
 def main():
     # Set Additional Args
@@ -41,6 +42,18 @@ def main():
         model = Seq2Seq(args)
     elif args.model == "sketch-rnn":
         model = SketchRNN(args)
+    elif args.model == "Seq2SeqAttn":
+        model = RecurrentSeq2Seq(
+            hidden_dim = args.h_dim,
+            dropout_prob = args.dropout_prob,
+            rnn_type = args.rnn_type,
+            bidirectional = args.bidirectionalEncoder,
+            num_layers = args.n_layers,
+            attention_type = args.attention_type,
+            input_feeding = args.input_feeding,
+            input_dim = args.x_dim * args.channels,
+            output_dim = args.output_dim
+            )
     else:
         assert False, "bad model specified"
     if args.cuda:

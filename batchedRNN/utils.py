@@ -54,12 +54,18 @@ parser.add_argument("--decoder_layer_dropout", type=float, default=0.9)
 parser.add_argument("--noEarlyStopping", action="store_true", default=False)
 parser.add_argument("--earlyStoppingPatients", type=int, default=10)
 parser.add_argument("--earlyStoppingMinDelta", type=float, default=0.0001)
-parser.add_argument("--bidirectionalEncoder", type=bool, default=True)
+parser.add_argument("--bidirectionalEncoder", action="store_true", default=False)
 parser.add_argument("--local", action="store_true", default=False)
 parser.add_argument("--debugDataset", action="store_true", default=False)
 parser.add_argument("--encoder_h_dim", type=int, default=512)
 parser.add_argument("--decoder_h_dim", type=int, default=2048)
 parser.add_argument("--n_gaussians", type=int, default=20)
+
+parser.add_argument("--dropout_prob", type=float, default=0.9)
+parser.add_argument("--rnn_type", type=str, default="gru")
+parser.add_argument("--attention_type", type=str, default="dot")
+parser.add_argument("--input_feeding", action="store_true", default=False)
+
 args = parser.parse_args()
 logging.basicConfig(stream=sys.stderr,level=logging.DEBUG)
 
@@ -331,7 +337,7 @@ def sketchRNNReconLoss(target, Pi, Mu, Sigma):
     return loss
 
 def getLoss(model, output, target, scaler, epoch):
-    if args.model == "rnn":
+    if args.model == "rnn" or args.model == "Seq2SeqAttn":
         reconLoss = getReconLoss(output, target, scaler)
         return reconLoss, 0
     else:
