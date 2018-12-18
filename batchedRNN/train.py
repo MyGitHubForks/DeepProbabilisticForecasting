@@ -2,7 +2,7 @@ from utils import *
 from model.RoseSeq2Seq import Seq2Seq
 from model.SketchRNN import SketchRNN
 from torch.optim.lr_scheduler import MultiStepLR
-from model.seq2seq.models.seq2seq import RecurrentSeq2Seq
+from model.seq2seq import RecurrentSeq2Seq
 
 def main():
     # Set Additional Args
