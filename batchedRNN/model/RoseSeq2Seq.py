@@ -118,7 +118,7 @@ class Seq2Seq(nn.Module):
         for t in range(self.args.target_sequence_len):
             decoder_output, decoder_hidden = self.dec(inp, decoder_hidden)
             if sample:
-                inp = target[t-1]
+                inp = target[t]
             else:
                 inp = decoder_output
             ys += [decoder_output]
