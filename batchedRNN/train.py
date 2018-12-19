@@ -52,7 +52,8 @@ def main():
             attention_type = args.attention_type,
             input_feeding = args.input_feeding,
             input_dim = args.x_dim * args.channels,
-            output_dim = args.output_dim
+            output_dim = args.output_dim,
+            args = args
             )
     else:
         assert False, "bad model specified"

@@ -12,7 +12,7 @@ class RecurrentDecoder(nn.Module):
 
     def __init__(self, rnn_type, input_dim, hidden_dim,
                  annotation_dim, num_layers, attention_type, input_feeding,
-                 dropout_prob):
+                 dropout_prob, args):
         super().__init__()
         self.rnn_type = rnn_type
         self.input_dim = input_dim
@@ -21,7 +21,7 @@ class RecurrentDecoder(nn.Module):
         self.num_layers = num_layers
         self.input_feeding = input_feeding
         self.dropout_prob = dropout_prob
-
+        self.args = args
         self.dropout = nn.Dropout(dropout_prob)
         self.word_embedding = nn.Linear(in_features=self.input_dim,
                                         out_features=self.input_dim)
@@ -95,7 +95,7 @@ class RecurrentDecoder(nn.Module):
                 the attention weight for each time step of the context.
         """
         initialInput = torch.zeros(decoder_inputs[0].size()).unsqueeze(0)
-        if args.cuda:
+        if self.args.cuda:
             initialInput = initialInput.cuda()
         decoder_inputs = torch.cat([initialInput, decoder_inputs[:-1]], dim=0)
         state = copy.copy(state)

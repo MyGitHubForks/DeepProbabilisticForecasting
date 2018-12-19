@@ -9,7 +9,7 @@ class RecurrentSeq2Seq(nn.Module):
     def __init__(self, hidden_dim, dropout_prob,
                 rnn_type, bidirectional, num_layers,
                 attention_type, input_feeding,
-                input_dim, output_dim):
+                input_dim, output_dim, args):
         super().__init__()
         self.hidden_dim = hidden_dim
         self.dropout_prob = dropout_prob
@@ -31,7 +31,7 @@ class RecurrentSeq2Seq(nn.Module):
             rnn_type=rnn_type, input_dim=output_dim, hidden_dim=hidden_dim,
             annotation_dim=annotation_dim, num_layers=num_layers,
             attention_type=attention_type, input_feeding=input_feeding,
-            dropout_prob=dropout_prob)
+            dropout_prob=dropout_prob, args=args)
         self.reset_parameters()
 
     def reset_parameters(self):
