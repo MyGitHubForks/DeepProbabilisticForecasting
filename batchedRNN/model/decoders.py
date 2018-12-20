@@ -22,6 +22,7 @@ class RecurrentDecoder(nn.Module):
         self.input_feeding = input_feeding
         self.dropout_prob = dropout_prob
         self.args = args
+        self.attention_type = attention_type
         self.dropout = nn.Dropout(dropout_prob)
         self.word_embedding = nn.Linear(in_features=self.input_dim,
                                         out_features=self.input_dim)
@@ -52,6 +53,10 @@ class RecurrentDecoder(nn.Module):
             self.attention = attention.MLPAttention(
                 hidden_dim=hidden_dim, annotation_dim=annotation_dim,
                 dropout_prob=dropout_prob)
+        elif attention_type == "None":
+            self.attention = nn.Sequential(nn.Linear(in_features=hidden_dim,
+            out_features=hidden_dim),
+            nn.Tanh())
         else:
             raise ValueError('Unknown attention type!')
         self.output_linear = nn.Linear(in_features=hidden_dim,
@@ -72,7 +77,8 @@ class RecurrentDecoder(nn.Module):
             init.constant_(bias_hh.data, val=0)
             if self.rnn_type == 'lstm':  # Set initial forget bias to 1
                 bias_ih.data.chunk(4)[1].fill_(1)
-        self.attention.reset_parameters()
+        if self.attention_type != "None":
+            self.attention.reset_parameters()
         init.normal_(self.output_linear.weight.data, mean=0, std=0.01)
         init.constant_(self.output_linear.bias.data, val=0)
 
@@ -111,8 +117,14 @@ class RecurrentDecoder(nn.Module):
         embedded_inputs = self.dropout(embedded_inputs)
         if not self.input_feeding:
             rnn_outputs, rnn_state = self.rnn(input=embedded_inputs, hx=state.rnn)
-            attentional_states, attention_weights = self.attention.forward(
-                queries=rnn_outputs, annotations=annotations)
+            if self.attention_type != "None":
+                attentional_states, attention_weights = self.attention(
+                    queries=rnn_outputs, annotations=annotations)
+            else:
+                attentional_states = self.attention(rnn_outputs)
+                attention_weights = torch.zeros((1,1))
+                if self.args.cuda:
+                    attention_weights = attention_weights.cuda()
             state.update(rnn_state=rnn_state)
         else:
             target_seq_len, batch_size, _ = decoder_inputs.size()
@@ -130,8 +142,14 @@ class RecurrentDecoder(nn.Module):
                 decoder_input_t = decoder_input_t.unsqueeze(0)
                 rnn_output_t, rnn_state_t = self.rnn(
                     input=decoder_input_t, hx=state.rnn)
-                attentional_state_t, attention_weights_t = self.attention(
-                    queries=rnn_output_t, annotations=annotations)
+                if self.attention_type != "None":
+                    attentional_state_t, attention_weights_t = self.attention(
+                        queries=rnn_output_t, annotations=annotations)
+                else:
+                    attentional_state_t = self.attention(rnn_output_t)
+                    attention_weights_t = torch.zeros((1,1))
+                    if self.args.cuda:
+                        attention_weights = attention_weights.cuda()
                 attentional_state_t = attentional_state_t.squeeze(0)
                 attentional_states.append(attentional_state_t)
                 attention_weights.append(attention_weights_t)
