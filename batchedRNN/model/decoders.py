@@ -165,15 +165,17 @@ class RecurrentDecoder(nn.Module):
                     if self.args.cuda:
                         attention_weights_t = attention_weights_t.cuda()
                 attentional_state_t = attentional_state_t.squeeze(0)
-                attentional_states.append(attentional_state_t)
-                attention_weights.append(attention_weights_t)
                 state.update_state(rnn_state=rnn_state_t,
                                    attentional_state=attentional_state_t)
+                attentional_state_t = self.output_linear(attentional_state_t)
+                attentional_states.append(attentional_state_t)
+                attention_weights.append(attention_weights_t)
+                
                 if sample:
                     inp = targets[t].squeeze()
                 else:
                     inp = attentional_state_t.squeeze()
-            attentional_states = self.output_linear(torch.stack(attentional_states, dim=0))
+            attentional_states = torch.stack(attentional_states, dim=0)
             attention_weights = torch.cat(attention_weights, dim=0)
         logits = attentional_states
         return logits, state, attention_weights
