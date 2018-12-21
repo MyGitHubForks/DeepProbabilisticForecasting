@@ -150,8 +150,7 @@ class RecurrentDecoder(nn.Module):
                 inp = self.word_embedding(inp)
                 inp = self.dropout(inp)
                 if self.attention_type != "None":
-                    decoder_input_t = torch.cat(
-                        [inp, state.attention], dim=1)
+                    decoder_input_t = torch.cat([inp, state.attention], dim=1)
                     decoder_input_t = decoder_input_t.unsqueeze(0)
                     rnn_output_t, rnn_state_t = self.rnn(
                         input=decoder_input_t, hx=state.rnn)
