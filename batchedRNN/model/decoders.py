@@ -107,8 +107,6 @@ class RecurrentDecoder(nn.Module):
                 the attention weight for each time step of the context.
         """
         inp = torch.zeros(targets[0].size())
-        if self.args.cuda:
-            inp = inp.cuda()
         decoder_inputs = torch.cat([inp.unsqueeze(0), targets[:-1]], dim=0)
         state = copy.copy(state)
         bidirectionalEncoder = state.prepForDecoder(num_layers=self.num_layers)
