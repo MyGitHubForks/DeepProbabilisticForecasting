@@ -121,7 +121,7 @@ class RecurrentDecoder(nn.Module):
                 attentional_states, attention_weights = self.attention(
                     queries=rnn_outputs, annotations=annotations)
             else:
-                attentional_states = self.attention(rnn_outputs)
+                attentional_states = rnn_outputs
                 attention_weights = torch.zeros((1,1))
                 if self.args.cuda:
                     attention_weights = attention_weights.cuda()
