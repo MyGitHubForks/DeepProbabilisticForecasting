@@ -121,10 +121,9 @@ class Seq2Seq(nn.Module):
         # Decode
         for t in range(self.args.target_sequence_len):
             decoder_output, decoder_hidden = self.dec(inp, decoder_hidden)
-            # if sample:
-            #     inp = target[t]
-            # else:
-            #     inp = decoder_output
-            inp = target[t]
+            if sample:
+                inp = target[t]
+            else:
+                inp = decoder_output
             ys += [decoder_output]
         return torch.cat([torch.unsqueeze(y, dim=0) for y in ys])
