@@ -43,12 +43,12 @@ class RecurrentSeq2Seq(nn.Module):
         return torch.cat([inp0, inp1], dim=2)
 
 
-    def forward(self, encoder_inputs, decoder_inputs, epoch=None):
+    def forward(self, encoder_inputs, decoder_inputs, epoch):
         encoder_hidden_states, encoder_state = self.encoder(
             encoder_inputs=self.remove4D(encoder_inputs))
         decoder_state = decoders.DecoderState(
             rnn_state=encoder_state, input_feeding=self.input_feeding)
         logits, _, _ = self.decoder(
             annotations=encoder_hidden_states,
-            decoder_inputs=decoder_inputs, state=decoder_state)
+            targets=decoder_inputs, state=decoder_state, epoch=epoch)
         return logits

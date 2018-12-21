@@ -4,7 +4,7 @@ import torch
 from torch import nn
 from torch.autograd import Variable
 from torch.nn import init
-
+import numpy as np
 from . import attention
 
 
@@ -82,7 +82,13 @@ class RecurrentDecoder(nn.Module):
         init.normal_(self.output_linear.weight.data, mean=0, std=0.01)
         init.constant_(self.output_linear.bias.data, val=0)
 
-    def forward(self, annotations, decoder_inputs, state):
+    def scheduleSample(self, epoch):
+        eps = max(self.args.scheduling_start - 
+            (self.args.scheduling_start - self.args.scheduling_end)* epoch / self.args.n_epochs,
+            self.args.scheduling_end)
+        return np.random.binomial(1, eps)
+
+    def forward(self, annotations, targets, state, epoch):
         """
         Args:
             annotations (Variable): A float variable of size
@@ -100,10 +106,10 @@ class RecurrentDecoder(nn.Module):
                 (length, batch_size, max_src_length), which contains
                 the attention weight for each time step of the context.
         """
-        initialInput = torch.zeros(decoder_inputs[0].size()).unsqueeze(0)
+        inp = torch.zeros(targets[0].size())
         if self.args.cuda:
-            initialInput = initialInput.cuda()
-        decoder_inputs = torch.cat([initialInput, decoder_inputs[:-1]], dim=0)
+            inp = inp.cuda()
+        decoder_inputs = torch.cat([inp.unsqueeze(0), targets[:-1]], dim=0)
         state = copy.copy(state)
         bidirectionalEncoder = state.prepForDecoder(num_layers=self.num_layers)
         if bidirectionalEncoder:
@@ -113,9 +119,9 @@ class RecurrentDecoder(nn.Module):
                 state.update_rnn_state((hidden, cell))
             else:
                 state.update_rnn_state(self.resizeEncoderState(state.rnn))
-        embedded_inputs = self.word_embedding(decoder_inputs)
-        embedded_inputs = self.dropout(embedded_inputs)
         if not self.input_feeding:
+            embedded_inputs = self.word_embedding(decoder_inputs)
+            embedded_inputs = self.dropout(embedded_inputs)
             rnn_outputs, rnn_state = self.rnn(input=embedded_inputs, hx=state.rnn)
             if self.attention_type != "None":
                 attentional_states, attention_weights = self.attention(
@@ -131,15 +137,21 @@ class RecurrentDecoder(nn.Module):
             attentional_states = []
             attention_weights = []
             if state.attention is "None":
-                zero_attentional_state = (
-                    embedded_inputs.data.new(batch_size, self.hidden_dim).zero_())
+                zero_attentional_state = torch.zeros((batch_size, self.hidden_dim))
+                # zero_attentional_state = (
+                #     embedded_inputs.data.new(batch_size, self.hidden_dim).zero_())
                 zero_attentional_state = Variable(zero_attentional_state)
                 state.update_attentional_state(zero_attentional_state)
+            if self.args.no_schedule_sampling or not self.training:
+                sample=0
+            else:
+                sample = self.scheduleSample(epoch)
             for t in range(target_seq_len):
-                embedded_inputs_t = embedded_inputs[t]
+                inp = self.word_embedding(inp)
+                inp = self.dropout(inp)
                 if self.attention_type != "None":
                     decoder_input_t = torch.cat(
-                        [embedded_inputs_t, state.attention], dim=1)
+                        [inp, state.attention], dim=1)
                     decoder_input_t = decoder_input_t.unsqueeze(0)
                     rnn_output_t, rnn_state_t = self.rnn(
                         input=decoder_input_t, hx=state.rnn)
@@ -147,18 +159,22 @@ class RecurrentDecoder(nn.Module):
                         queries=rnn_output_t, annotations=annotations)
                 else:
                     attentional_state_t, rnn_state_t = self.rnn(
-                        input=embedded_inputs_t.unsqueeze(0), hx=state.rnn)
+                        input=inp.unsqueeze(0), hx=state.rnn)
                     attention_weights_t = torch.zeros((1,1))
                     if self.args.cuda:
                         attention_weights_t = attention_weights_t.cuda()
-                attentional_state_t = attentional_state_t.squeeze(0)
+                attentional_state_t = self.output_linear(attentional_state_t.squeeze(0))
                 attentional_states.append(attentional_state_t)
                 attention_weights.append(attention_weights_t)
                 state.update_state(rnn_state=rnn_state_t,
                                    attentional_state=attentional_state_t)
+                if sample:
+                    inp = targets[t].squeeze()
+                else:
+                    inp = attentional_state_t.squeeze()
             attentional_states = torch.stack(attentional_states, dim=0)
             attention_weights = torch.cat(attention_weights, dim=0)
-        logits = self.output_linear(attentional_states)
+        logits = attentional_states
         return logits, state, attention_weights
 
 
