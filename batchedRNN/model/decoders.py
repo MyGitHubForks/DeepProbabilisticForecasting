@@ -136,7 +136,7 @@ class RecurrentDecoder(nn.Module):
             target_seq_len, batch_size, _ = decoder_inputs.size()
             attentional_states = []
             attention_weights = []
-            if state.attention is "None":
+            if state.attention is None:
                 zero_attentional_state = torch.zeros((batch_size, self.hidden_dim))
                 # zero_attentional_state = (
                 #     embedded_inputs.data.new(batch_size, self.hidden_dim).zero_())
