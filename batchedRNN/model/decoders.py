@@ -150,7 +150,7 @@ class RecurrentDecoder(nn.Module):
                         input=embedded_inputs_t.unsqueeze(0), hx=state.rnn)
                     attention_weights_t = torch.zeros((1,1))
                     if self.args.cuda:
-                        attention_weights = attention_weights.cuda()
+                        attention_weights_t = attention_weights_t.cuda()
                 attentional_state_t = attentional_state_t.squeeze(0)
                 attentional_states.append(attentional_state_t)
                 attention_weights.append(attention_weights_t)
