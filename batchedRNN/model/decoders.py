@@ -132,6 +132,7 @@ class RecurrentDecoder(nn.Module):
                 if self.args.cuda:
                     attention_weights = attention_weights.cuda()
             state.update(rnn_state=rnn_state)
+            attentional_states = self.output_linear(attentional_states)
         else:
             target_seq_len, batch_size, _ = decoder_inputs.size()
             attentional_states = []
