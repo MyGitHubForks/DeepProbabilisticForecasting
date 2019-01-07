@@ -1,15 +1,9 @@
 # Deep Probabilistic Forecasting
 
-
-
-## Getting Started
-
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
-
-### Prerequisites
+## Prerequisites
 In your working directory, run "git clone git@github.com:Rose-ML-Lab/DeepProbabilisticForecasting.git"
 
-### Installing
+## Installing
 Install the packages necessary to run this code by running "pip install -r requirements.txt"
 Note: requirements.txt contains more than the packages that are necessary to run this codebase
 
